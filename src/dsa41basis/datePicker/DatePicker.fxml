@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.text.Font?>
+<?import dsatool.util.ReactiveSpinner?>
+
+<HBox fx:id="box" spacing="2" xmlns:fx="http://javafx.com/fxml" >
+   <ReactiveSpinner fx:id="day" imin="1" imax="30" initialValue="1" prefWidth="65" />
+   <ComboBox fx:id="month" />
+   <ReactiveSpinner fx:id="year" imin="0" imax="2000" initialValue="1000" prefWidth="85" />
+   <Button prefWidth="25" prefHeight="25" text="&#xE923;" onAction="#setToCurrentDate" >
+      <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+      <font>
+         <Font name="Material Icons" size="15.0" />
+      </font>
+      <tooltip>
+          <Tooltip text="An irdisches Datum anpassen" />
+      </tooltip>
+   </Button>
+</HBox>

@@ -1,0 +1,6 @@
+{
+	"releaseDate" : "@releaseDate@",
+	"previousReleaseDate" : "@previousReleaseDate@",
+	"previousReleaseLink" : "https://raw.githubusercontent.com/DSATool/DSA41BasisPlugin/master/release/DSA41Basis_@previousReleaseDate@.zip",
+	"updateInfo" : "https://raw.githubusercontent.com/DSATool/DSA41BasisPlugin/master/release/update-info.json"
+}
