@@ -23,21 +23,23 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
 public class Spell extends Talent {
-	private JSONObject actualRepresentation;
+	private JSONObject actualSpell;
 	private final StringProperty complexity;
 	private final StringProperty representation;
 	private final BooleanProperty primarySpell;
 
-	public Spell(String name, JSONObject spell, JSONObject actual, JSONObject actualGroup, String representation) {
-		super(name, null, spell, actual, actualGroup);
+	public Spell(final String name, final JSONObject spell, final JSONObject actualRepresentation, final JSONObject actualSpell, final JSONObject actualGroup,
+			final String representation) {
+		super(name, null, spell, actualRepresentation, actualGroup);
+
+		this.actualSpell = actualSpell;
 
 		this.representation = new SimpleStringProperty(representation);
 		complexity = new SimpleStringProperty(DSAUtil.getEnhancementGroupString(spell.getIntOrDefault("Komplexität", 1)));
-
-		actualRepresentation = actual == null ? null : actual.getObjOrDefault(representation, null);
 
 		primarySpell = new SimpleBooleanProperty(actualRepresentation == null ? false : actualRepresentation.getBoolOrDefault("Hauszauber", false));
 		primaryTalent = new SimpleBooleanProperty(actualRepresentation == null ? false : actualRepresentation.getBoolOrDefault("Leittalent", false));
@@ -56,7 +58,7 @@ public class Spell extends Talent {
 	}
 
 	@Override
-	public int getEnhancementCost(JSONObject hero, int targetZfW) {
+	public int getEnhancementCost(final JSONObject hero, final int targetZfW) {
 		return HeroUtil.getSpellComplexity(hero, name.get(), representation.get(), targetZfW);
 	}
 
@@ -64,18 +66,36 @@ public class Spell extends Talent {
 		return representation.get();
 	}
 
-	private void insertRepresentation(boolean activated) {
-		actualRepresentation = new JSONObject(actual);
-		if (!activated) {
-			actualRepresentation.put("aktiviert", false);
+	private void insertSpell() {
+		if (actualSpell == null) {
+			actualSpell = new JSONObject(actualGroup);
 		}
-		actual.put(representation.get(), actualRepresentation);
+		actualGroup.put(name.get(), actualSpell);
 	}
 
 	@Override
-	protected void insertTalent(boolean activated) {
-		actual = new JSONObject(actualGroup);
-		actualGroup.put(getName(), actual);
+	public void insertTalent(final boolean activated) {
+		if (actualSpell == null) {
+			insertSpell();
+		}
+		if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+			final JSONArray choiceTalent = actualSpell.getArr(representation.get());
+			if (actual == null) {
+				actual = new JSONObject(choiceTalent);
+			}
+			if (!choiceTalent.contains(actual)) {
+				choiceTalent.add(actual);
+			}
+		} else {
+			if (actual == null) {
+				actual = new JSONObject(actual);
+			}
+			actualSpell.put(representation.get(), actual);
+		}
+		if (!activated) {
+			actual.put("aktiviert", false);
+		}
+		actual.notifyListeners(null);
 	}
 
 	public final boolean isPrimarySpell() {
@@ -86,76 +106,112 @@ public class Spell extends Talent {
 		return primarySpell;
 	}
 
+	@Override
+	public void removeTalent() {
+		if (actualSpell != null) {
+			if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+				actualSpell.getArr(representation.get()).remove(actual);
+				if (actualSpell.getArr(representation.get()).size() == 0) {
+					actualSpell.removeKey(representation.get());
+				}
+			} else {
+				actualSpell.remove(actual);
+			}
+			if (actualSpell.size() == 0) {
+				actualGroup.remove(actualSpell);
+			}
+			actualSpell.notifyListeners(null);
+		}
+	}
+
 	public final ReadOnlyStringProperty representationProperty() {
 		return representation;
 	}
 
-	public final void setPrimarySpell(boolean primary) {
+	public final void setPrimarySpell(final boolean primary) {
+		if (actualSpell == null) {
+			insertSpell();
+		}
 		if (actual == null) {
 			insertTalent(false);
 		}
-		if (actualRepresentation == null) {
-			insertRepresentation(false);
-		}
 		if (primary) {
-			actualRepresentation.put("Hauszauber", true);
+			actual.put("Hauszauber", true);
 		} else {
-			actualRepresentation.removeKey("Hauszauber");
+			actual.removeKey("Hauszauber");
 		}
 		primarySpell.set(primary);
-		actual.notifyListeners(null);
+		actualSpell.notifyListeners(null);
 	}
 
 	@Override
-	public void setPrimaryTalent(boolean primary) {
+	public void setPrimaryTalent(final boolean primary) {
+		if (actualSpell == null) {
+			insertSpell();
+		}
 		if (actual == null) {
 			insertTalent(false);
-		}
-		if (actualRepresentation == null) {
-			insertRepresentation(false);
 		}
 		if (primary) {
-			actualRepresentation.put("Leittalent", true);
+			actual.put("Leittalent", true);
 		} else {
-			actualRepresentation.removeKey("Leittalent");
+			actual.removeKey("Leittalent");
 		}
 		primaryTalent.set(primary);
-		actual.notifyListeners(null);
+		actualSpell.notifyListeners(null);
 	}
 
 	@Override
-	public void setSes(int ses) {
+	public void setSes(final int ses) {
+		if (actualSpell == null) {
+			insertSpell();
+		}
 		if (actual == null) {
 			insertTalent(false);
 		}
-		if (actualRepresentation == null) {
-			insertRepresentation(false);
-		}
 		if (ses == 0) {
-			actualRepresentation.removeKey("SEs");
+			actual.removeKey("SEs");
 		} else {
-			actualRepresentation.put("SEs", ses);
+			actual.put("SEs", ses);
 		}
 		this.ses.set(ses);
-		actual.notifyListeners(null);
+		actualSpell.notifyListeners(null);
 	}
 
 	@Override
-	public void setValue(int value) {
-		if (actual == null) {
-			insertTalent(true);
+	public void setValue(final int value) {
+		if (actualSpell == null) {
+			insertSpell();
 		}
-		if (actualRepresentation == null) {
-			insertRepresentation(true);
+		if (actual == null) {
+			insertTalent(false);
 		}
 		if (value == Integer.MIN_VALUE) {
-			actualRepresentation.removeKey("ZfW");
-			actualRepresentation.put("aktiviert", false);
+			actual.removeKey("ZfW");
+			actual.put("aktiviert", false);
 		} else {
-			actualRepresentation.put("ZfW", value);
-			actualRepresentation.removeKey("aktiviert");
+			actual.put("ZfW", value);
+			actual.removeKey("aktiviert");
 		}
 		this.value.set(value);
-		actual.notifyListeners(null);
+		actualSpell.notifyListeners(null);
+	}
+
+	@Override
+	public void setVariant(final String variant) {
+		if (actualSpell == null) {
+			insertSpell();
+		}
+		if (actual == null) {
+			insertTalent(false);
+		}
+		if (talent.containsKey("Auswahl")) {
+			actual.put("Auswahl", variant);
+		} else if (talent.containsKey("Freitext")) {
+			actual.put("Freitext", variant);
+		}
+		this.variant.set(variant);
+		displayName.set(name.get() + ": " + variant);
+		actualSpell.notifyListeners(null);
 	}
 }

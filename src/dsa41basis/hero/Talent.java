@@ -16,6 +16,7 @@
 package dsa41basis.hero;
 
 import java.util.Arrays;
+import java.util.Set;
 
 import dsa41basis.util.DSAUtil;
 import dsa41basis.util.HeroUtil;
@@ -32,6 +33,7 @@ import jsonant.value.JSONObject;
 public class Talent {
 
 	protected final StringProperty name;
+	protected final StringProperty displayName;
 	protected JSONObject actual;
 	protected JSONObject actualGroup;
 	protected IntegerProperty ses;
@@ -40,8 +42,9 @@ public class Talent {
 	protected BooleanProperty primaryTalent;
 	protected final JSONArray challenge;
 	protected JSONObject talent;
+	protected final StringProperty variant;
 
-	public Talent(String name, JSONObject talentGroup, JSONObject talent, JSONObject actual, JSONObject actualGroup) {
+	public Talent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
 		this.name = new SimpleStringProperty(name);
 		this.talent = talent;
 		this.actual = actual;
@@ -54,6 +57,22 @@ public class Talent {
 		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
 		value = new SimpleIntegerProperty(actual == null || !actual.getBoolOrDefault("aktiviert", true)
 				? talent.getBoolOrDefault("Basis", false) ? 0 : Integer.MIN_VALUE : actual.getIntOrDefault("TaW", 0));
+
+		if (talent.containsKey("Auswahl")) {
+			final Set<String> choices = HeroUtil.getChoices(null, talent.getString("Auswahl"), null);
+			variant = new SimpleStringProperty(actual != null ? actual.getStringOrDefault("Auswahl", choices.isEmpty() ? "" : choices.iterator().next()) : "");
+		} else if (talent.containsKey("Freitext")) {
+			final Set<String> choices = HeroUtil.getChoices(null, talent.getString("Freitext"), null);
+			variant = new SimpleStringProperty(actual != null ? actual.getStringOrDefault("Freitext", choices.isEmpty() ? "" : choices.iterator().next()) : "");
+		} else {
+			variant = new SimpleStringProperty("");
+		}
+
+		if ("".equals(variant.get())) {
+			displayName = new SimpleStringProperty(name);
+		} else {
+			displayName = new SimpleStringProperty(name + ": " + variant.get());
+		}
 	}
 
 	public final ReadOnlyStringProperty attributesProperty() {
@@ -68,11 +87,15 @@ public class Talent {
 		return attributes.get();
 	}
 
-	public int getEnhancementCost(JSONObject hero, int targetTaW) {
+	public final String getDisplayName() {
+		return displayName.get();
+	}
+
+	public int getEnhancementCost(final JSONObject hero, final int targetTaW) {
 		return HeroUtil.getTalentComplexity(hero, name.get());
 	}
 
-	public int getMaximum(JSONObject hero) {
+	public int getMaximum(final JSONObject hero) {
 		final JSONObject attributes = hero.getObj("Eigenschaften");
 		int max = 0;
 		for (int i = 0; i < 3; ++i) {
@@ -100,14 +123,31 @@ public class Talent {
 		return value.get();
 	}
 
-	protected void insertTalent(boolean activated) {
-		actual = new JSONObject(actualGroup);
+	public final String getVariant() {
+		return variant.get();
+	}
+
+	public void insertTalent(final boolean activated) {
+		if (actualGroup != null && (talent.containsKey("Auswahl") || talent.containsKey("Freitext"))) {
+			final JSONArray choiceTalent = actualGroup.getArr(name.get());
+			if (actual == null) {
+				actual = new JSONObject(choiceTalent);
+			}
+			if (!choiceTalent.contains(actual)) {
+				choiceTalent.add(actual);
+			}
+		} else {
+			if (actual == null) {
+				actual = new JSONObject(actualGroup);
+			}
+			if (actualGroup != null) {
+				actualGroup.put(name.get(), actual);
+			}
+		}
 		if (!activated) {
 			actual.put("aktiviert", false);
 		}
-		if (actualGroup != null) {
-			actualGroup.put(name.get(), actual);
-		}
+		actual.notifyListeners(null);
 	}
 
 	public final boolean isPrimaryTalent() {
@@ -122,11 +162,22 @@ public class Talent {
 		return primaryTalent;
 	}
 
+	public void removeTalent() {
+		if (actualGroup != null) {
+			if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+				actualGroup.getArr(name.get()).remove(actual);
+			} else {
+				actualGroup.remove(actual);
+			}
+			actualGroup.notifyListeners(null);
+		}
+	}
+
 	public final IntegerProperty sesProperty() {
 		return ses;
 	}
 
-	public void setPrimaryTalent(boolean primary) {
+	public void setPrimaryTalent(final boolean primary) {
 		if (actual == null) {
 			insertTalent(false);
 		}
@@ -139,7 +190,7 @@ public class Talent {
 		actual.notifyListeners(null);
 	}
 
-	public void setSes(int ses) {
+	public void setSes(final int ses) {
 		if (actual == null) {
 			insertTalent(false);
 		}
@@ -152,7 +203,7 @@ public class Talent {
 		actual.notifyListeners(null);
 	}
 
-	public void setValue(int value) {
+	public void setValue(final int value) {
 		if (actual == null) {
 			insertTalent(true);
 		}
@@ -164,6 +215,20 @@ public class Talent {
 			actual.removeKey("aktiviert");
 		}
 		this.value.set(value);
+		actual.notifyListeners(null);
+	}
+
+	public void setVariant(final String variant) {
+		if (actual == null) {
+			insertTalent(true);
+		}
+		if (talent.containsKey("Auswahl")) {
+			actual.put("Auswahl", variant);
+		} else if (talent.containsKey("Freitext")) {
+			actual.put("Freitext", variant);
+		}
+		this.variant.set(variant);
+		displayName.set(name.get() + ": " + variant);
 		actual.notifyListeners(null);
 	}
 

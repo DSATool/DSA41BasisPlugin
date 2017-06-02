@@ -23,7 +23,7 @@ import jsonant.value.JSONValue;
 
 public class RequirementsUtil {
 
-	private static boolean checkRKPVariants(JSONObject variants, JSONArray source) {
+	private static boolean checkRKPVariants(final JSONObject variants, final JSONArray source) {
 		if (variants.containsKey("Muss")) {
 			final JSONArray requiredVariants = variants.getArr("Muss");
 			for (int i = 0; i < requiredVariants.size(); ++i) {
@@ -53,7 +53,7 @@ public class RequirementsUtil {
 		return true;
 	}
 
-	private static boolean fulfillsRKPRequirement(JSONObject hero, String category, JSONObject rkps, boolean isProfession) {
+	private static boolean fulfillsRKPRequirement(final JSONObject hero, final String category, final JSONObject rkps, final boolean isProfession) {
 		if (rkps.containsKey("Muss")) {
 			final JSONObject must = rkps.getObj("Muss");
 			for (final String rkp : must.keySet()) {
@@ -80,10 +80,10 @@ public class RequirementsUtil {
 		return true;
 	}
 
-	private static boolean hasRKP(JSONObject hero, String category, String name, JSONObject rkp, boolean isProfession) {
+	private static boolean hasRKP(final JSONObject hero, final String category, final String name, final JSONObject rkp, final boolean isProfession) {
 		final JSONObject biography = hero.getObj("Biografie");
 		final JSONObject pros = hero.getObj("Vorteile");
-		if (biography.getString(category).equals(name)) {
+		if (name.equals(biography.getString(category))) {
 			if (rkp.containsKey("Varianten")) {
 				if (checkRKPVariants(rkp.getObj("Varianten"), biography.getArr(category + ":Varianten"))) return true;
 				if (isProfession && pros.containsKey("Veteran")) {
@@ -93,7 +93,7 @@ public class RequirementsUtil {
 				return true;
 		} else if (isProfession && pros.containsKey("Breitgefächerte Bildung")) {
 			final JSONObject bgb = pros.getObj("Breitgefächerte Bildung");
-			if (bgb.getString("Profession").equals(name)) {
+			if (name.equals(bgb.getString("Profession"))) {
 				if (rkp.containsKey("Varianten")) {
 					if (checkRKPVariants(rkp.getObj("Varianten"), bgb.getArr(category + ":Varianten"))) return true;
 				} else
@@ -103,7 +103,7 @@ public class RequirementsUtil {
 		return false;
 	}
 
-	public static boolean isRequirementFulfilled(JSONObject hero, JSONObject requirements, String choice, String freeText) {
+	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String freeText) {
 		if (requirements == null) return true;
 
 		if (requirements.containsKey("Wahl")) {
@@ -188,8 +188,14 @@ public class RequirementsUtil {
 			final JSONObject talents = requirements.getObj("Talente");
 			if (talents.containsKey("Muss")) {
 				final JSONObject must = talents.getObj("Muss");
-				for (final String talent : must.keySet()) {
-					if (!isTalentRequirementFulfilled(hero, talent, must.getInt(talent))) return false;
+				for (String talent : must.keySet()) {
+					final int value = must.getInt(talent);
+					if ("Auswahl".equals(talent)) {
+						talent = choice;
+					} else if ("Freitext".equals(talent)) {
+						talent = freeText;
+					}
+					if (!isTalentRequirementFulfilled(hero, talent, value)) return false;
 				}
 			}
 			if (talents.containsKey("Wahl")) {
@@ -197,8 +203,14 @@ public class RequirementsUtil {
 				for (int i = 0; i < choices.size(); ++i) {
 					final JSONObject curChoice = choices.getObj(i);
 					boolean match = false;
-					for (final String talent : curChoice.keySet()) {
-						if (isTalentRequirementFulfilled(hero, talent, curChoice.getInt(talent))) {
+					for (String talent : curChoice.keySet()) {
+						final int value = curChoice.getInt(talent);
+						if ("Auswahl".equals(talent)) {
+							talent = choice;
+						} else if ("Freitext".equals(talent)) {
+							talent = freeText;
+						}
+						if (isTalentRequirementFulfilled(hero, talent, value)) {
 							match = true;
 						}
 					}
@@ -716,8 +728,8 @@ public class RequirementsUtil {
 		return true;
 	}
 
-	private static boolean isTalentRequirementFulfilled(JSONObject hero, String talent, int value) {
-		if ("Lesen/Schreiben".equals(talent)) {
+	private static boolean isTalentRequirementFulfilled(final JSONObject hero, final String talentName, final int value) {
+		if ("Lesen/Schreiben".equals(talentName)) {
 			final JSONObject languages = hero.getObj("Talente").getObj("Sprachen und Schriften");
 			for (final String language : languages.keySet()) {
 				if (!HeroUtil.findTalent(language)._1.getBoolOrDefault("Schrift", false)) {
@@ -731,21 +743,46 @@ public class RequirementsUtil {
 			}
 			return value < 0;
 		} else {
-			final Tuple<JSONObject, JSONObject> res = HeroUtil.findActualTalent(hero, talent);
-			final JSONObject actual = res._1;
+			final JSONObject talent = HeroUtil.findTalent(talentName)._1;
+			final Tuple<JSONValue, JSONObject> res = HeroUtil.findActualTalent(hero, talentName);
+			final JSONValue actual = res._1;
+			if (actual == null) return value < 0;
 			if (res._2 != null && res._2 == hero.getObjOrDefault("Zauber", null)) {
-				if (actual == null) return value < 0;
-				for (final String rep : actual.keySet()) {
-					if (value < 0) {
-						if (actual.getObj(rep).getIntOrDefault("ZfW", 0) > -value) return false;
-					} else if (actual.getObj(rep).getIntOrDefault("ZfW", 0) >= value && actual.getObj(rep).getBoolOrDefault("aktiviert", true)) return true;
+				for (final String rep : ((JSONObject) actual).keySet()) {
+					if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+						final JSONArray actualRep = ((JSONObject) actual).getArr(rep);
+						for (int i = 0; i < actualRep.size(); ++i) {
+							if (value < 0) {
+								if (actualRep.getObj(i).getIntOrDefault("ZfW", 0) > -value) return false;
+							} else if (actualRep.getObj(i).getIntOrDefault("ZfW", 0) >= value
+									&& actualRep.getObj(i).getBoolOrDefault("aktiviert", true))
+								return true;
+						}
+					} else {
+						if (value < 0) {
+							if (((JSONObject) actual).getObj(rep).getIntOrDefault("ZfW", 0) > -value) return false;
+						} else if (((JSONObject) actual).getObj(rep).getIntOrDefault("ZfW", 0) >= value
+								&& ((JSONObject) actual).getObj(rep).getBoolOrDefault("aktiviert", true))
+							return true;
+					}
 				}
 				return value < 0;
 			} else {
-				if (value < 0)
-					return actual == null || actual.getIntOrDefault("TaW", 0) <= -value || !actual.getBoolOrDefault("aktiviert", true);
-				else
-					return actual != null && actual.getIntOrDefault("TaW", 0) >= value && actual.getBoolOrDefault("aktiviert", true);
+				if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+					for (int i = 0; i < actual.size(); ++i) {
+						if (value < 0) {
+							if (((JSONArray) actual).getObj(i).getIntOrDefault("ZfW", 0) > -value) return false;
+						} else if (((JSONArray) actual).getObj(i).getIntOrDefault("ZfW", 0) >= value
+								&& ((JSONArray) actual).getObj(i).getBoolOrDefault("aktiviert", true))
+							return true;
+					}
+					return value < 0;
+				} else {
+					if (value < 0)
+						return ((JSONObject) actual).getIntOrDefault("TaW", 0) <= -value;
+					else
+						return ((JSONObject) actual).getIntOrDefault("TaW", 0) >= value && ((JSONObject) actual).getBoolOrDefault("aktiviert", true);
+				}
 			}
 		}
 	}

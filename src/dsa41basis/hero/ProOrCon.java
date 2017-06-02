@@ -15,11 +15,6 @@
  */
 package dsa41basis.hero;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import dsa41basis.util.HeroUtil;
@@ -238,131 +233,9 @@ public class ProOrCon {
 	}
 
 	public Set<String> getFirstChoiceItems(final boolean onlyUnused) {
-		final Set<String> choices = new LinkedHashSet<>();
 		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession"
 				: "Veteran".equals(name.get()) ? "Profession:Variante" : proOrCon.getStringOrDefault("Auswahl", proOrCon.getString("Freitext"));
-		if (choice == null) return choices;
-		switch (choice) {
-		case "Merkmal":
-			choices.addAll(ResourceManager.getResource("data/Merkmale").keySet());
-			break;
-		case "Ritual":
-			final JSONObject rituals = ResourceManager.getResource("data/Rituale");
-			for (final String group : rituals.keySet()) {
-				choices.addAll(rituals.getObj(group).keySet());
-			}
-			break;
-		case "Talentgruppe":
-			choices.add("Kampftalente");
-			choices.addAll(ResourceManager.getResource("data/Talentgruppen").keySet());
-			choices.removeAll(Arrays.asList("Gaben", "Ritualkenntnis", "Liturgiekenntnis"));
-			break;
-		case "Talent":
-			final JSONObject talents = ResourceManager.getResource("data/Talente");
-			for (final String talentgroup : talents.keySet()) {
-				choices.addAll(talents.getObj(talentgroup).keySet());
-			}
-			break;
-		case "Zauber":
-			choices.addAll(ResourceManager.getResource("data/Zauber").keySet());
-			break;
-		case "Körperliche Eigenschaft":
-			final JSONObject attributes = ResourceManager.getResource("data/Eigenschaften");
-			for (final String attribute : attributes.keySet()) {
-				if (attributes.getObj(attribute).getStringOrDefault("Eigenschaft", "geistig").equals("körperlich")) {
-					choices.add(attributes.getObj(attribute).getString("Name"));
-				}
-			}
-			break;
-		case "Eigenschaft":
-			final JSONObject attributes2 = ResourceManager.getResource("data/Eigenschaften");
-			for (final String attribute : attributes2.keySet()) {
-				choices.add(attributes2.getObj(attribute).getString("Name"));
-			}
-			break;
-		case "Schlechte Eigenschaft":
-			if (hero != null) {
-				final JSONObject cons = ResourceManager.getResource("data/Nachteile");
-				for (final String con : hero.getObj("Nachteile").keySet()) {
-					if (cons.getObj(con).getBoolOrDefault("Schlechte Eigenschaft", false)) {
-						choices.add(con);
-					}
-				}
-			}
-			break;
-		case "Gottheit":
-			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Liturgiekenntnis").keySet());
-			break;
-		case "Kultur":
-			final JSONObject cultures = ResourceManager.getResource("data/Kulturen");
-			for (final String cultureName : cultures.keySet()) {
-				final JSONObject culture = cultures.getObj(cultureName);
-				if (culture.containsKey("Kulturkunde")) {
-					choices.add(culture.getString("Kulturkunde"));
-				}
-				if (culture.containsKey("Varianten")) {
-					final JSONObject variants = culture.getObj("Varianten");
-					for (final String variantName : variants.keySet()) {
-						final JSONObject variant = variants.getObj(variantName);
-						if (variant.containsKey("Kulturkunde")) {
-							choices.add(variant.getString("Kulturkunde"));
-						}
-					}
-				}
-			}
-			Collections.addAll(choices, new String[] { "Schwarze Lande", "Trolle", "Grolme" });
-			break;
-		case "Fernkampftalent":
-			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Fernkampftalente").keySet());
-			break;
-		case "Kampftalent":
-			final JSONObject talents2 = ResourceManager.getResource("data/Talente");
-			choices.addAll(talents2.getObj("Nahkampftalente").keySet());
-			choices.addAll(talents2.getObj("Fernkampftalente").keySet());
-			break;
-		case "Profession":
-			choices.addAll(ResourceManager.getResource("data/Professionen").keySet());
-			break;
-		case "Profession:Variante":
-			if (hero != null) {
-				final JSONObject variants = ResourceManager.getResource("data/Professionen").getObj(hero.getObj("Biografie").getString("Profession"))
-						.getObj("Varianten");
-				choices.addAll(getVariantStrings(variants));
-			}
-			break;
-		case "Repräsentation":
-			final JSONObject representations = ResourceManager.getResource("data/Repraesentationen");
-			for (final String representation : representations.keySet()) {
-				choices.add(representations.getObj(representation).getString("Name"));
-			}
-			break;
-		case "Ritualkenntnis":
-			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Ritualkenntnis").keySet());
-			break;
-		case "Kirche":
-			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Liturgiekenntnis").keySet());
-			choices.add("Bund des wahren Glaubens");
-			break;
-		case "Waffe":
-			final JSONObject weaponItems = ResourceManager.getResource("data/Ausruestung");
-			for (final String item : weaponItems.keySet()) {
-				if (weaponItems.getObj(item).getArr("Waffentypen").contains(description.get())) {
-					choices.add(weaponItems.getObj(item).getString("Typ"));
-				}
-			}
-			break;
-		case "Rüstung":
-			final JSONObject armorItems = ResourceManager.getResource("data/Ausruestung");
-			for (final String item : armorItems.keySet()) {
-				if (armorItems.getObj(item).getArr("Kategorien").contains("Rüstung")) {
-					choices.add(armorItems.getObj(item).getString("Typ"));
-				}
-			}
-			break;
-		default:
-			choices.add(choice);
-			break;
-		}
+		final Set<String> choices = HeroUtil.getChoices(hero, choice, null);
 
 		if (onlyUnused && hero != null && second == ChoiceOrTextEnum.NONE) {
 			final JSONObject pros = hero.getObj("Vorteile");
@@ -418,59 +291,9 @@ public class ProOrCon {
 	}
 
 	public Set<String> getSecondChoiceItems(final boolean onlyUnused) {
-		final Set<String> choices = new LinkedHashSet<>();
 		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession:Variante" : proOrCon.getString("Freitext");
+		final Set<String> choices = HeroUtil.getChoices(hero, choice, description != null ? description.get() : null);
 		if (choice == null) return choices;
-		switch (choice) {
-		case "Spezialisierung":
-			if ("Talent".equals(proOrCon.getString("Auswahl"))) {
-				final JSONObject talent = HeroUtil.findTalent(description.get())._1;
-				if (talent != null && talent.containsKey("Spezialisierungen")) {
-					final JSONArray specializations = talent.getArr("Spezialisierungen");
-					for (int i = 0; i < specializations.size(); ++i) {
-						choices.add(specializations.getString(i));
-					}
-				}
-			} else if ("Zauber".equals(proOrCon.getString("Auswahl"))) {
-				final JSONObject spell = ResourceManager.getResource("data/Zauber").getObj(description.get());
-				if (spell.containsKey("Spontane Modifikationen")) {
-					final JSONArray spoMos = spell.getArr("Spontane Modifikationen");
-					for (int i = 0; i < spoMos.size(); ++i) {
-						choices.add(spoMos.getString(i));
-					}
-				}
-				if (spell.containsKey("Varianten")) {
-					final JSONArray variants = spell.getArr("Varianten");
-					for (int i = 0; i < variants.size(); ++i) {
-						choices.add(variants.getString(i));
-					}
-				}
-			}
-			break;
-		case "Waffe":
-			final JSONObject weaponItems = ResourceManager.getResource("data/Ausruestung");
-			for (final String item : weaponItems.keySet()) {
-				if (weaponItems.getObj(item).getArr("Waffentypen").contains(description.get())) {
-					choices.add(weaponItems.getObj(item).getString("Typ"));
-				}
-			}
-			break;
-		case "Rüstung":
-			final JSONObject armorItems = ResourceManager.getResource("data/Ausruestung");
-			for (final String item : armorItems.keySet()) {
-				if (armorItems.getObj(item).getArr("Kategorien").contains("Rüstung")) {
-					choices.add(armorItems.getObj(item).getString("Typ"));
-				}
-			}
-			break;
-		case "Profession:Variante":
-			final JSONObject variants = ResourceManager.getResource("data/Professionen").getObj(description.get()).getObj("Varianten");
-			choices.addAll(getVariantStrings(variants));
-			break;
-		default:
-			choices.add(choice);
-			break;
-		}
 
 		if (onlyUnused && hero != null) {
 			final JSONObject pros = hero.getObj("Vorteile");
@@ -514,42 +337,6 @@ public class ProOrCon {
 
 	public final String getVariant() {
 		return variant.get();
-	}
-
-	private List<String> getVariantStrings(final JSONObject variants) {
-		final List<String> result = new ArrayList<>();
-		final List<String> combinable = new ArrayList<>();
-		for (final String variantName : variants.keySet()) {
-			final JSONObject variant = variants.getObj(variantName);
-			if (variant.getBoolOrDefault("kombinierbar", false)) {
-				final List<String> newCombinations = new ArrayList<>(combinable.size());
-				for (final String variantString : combinable) {
-					newCombinations.add(variantString + ", " + variantName);
-				}
-				combinable.add(variantName);
-				combinable.addAll(newCombinations);
-			} else {
-				final List<String> newVariants = getVariantStrings(variant.getObj("Varianten"));
-				for (final String variantString : newVariants) {
-					if (!variantString.equals(variantName) && !variantString.startsWith(variantName + ",")) {
-						result.add(variantName + ", " + variantString);
-					} else {
-						result.add(variantString);
-					}
-				}
-				if (newVariants.isEmpty()) {
-					result.add(variantName);
-				}
-			}
-		}
-		final List<String> newCombinations = new ArrayList<>(combinable.size());
-		for (final String variantString : result) {
-			for (final String combination : combinable) {
-				newCombinations.add(variantString + ", " + combination);
-			}
-		}
-		result.addAll(newCombinations);
-		return result;
 	}
 
 	public final ReadOnlyStringProperty nameProperty() {

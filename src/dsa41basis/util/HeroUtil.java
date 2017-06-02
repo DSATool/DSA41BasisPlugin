@@ -15,7 +15,12 @@
  */
 package dsa41basis.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
@@ -27,6 +32,7 @@ import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
+import jsonant.value.JSONValue;
 
 public class HeroUtil {
 
@@ -156,22 +162,75 @@ public class HeroUtil {
 
 		if (effect.containsKey("Talente")) {
 			final JSONObject talentChanges = effect.getObj("Talente");
-			for (String talentName : talentChanges.keySet()) {
-				final int change = talentChanges.getInt(talentName);
-				if ("Auswahl".equals(talentName)) {
-					talentName = actual.getString("Auswahl");
-				}
-				final String group = HeroUtil.findTalent(talentName)._2;
-				if (group != null) {
-					final JSONObject actualTalent = "Zauber".equals(group) ? hero.getObj("Zauber").getObj(talentName).getObj("ÜNB")
-							: hero.getObj("Talente").getObj(group).getObj(talentName);
-					final String targetValue = "Zauber".equals(group) ? "ZfW" : "TaW";
-					if (actualTalent.size() == 0 || actualTalent.getBoolOrDefault("aktiviert", true) == false) {
-						actualTalent.put("AutomatischDurch", effectorName);
+			for (final String talentName : talentChanges.keySet()) {
+				final String modifiedName = "Auswahl".equals(talentName) ? actual.getString("Auswahl") : talentName;
+				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(modifiedName);
+				final JSONObject talent = talentAndGroup._1;
+				final String groupName = talentAndGroup._2;
+				if (groupName != null) {
+					final String targetValue = "Zauber".equals(groupName) ? "ZfW" : "TaW";
+					final JSONObject actualGroup = "Zauber".equals(groupName) ? hero.getObj("Zauber") : hero.getObj("Talente").getObj(groupName);
+					if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+						final JSONArray actualTalent;
+						if ("Zauber".equals(groupName)) {
+							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
+							if (actualSpell.size() == 0) {
+								actualTalent = actualSpell.getArr("ÜNB");
+							} else {
+								actualTalent = actualSpell.getArr(actualSpell.keySet().iterator().next());
+							}
+						} else {
+							actualTalent = actualGroup.getArr(modifiedName);
+						}
+						final JSONObject modifications = talentChanges.getObj(talentName);
+						for (String variantName : modifications.keySet()) {
+							final int change = modifications.getInt(variantName);
+							if ("Auswahl".equals(variantName)) {
+								variantName = actual.getString("Auswahl");
+							} else if ("Freitext".equals(variantName)) {
+								variantName = actual.getString("Freitext");
+							}
+							JSONObject actualVariant = null;
+							for (int i = 0; i < actualTalent.size(); ++i) {
+								final JSONObject variant = actualTalent.getObj(i);
+								if (talent.containsKey("Auswahl") && variantName.equals(variant.getString("Auswahl"))
+										|| talent.containsKey("Freitext") && variantName.equals(variant.getString("Freitext"))) {
+									actualVariant = variant;
+									break;
+								}
+							}
+							if (actualVariant == null) {
+								actualVariant = new JSONObject(actualTalent);
+								actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext", variantName);
+								actualTalent.add(actualVariant);
+							}
+							if (!actualVariant.containsKey(targetValue) || !actualVariant.getBoolOrDefault("aktiviert", true)) {
+								actualVariant.put("AutomatischDurch", effectorName);
+							}
+							actualVariant.put(targetValue, actualVariant.getIntOrDefault(targetValue, 0) + change * actual.getIntOrDefault("Stufe", 1));
+							actualVariant.removeKey("aktiviert");
+							actualVariant.notifyListeners(null);
+						}
+					} else {
+						final JSONObject actualTalent;
+						if ("Zauber".equals(groupName)) {
+							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
+							if (actualSpell.size() == 0) {
+								actualTalent = actualSpell.getObj("ÜNB");
+							} else {
+								actualTalent = actualSpell.getObj(actualSpell.keySet().iterator().next());
+							}
+						} else {
+							actualTalent = actualGroup.getObj(modifiedName);
+						}
+						final int change = talentChanges.getInt(talentName);
+						if (actualTalent.size() == 0 || !actualTalent.getBoolOrDefault("aktiviert", true)) {
+							actualTalent.put("AutomatischDurch", effectorName);
+						}
+						actualTalent.put(targetValue, actualTalent.getIntOrDefault(targetValue, 0) + change * actual.getIntOrDefault("Stufe", 1));
+						actualTalent.removeKey("aktiviert");
+						actualTalent.notifyListeners(null);
 					}
-					actualTalent.put(targetValue, actualTalent.getIntOrDefault(targetValue, 0) + change * actual.getIntOrDefault("Stufe", 1));
-					actualTalent.removeKey("aktiviert");
-					actualTalent.notifyListeners(null);
 				}
 			}
 		}
@@ -209,11 +268,11 @@ public class HeroUtil {
 		return value * derivation.getDoubleOrDefault("Multiplikator", 1.0);
 	}
 
-	public static Tuple<JSONObject, JSONObject> findActualTalent(final JSONObject hero, final String talentName) {
+	public static Tuple<JSONValue, JSONObject> findActualTalent(final JSONObject hero, final String talentName) {
 		final JSONObject actualTalentGroups = hero.getObj("Talente");
 		for (final String talentGroupName : actualTalentGroups.keySet()) {
 			final JSONObject talentGroup = actualTalentGroups.getObj(talentGroupName);
-			if (talentGroup.containsKey(talentName)) return new Tuple<>(talentGroup.getObj(talentName), talentGroup);
+			if (talentGroup.containsKey(talentName)) return new Tuple<>((JSONValue) talentGroup.getUnsafe(talentName), talentGroup);
 		}
 		final JSONObject spells = hero.getObjOrDefault("Zauber", null);
 		if (spells != null && spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), spells);
@@ -221,43 +280,50 @@ public class HeroUtil {
 	}
 
 	public static Tuple<JSONObject, String> findProConOrSkill(final String name) {
-		final JSONObject pros = ResourceManager.getResource("data/Vorteile");
-		if (pros.containsKey(name)) return new Tuple<>(pros.getObj(name), "Vorteile");
-		final JSONObject cons = ResourceManager.getResource("data/Nachteile");
-		if (cons.containsKey(name)) return new Tuple<>(cons.getObj(name), "Nachteile");
-		final JSONObject skill = findSkill(name);
-		if (skill != null) return new Tuple<>(skill, "Sonderfertigkeiten");
-		ErrorLogger.log("Konnte Vorteil/Nachteil/Sonderfertigkeit nicht finden: " + name);
+		if (name != null && !name.isEmpty()) {
+			final JSONObject pros = ResourceManager.getResource("data/Vorteile");
+			if (pros.containsKey(name)) return new Tuple<>(pros.getObj(name), "Vorteile");
+			final JSONObject cons = ResourceManager.getResource("data/Nachteile");
+			if (cons.containsKey(name)) return new Tuple<>(cons.getObj(name), "Nachteile");
+			final JSONObject skill = findSkill(name);
+			if (skill != null) return new Tuple<>(skill, "Sonderfertigkeiten");
+			ErrorLogger.log("Konnte Vorteil/Nachteil/Sonderfertigkeit nicht finden: " + name);
+		}
 		return new Tuple<>(null, null);
 	}
 
 	public static JSONObject findSkill(final String skillName) {
-		final JSONObject specialSkills = ResourceManager.getResource("data/Sonderfertigkeiten");
-		for (final String skillGroup : specialSkills.keySet()) {
-			final JSONObject group = specialSkills.getObj(skillGroup);
-			if (group.containsKey(skillName)) return group.getObj(skillName);
+		if (skillName != null && !skillName.isEmpty()) {
+			final JSONObject specialSkills = ResourceManager.getResource("data/Sonderfertigkeiten");
+			for (final String skillGroup : specialSkills.keySet()) {
+				final JSONObject group = specialSkills.getObj(skillGroup);
+				if (group.containsKey(skillName)) return group.getObj(skillName);
+			}
+			final JSONObject rituals = ResourceManager.getResource("data/Rituale");
+			for (final String skillGroup : rituals.keySet()) {
+				final JSONObject group = rituals.getObj(skillGroup);
+				if (group.containsKey(skillName)) return group.getObj(skillName);
+			}
+			final JSONObject liturgies = ResourceManager.getResource("data/Liturgien");
+			if (liturgies.containsKey(skillName)) return liturgies.getObj(skillName);
+			final JSONObject shamanistic = ResourceManager.getResource("data/Schamanenrituale");
+			if (shamanistic.containsKey(skillName)) return shamanistic.getObj(skillName);
+			ErrorLogger.log("Konnte Sonderfertigkeit nicht finden: " + skillName);
 		}
-		final JSONObject rituals = ResourceManager.getResource("data/Rituale");
-		for (final String skillGroup : rituals.keySet()) {
-			final JSONObject group = rituals.getObj(skillGroup);
-			if (group.containsKey(skillName)) return group.getObj(skillName);
-		}
-		final JSONObject liturgies = ResourceManager.getResource("data/Liturgien");
-		if (liturgies.containsKey(skillName)) return liturgies.getObj(skillName);
-		final JSONObject shamanistic = ResourceManager.getResource("data/Schamanenrituale");
-		if (shamanistic.containsKey(skillName)) return shamanistic.getObj(skillName);
 		return null;
 	}
 
 	public static Tuple<JSONObject, String> findTalent(final String talentName) {
-		final JSONObject talentGroups = ResourceManager.getResource("data/Talente");
-		for (final String talentGroupName : talentGroups.keySet()) {
-			final JSONObject talentGroup = talentGroups.getObj(talentGroupName);
-			if (talentGroup.containsKey(talentName)) return new Tuple<>(talentGroup.getObj(talentName), talentGroupName);
+		if (talentName != null && !talentName.isEmpty()) {
+			final JSONObject talentGroups = ResourceManager.getResource("data/Talente");
+			for (final String talentGroupName : talentGroups.keySet()) {
+				final JSONObject talentGroup = talentGroups.getObj(talentGroupName);
+				if (talentGroup.containsKey(talentName)) return new Tuple<>(talentGroup.getObj(talentName), talentGroupName);
+			}
+			final JSONObject spells = ResourceManager.getResource("data/Zauber");
+			if (spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), "Zauber");
+			ErrorLogger.log("Konnte Talent nicht finden: " + talentName);
 		}
-		final JSONObject spells = ResourceManager.getResource("data/Zauber");
-		if (spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), "Zauber");
-		ErrorLogger.log("Konnte Talent nicht finden: " + talentName);
 		return new Tuple<>(null, null);
 	}
 
@@ -376,6 +442,158 @@ public class HeroUtil {
 			}
 		}
 		return BE;
+	}
+
+	public static Set<String> getChoices(final JSONObject hero, final String choice, final String other) {
+		final Set<String> choices = new LinkedHashSet<>();
+		if (choice == null) return choices;
+		switch (choice) {
+		case "Merkmal":
+			choices.addAll(ResourceManager.getResource("data/Merkmale").keySet());
+			break;
+		case "Ritual":
+			final JSONObject rituals = ResourceManager.getResource("data/Rituale");
+			for (final String group : rituals.keySet()) {
+				choices.addAll(rituals.getObj(group).keySet());
+			}
+			break;
+		case "Talentgruppe":
+			choices.add("Kampftalente");
+			choices.addAll(ResourceManager.getResource("data/Talentgruppen").keySet());
+			choices.removeAll(Arrays.asList("Gaben", "Ritualkenntnis", "Liturgiekenntnis"));
+			break;
+		case "Talent":
+			final JSONObject talents = ResourceManager.getResource("data/Talente");
+			for (final String talentgroup : talents.keySet()) {
+				choices.addAll(talents.getObj(talentgroup).keySet());
+			}
+			break;
+		case "Zauber":
+			choices.addAll(ResourceManager.getResource("data/Zauber").keySet());
+			break;
+		case "Körperliche Eigenschaft":
+			final JSONObject attributes = ResourceManager.getResource("data/Eigenschaften");
+			for (final String attribute : attributes.keySet()) {
+				if (attributes.getObj(attribute).getStringOrDefault("Eigenschaft", "geistig").equals("körperlich")) {
+					choices.add(attributes.getObj(attribute).getString("Name"));
+				}
+			}
+			break;
+		case "Eigenschaft":
+			final JSONObject attributes2 = ResourceManager.getResource("data/Eigenschaften");
+			for (final String attribute : attributes2.keySet()) {
+				choices.add(attributes2.getObj(attribute).getString("Name"));
+			}
+			break;
+		case "Schlechte Eigenschaft":
+			if (hero != null) {
+				final JSONObject cons = ResourceManager.getResource("data/Nachteile");
+				for (final String con : hero.getObj("Nachteile").keySet()) {
+					if (cons.getObj(con).getBoolOrDefault("Schlechte Eigenschaft", false)) {
+						choices.add(con);
+					}
+				}
+			}
+			break;
+		case "Gottheit":
+			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Liturgiekenntnis").keySet());
+			break;
+		case "Kultur":
+			final JSONObject cultures = ResourceManager.getResource("data/Kulturen");
+			for (final String cultureName : cultures.keySet()) {
+				final JSONObject culture = cultures.getObj(cultureName);
+				if (culture.containsKey("Kulturkunde")) {
+					choices.add(culture.getString("Kulturkunde"));
+				}
+				if (culture.containsKey("Varianten")) {
+					final JSONObject variants = culture.getObj("Varianten");
+					for (final String variantName : variants.keySet()) {
+						final JSONObject variant = variants.getObj(variantName);
+						if (variant.containsKey("Kulturkunde")) {
+							choices.add(variant.getString("Kulturkunde"));
+						}
+					}
+				}
+			}
+			Collections.addAll(choices, new String[] { "Schwarze Lande", "Trolle", "Grolme" });
+			break;
+		case "Fernkampftalent":
+			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Fernkampftalente").keySet());
+			break;
+		case "Kampftalent":
+			final JSONObject talents2 = ResourceManager.getResource("data/Talente");
+			choices.addAll(talents2.getObj("Nahkampftalente").keySet());
+			choices.addAll(talents2.getObj("Fernkampftalente").keySet());
+			break;
+		case "Profession":
+			choices.addAll(ResourceManager.getResource("data/Professionen").keySet());
+			break;
+		case "Profession:Variante":
+			if (hero != null) {
+				final JSONObject variants = ResourceManager.getResource("data/Professionen").getObj(hero.getObj("Biografie").getString("Profession"))
+						.getObj("Varianten");
+				choices.addAll(getVariantStrings(variants));
+			}
+			break;
+		case "Repräsentation":
+			final JSONObject representations = ResourceManager.getResource("data/Repraesentationen");
+			for (final String representation : representations.keySet()) {
+				choices.add(representations.getObj(representation).getString("Name"));
+			}
+			break;
+		case "Ritualkenntnis":
+			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Ritualkenntnis").keySet());
+			break;
+		case "Kirche":
+			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Liturgiekenntnis").keySet());
+			choices.add("Bund des wahren Glaubens");
+			break;
+		case "Spezialisierung":
+			final JSONObject talent = HeroUtil.findTalent(other)._1;
+			if (talent != null && talent.containsKey("Spezialisierungen")) {
+				final JSONArray specializations = talent.getArr("Spezialisierungen");
+				for (int i = 0; i < specializations.size(); ++i) {
+					choices.add(specializations.getString(i));
+				}
+			}
+			final JSONObject spell = ResourceManager.getResource("data/Zauber").getObj(other);
+			if (spell != null) {
+				if (spell.containsKey("Spontane Modifikationen")) {
+					final JSONArray spoMos = spell.getArr("Spontane Modifikationen");
+					for (int i = 0; i < spoMos.size(); ++i) {
+						choices.add(spoMos.getString(i));
+					}
+				}
+				if (spell.containsKey("Varianten")) {
+					final JSONArray variants = spell.getArr("Varianten");
+					for (int i = 0; i < variants.size(); ++i) {
+						choices.add(variants.getString(i));
+					}
+				}
+			}
+			break;
+		case "Waffe":
+			final JSONObject weaponItems = ResourceManager.getResource("data/Ausruestung");
+			for (final String item : weaponItems.keySet()) {
+				if (weaponItems.getObj(item).getArr("Waffentypen").contains(other)) {
+					choices.add(weaponItems.getObj(item).getString("Typ"));
+				}
+			}
+			break;
+		case "Rüstung":
+			final JSONObject armorItems = ResourceManager.getResource("data/Ausruestung");
+			for (final String item : armorItems.keySet()) {
+				if (armorItems.getObj(item).getArr("Kategorien").contains("Rüstung")) {
+					choices.add(armorItems.getObj(item).getString("Typ"));
+				}
+			}
+			break;
+		default:
+			choices.add(choice);
+			break;
+		}
+
+		return choices;
 	}
 
 	public static int getCurrentValue(final JSONObject actual, final boolean includeManualMod) {
@@ -662,7 +880,7 @@ public class HeroUtil {
 				}
 			}
 		} else if ("Sprachen und Schriften".equals(talentAndGroup._2)) {
-			final JSONObject actualTalent = HeroUtil.findActualTalent(hero, talentName)._1;
+			final JSONObject actualTalent = (JSONObject) HeroUtil.findActualTalent(hero, talentName)._1;
 
 			if (actualTalent != null && (actualTalent.getBoolOrDefault("Muttersprache", false) || actualTalent.getBoolOrDefault("Zweitsprache", false)
 					|| actualTalent.getBoolOrDefault("Lehrsprache", false))) {
@@ -742,10 +960,17 @@ public class HeroUtil {
 
 		if (cons.containsKey("Elfische Weltsicht")) {
 			++complexity;
-			final JSONObject actualTalent = HeroUtil.findActualTalent(hero, talentName)._1;
+			final JSONValue actualTalent = HeroUtil.findActualTalent(hero, talentName)._1;
 			if (talent.getBoolOrDefault("Leittalent", false)) {
 				--complexity;
-			} else if (actualTalent != null && actualTalent.getBoolOrDefault("Leittalent", false)) {
+			} else if (actualTalent instanceof JSONArray) {
+				for (int i = 0; i < actualTalent.size(); ++i) {
+					if (((JSONArray) actualTalent).getObj(i).getBoolOrDefault("Leittalent", false)) {
+						--complexity;
+						break;
+					}
+				}
+			} else if (actualTalent instanceof JSONObject && ((JSONObject) actualTalent).getBoolOrDefault("Leittalent", false)) {
 				--complexity;
 			}
 		}
@@ -786,6 +1011,42 @@ public class HeroUtil {
 			TPString.append("(A)");
 		}
 		return TPString.toString();
+	}
+
+	private static List<String> getVariantStrings(final JSONObject variants) {
+		final List<String> result = new ArrayList<>();
+		final List<String> combinable = new ArrayList<>();
+		for (final String variantName : variants.keySet()) {
+			final JSONObject variant = variants.getObj(variantName);
+			if (variant.getBoolOrDefault("kombinierbar", false)) {
+				final List<String> newCombinations = new ArrayList<>(combinable.size());
+				for (final String variantString : combinable) {
+					newCombinations.add(variantString + ", " + variantName);
+				}
+				combinable.add(variantName);
+				combinable.addAll(newCombinations);
+			} else {
+				final List<String> newVariants = getVariantStrings(variant.getObj("Varianten"));
+				for (final String variantString : newVariants) {
+					if (!variantString.equals(variantName) && !variantString.startsWith(variantName + ",")) {
+						result.add(variantName + ", " + variantString);
+					} else {
+						result.add(variantString);
+					}
+				}
+				if (newVariants.isEmpty()) {
+					result.add(variantName);
+				}
+			}
+		}
+		final List<String> newCombinations = new ArrayList<>(combinable.size());
+		for (final String variantString : result) {
+			for (final String combination : combinable) {
+				newCombinations.add(variantString + ", " + combination);
+			}
+		}
+		result.addAll(newCombinations);
+		return result;
 	}
 
 	public static int getZoneRS(final JSONObject hero, final String zone) {
@@ -880,12 +1141,19 @@ public class HeroUtil {
 
 	public static Integer interpretTalentRoll(final JSONObject hero, final String talentName, final String specialization, final String[] challenge,
 			final Tuple3<Integer, Integer, Integer> roll, final int modification) {
-		final JSONObject actualTalent = findActualTalent(hero, talentName)._1;
+		final JSONValue actualTalent = findActualTalent(hero, talentName)._1;
 		final Tuple<JSONObject, String> talentAndGroup = findTalent(talentName);
 		final JSONObject talent = talentAndGroup._1;
 		final JSONObject talentGroup = ResourceManager.getResource("data/Talente").getObj(talentAndGroup._2);
 		if (talent == null || actualTalent == null && !talent.getBoolOrDefault("Basis", false)) return null;
-		int taw = actualTalent == null ? 0 : actualTalent.getIntOrDefault("TaW", 0);
+		int taw = 0;
+		if (actualTalent instanceof JSONArray) {
+			for (int i = 0; i < actualTalent.size(); ++i) {
+				taw = Math.max(taw, ((JSONArray) actualTalent).getObj(i).getIntOrDefault("TaW", 0));
+			}
+		} else if (actualTalent instanceof JSONObject) {
+			taw = ((JSONObject) actualTalent).getIntOrDefault("TaW", 0);
+		}
 		if (specialization != null && actualTalent != null) {
 			final JSONObject specialSkills = hero.getObj("Sonderfertigkeiten");
 			if (specialSkills.containsKey("Talentspezialisierung")) {
@@ -1055,16 +1323,77 @@ public class HeroUtil {
 			final JSONObject talentChanges = effect.getObj("Talente");
 			for (final String talentName : talentChanges.keySet()) {
 				final String modifiedName = "Auswahl".equals(talentName) ? actual.getString("Auswahl") : talentName;
-				final Tuple<JSONObject, String> talent = HeroUtil.findTalent(modifiedName);
-				final JSONObject actualTalent = "Zauber".equals(talent._2) ? hero.getObj("Zauber").getObj(modifiedName).getObj("ÜNB")
-						: hero.getObj("Talente").getObj(talent._2).getObj(modifiedName);
-				final String targetValue = "Zauber".equals(talent._2) ? "ZfW" : "TaW";
-				actualTalent.put(targetValue,
-						actualTalent.getIntOrDefault(targetValue, 0) - talentChanges.getInt(talentName) * actual.getIntOrDefault("Stufe", 1));
-				if (actualTalent.getInt(targetValue) == 0 && actualTalent.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
-					actualTalent.getParent().remove(actualTalent);
+				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(modifiedName);
+				final JSONObject talent = talentAndGroup._1;
+				final String groupName = talentAndGroup._2;
+				if (groupName != null) {
+					final String targetValue = "Zauber".equals(groupName) ? "ZfW" : "TaW";
+					final JSONObject actualGroup = "Zauber".equals(groupName) ? hero.getObj("Zauber") : hero.getObj("Talente").getObj(groupName);
+					if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+						final JSONArray actualTalent;
+						if ("Zauber".equals(groupName)) {
+							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
+							if (actualSpell.size() == 0) {
+								actualTalent = actualSpell.getArr("ÜNB");
+							} else {
+								actualTalent = actualSpell.getArr(actualSpell.keySet().iterator().next());
+							}
+						} else {
+							actualTalent = actualGroup.getArr(modifiedName);
+						}
+						final JSONObject modifications = talentChanges.getObj(talentName);
+						for (String variantName : modifications.keySet()) {
+							final int change = modifications.getInt(variantName);
+							if ("Auswahl".equals(variantName)) {
+								variantName = actual.getString("Auswahl");
+							} else if ("Freitext".equals(variantName)) {
+								variantName = actual.getString("Freitext");
+							}
+							JSONObject actualVariant = null;
+							for (int i = 0; i < actualTalent.size(); ++i) {
+								final JSONObject variant = actualTalent.getObj(i);
+								if (talent.containsKey("Auswahl") && variantName.equals(variant.getString("Auswahl"))
+										|| talent.containsKey("Freitext") && variantName.equals(variant.getString("Freitext"))) {
+									actualVariant = variant;
+									break;
+								}
+							}
+							if (actualVariant == null) {
+								actualVariant = new JSONObject(actualTalent);
+								actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext", variantName);
+								actualTalent.add(actualVariant);
+							}
+							actualVariant.put(targetValue,
+									actualVariant.getIntOrDefault(targetValue, 0) - change * actual.getIntOrDefault("Stufe", 1));
+							if (actualVariant.getInt(targetValue) == 0 && actualVariant.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+								actualTalent.remove(actualVariant);
+								if (actualTalent.size() == 0) {
+									actualTalent.getParent().remove(actualTalent);
+								}
+							}
+							actualVariant.notifyListeners(null);
+						}
+					} else {
+						final JSONObject actualTalent;
+						if ("Zauber".equals(groupName)) {
+							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
+							if (actualSpell.size() == 0) {
+								actualTalent = actualSpell.getObj("ÜNB");
+							} else {
+								actualTalent = actualSpell.getObj(actualSpell.keySet().iterator().next());
+							}
+						} else {
+							actualTalent = actualGroup.getObj(modifiedName);
+						}
+						final int change = talentChanges.getInt(talentName);
+						actualTalent.put(targetValue,
+								actualTalent.getIntOrDefault(targetValue, 0) - change * actual.getIntOrDefault("Stufe", 1));
+						if (actualTalent.getInt(targetValue) == 0 && actualTalent.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+							actualTalent.getParent().remove(actualTalent);
+						}
+						actualTalent.notifyListeners(null);
+					}
 				}
-				actualTalent.notifyListeners(null);
 			}
 		}
 	}
