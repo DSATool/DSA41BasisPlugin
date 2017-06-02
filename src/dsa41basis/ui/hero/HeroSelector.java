@@ -54,7 +54,7 @@ public class HeroSelector {
 
 	protected final List<HeroController> controllers = new ArrayList<>();
 
-	public HeroSelector(boolean allowCreate) {
+	public HeroSelector(final boolean allowCreate) {
 		final FXMLLoader fxmlLoader = new FXMLLoader();
 
 		fxmlLoader.setController(this);
@@ -122,6 +122,22 @@ public class HeroSelector {
 		list.getSelectionModel().clearAndSelect(list.getItems().size() - 1);
 		final JSONObject bio = hero.getObj("Biografie");
 		bio.put("Vorname", "Neuer Held");
+		bio.put("Nachname", "");
+		bio.put("Rasse", "");
+		bio.put("Kultur", "");
+		bio.put("Profession", "");
+		bio.put("Geburtstag", 0);
+		bio.put("Geburtsmonat", 0);
+		bio.put("Geburtsjahr", 0);
+		bio.put("Geschlecht", "männlich");
+		bio.put("Größe", 175);
+		bio.put("Gewicht", 75);
+		bio.put("Augenfarbe", "braun");
+		bio.put("Haarfarbe", "braun");
+		bio.put("Hautfarbe", "weiß");
+		bio.put("Gottheiten", "Zwölfgötter");
+		bio.put("Abenteuerpunkte", 0);
+		bio.put("Abenteuerpunkte-Guthaben", 0);
 		hero.put("Biografie", bio);
 		bio.notifyListeners(null);
 		final JSONObject actualAttributes = new JSONObject(hero);
@@ -228,7 +244,7 @@ public class HeroSelector {
 		list.getSelectionModel().clearAndSelect(Math.min(list.getItems().size() - 1, index));
 	}
 
-	private void removeHero(int index) {
+	private void removeHero(final int index) {
 		if (index > -1) {
 			ResourceManager.deleteResource(heroes.get(index));
 		}
@@ -242,7 +258,7 @@ public class HeroSelector {
 		}
 	}
 
-	private void saveHero(int index) {
+	private void saveHero(final int index) {
 		final FileChooser dialog = new FileChooser();
 
 		dialog.setTitle("Datei speichern");
@@ -254,11 +270,11 @@ public class HeroSelector {
 		}
 	}
 
-	public void setContent(Node content) {
+	public void setContent(final Node content) {
 		pane.setCenter(content);
 	}
 
-	protected void setHero(int index) {
+	protected void setHero(final int index) {
 		for (final HeroController controller : controllers) {
 			try {
 				controller.setHero(heroes.get(index));
