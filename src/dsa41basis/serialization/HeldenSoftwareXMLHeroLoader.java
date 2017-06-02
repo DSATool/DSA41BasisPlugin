@@ -329,7 +329,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		professionReplacements.put("Jahrmarktskaempfer", "Jahrmarktskämpfer");
 		professionReplacements.put("Kaempfer", "Kämpfer");
 		professionReplacements.put("KaempferUdw", "Soldat");
-		professionReplacements.put("Karawahnenfuehrer", "Karawanenführer");
+		professionReplacements.put("Karawanenfuehrer", "Karawanenführer");
 		professionReplacements.put("Legendensaenger", "Legendensänger");
 		professionReplacements.put("Lehrmeister", "Magier");
 		professionReplacements.put("Rattenfaenger", "Rattenfänger");
@@ -1122,7 +1122,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					if (culture.getObj("Varianten").containsKey(name)) {
 						found = true;
 						culture = culture.getObj("Varianten").getObj(name);
-						mods.add(name);
+						if (mods.size() == 0 && !cultureName.equals(name) || mods.size() > 0 && !mods.getString(mods.size() - 1).equals(name)) {
+							mods.add(name);
+						}
 						variants.remove(i);
 						i--;
 					}
@@ -1390,7 +1392,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 							if (profession.getObj("Varianten").containsKey(name)) {
 								found = true;
 								profession = profession.getObj("Varianten").getObj(name);
-								mods.add(name);
+								if (mods.size() == 0 && !professionName.equals(name) || mods.size() > 0 && !mods.getString(mods.size() - 1).equals(name)) {
+									mods.add(name);
+								}
 								variants.remove(i);
 								i--;
 							}
@@ -1547,7 +1551,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 							if (proProf.getObj("Varianten").containsKey(name)) {
 								found = true;
 								proProf = proProf.getObj("Varianten").getObj(name);
-								proMods.add(name);
+								if (proMods.size() == 0 && !proName.equals(name) || proMods.size() > 0 && !proMods.getString(proMods.size() - 1).equals(name)) {
+									proMods.add(name);
+								}
 								proVariants.remove(i);
 								i--;
 							}
@@ -1861,7 +1867,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					if (race.getObj("Varianten").containsKey(name)) {
 						found = true;
 						race = race.getObj("Varianten").getObj(name);
-						mods.add(name);
+						if (mods.size() == 0 && !raceName.equals(name) || mods.size() > 0 && !mods.getString(mods.size() - 1).equals(name)) {
+							mods.add(name);
+						}
 						variants.remove(i);
 						i--;
 					}
@@ -2109,24 +2117,38 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		apply("zauberliste", new Tuple<>("zauber", () -> {
 			String name = get("name");
 			name = spellReplacements.getOrDefault(name, name);
+			final String variant = get("variante");
 			if ("Dämonenbann".equals(name)) {
-				final String domain = get("variante");
-				name = domain + "bann";
+				name = variant + "bann";
 			}
-			if (ResourceManager.getResource("data/Zauber").containsKey(name)) {
-				final JSONObject spell = spells.getObj(name);
+			final JSONObject spell = HeroUtil.findTalent(name)._1;
+			if (spell != null) {
+				final JSONObject actualSpell = spells.getObj(name);
 				final String rep = representations.getOrDefault(get("repraesentation"), "Mag");
-				final JSONObject actualSpell = new JSONObject(spell);
-				spell.put(rep, actualSpell);
-				actualSpell.put("ZfW", Integer.parseInt(get("value")));
+				final JSONObject actualRepresentation;
+				if (spell.containsKey("Auswahl") || spell.containsKey("Freitext")) {
+					final JSONArray choiceSpell = actualSpell.getArr(rep);
+					actualRepresentation = new JSONObject(choiceSpell);
+					choiceSpell.add(actualRepresentation);
+				} else {
+					actualRepresentation = actualSpell.getObj(rep);
+				}
+				actualRepresentation.put("ZfW", Integer.parseInt(get("value")));
 				if ("true".equals(get("hauszauber"))) {
-					actualSpell.put("Hauszauber", true);
+					actualRepresentation.put("Hauszauber", true);
 				}
 				if ("true".equals(get("leittalent"))) {
-					actualSpell.put("Leittalent", true);
+					actualRepresentation.put("Leittalent", true);
 				}
 				if ("true".equals(get("se"))) {
-					actualSpell.put("SEs", 1);
+					actualRepresentation.put("SEs", 1);
+				}
+				if (variant != null) {
+					if (spell.containsKey("Auswahl")) {
+						actualRepresentation.put("Auswahl", variant);
+					} else if (spell.containsKey("Freitext")) {
+						actualRepresentation.put("Freitext", variant);
+					}
 				}
 			}
 		}));
@@ -2138,11 +2160,26 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		apply("talentliste", new Tuple<>("talent", () -> {
 			String name = get("name");
 			name = replaceTalent(name);
+			String variant = get("variante");
+			if (name.startsWith("Kraftschub")) {
+				variant = name.substring(12, name.length() - 1);
+				name = "Kräfteschub";
+			} else if (name.startsWith("Talentschub")) {
+				variant = name.substring(13, name.length() - 1);
+				name = "Talentschub";
+			}
 			final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(name);
 			final JSONObject talent = talentAndGroup._1;
 			final String group = talentAndGroup._2;
 			if (group != null) {
-				final JSONObject actualTalent = actualTalents.getObj(group).getObj(name);
+				final JSONObject actualTalent;
+				if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+					final JSONArray choiceTalent = actualTalents.getObj(group).getArr(name);
+					actualTalent = new JSONObject(choiceTalent);
+					choiceTalent.add(actualTalent);
+				} else {
+					actualTalent = actualTalents.getObj(group).getObj(name);
+				}
 				final int taw = Integer.parseInt(get("value"));
 				actualTalent.put("TaW", taw);
 				if ("Fernkampftalente".equals(group) || talent.getBoolOrDefault("NurAT", false)) {
@@ -2153,6 +2190,13 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				}
 				if ("true".equals(get("se"))) {
 					actualTalent.put("SEs", 1);
+				}
+				if (variant != null) {
+					if (talent.containsKey("Auswahl")) {
+						actualTalent.put("Auswahl", variant);
+					} else if (talent.containsKey("Freitext")) {
+						actualTalent.put("Freitext", variant);
+					}
 				}
 			}
 		}));
