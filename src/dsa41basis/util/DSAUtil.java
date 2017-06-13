@@ -67,18 +67,18 @@ public class DSAUtil {
 		rangeUnits.put("Meile", new Tuple<>("M", "M"));
 	}
 
-	public static int diceRoll(int dice) {
+	public static int diceRoll(final int dice) {
 		return random.nextInt(dice) + 1;
 	}
 
-	public static void foreach(Predicate<JSONObject> filter, BiConsumer<String, JSONObject> function, JSONObject... collections) {
+	public static void foreach(final Predicate<JSONObject> filter, final BiConsumer<String, JSONObject> function, final JSONObject... collections) {
 		foreach(filter, (k, o) -> {
 			function.accept(k, o);
 			return true;
 		}, collections);
 	}
 
-	public static void foreach(Predicate<JSONObject> filter, BiFunction<String, JSONObject, Boolean> function, JSONObject... collections) {
+	public static void foreach(final Predicate<JSONObject> filter, final BiFunction<String, JSONObject, Boolean> function, final JSONObject... collections) {
 		for (final JSONObject collection : collections) {
 			if (collection == null) {
 				continue;
@@ -94,14 +94,14 @@ public class DSAUtil {
 		}
 	}
 
-	public static void foreach(Predicate<JSONObject> filter, Consumer<JSONObject> function, JSONArray... collections) {
+	public static void foreach(final Predicate<JSONObject> filter, final Consumer<JSONObject> function, final JSONArray... collections) {
 		foreach(filter, o -> {
 			function.accept(o);
 			return true;
 		}, collections);
 	}
 
-	public static void foreach(Predicate<JSONObject> filter, Function<JSONObject, Boolean> function, JSONArray... collections) {
+	public static void foreach(final Predicate<JSONObject> filter, final Function<JSONObject, Boolean> function, final JSONArray... collections) {
 		for (final JSONArray collection : collections) {
 			if (collection == null) {
 				continue;
@@ -163,9 +163,10 @@ public class DSAUtil {
 		return (newYear - oldYear) * 365 + (newMonth - oldMonth) * 30 + newDay - oldDay;
 	}
 
-	public static int getEnhancementCost(final int enhancement, int targetLevel) {
+	public static int getEnhancementCost(final int enhancement, int targetLevel, final boolean charGen) {
 		final JSONObject costs = ResourceManager.getResource("data/Steigerungskosten");
-		if (targetLevel < 0) {
+		if (targetLevel <= 0) {
+			if (charGen) return costs.getObj(getEnhancementGroupString(enhancement)).getIntOrDefault("Faktor", 1);
 			targetLevel = 0;
 		} else if (targetLevel > 31) {
 			targetLevel = 31;
@@ -176,23 +177,93 @@ public class DSAUtil {
 	public static int getEnhancementCost(final int enhancement, final int startLevel, final int targetLevel) {
 		int result = 0;
 		for (int i = startLevel + 1; i <= targetLevel; ++i) {
-			result += getEnhancementCost(enhancement, i);
+			result += getEnhancementCost(enhancement, i, false);
 		}
 		return result;
 	}
 
-	public static int getEnhancementCost(final Talent talent, final JSONObject hero, final String method, int modifier, final int startLevel,
-			final int targetLevel) {
-		modifier -= "Lehrmeister".equals(method) ? 1 : 0;
+	public static int getEnhancementCost(final Talent talent, final JSONObject hero, final String method, final int startLevel,
+			final int targetLevel, final boolean charGen) {
+		int modifier = "Lehrmeister".equals(method) ? -1 : 0;
 		final String talentGroup = HeroUtil.findTalent(talent.getName())._2;
+		int charGenModifier = 0;
+		int maxLevel = 10;
+		if (charGen) {
+			final JSONObject pros = hero.getObj("Vorteile");
+			if (pros.containsKey("Breitgefächerte Bildung") || pros.containsKey("Veteran")) {
+				maxLevel = 15;
+			}
+			if (pros.containsKey("Akademische Ausbildung (Gelehrter)") || pros.containsKey("Akademische Ausbildung (Magier)")) {
+				if (Arrays.asList("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) {
+					--charGenModifier;
+
+					final JSONArray proGroup = pros.getArrOrDefault("Begabung für Talentgruppe", null);
+					final JSONArray proSingle = pros.getArrOrDefault("Begabung für Talent", null);
+					if (proGroup != null) {
+						for (int i = 0; i < proGroup.size(); ++i) {
+							final JSONObject pro = proGroup.getObj(i);
+							final String choice = pro.getString("Auswahl");
+							if (talentGroup.equals(choice)) {
+								++charGenModifier;
+								break;
+							}
+						}
+					}
+					if (charGenModifier == -1 && proSingle != null) {
+						for (int i = 0; i < proGroup.size(); ++i) {
+							final JSONObject pro = proGroup.getObj(i);
+							if (talent.getName().equals(pro.getString("Auswahl"))) {
+								++charGenModifier;
+								break;
+							}
+						}
+					}
+				}
+			}
+			if (pros.containsKey("Akademische Ausbildung (Krieger)")) {
+				if (Arrays.asList("Nahkampftalente", "Fernkampftalente").contains(talentGroup)) {
+					charGenModifier -= 2;
+
+					final JSONArray proGroup = pros.getArrOrDefault("Begabung für Talentgruppe", null);
+					final JSONArray proSingle = pros.getArrOrDefault("Begabung für Talent", null);
+					if (proGroup != null) {
+						for (int i = 0; i < proGroup.size(); ++i) {
+							final JSONObject pro = proGroup.getObj(i);
+							final String choice = pro.getString("Auswahl");
+							if (talentGroup.equals(choice) || "Kampftalente".equals(choice)) {
+								++charGenModifier;
+								break;
+							}
+						}
+					}
+					if (charGenModifier == -2 && proSingle != null) {
+						for (int i = 0; i < proGroup.size(); ++i) {
+							final JSONObject pro = proGroup.getObj(i);
+							if (talent.getName().equals(pro.getString("Auswahl"))) {
+								++charGenModifier;
+								break;
+							}
+						}
+					}
+				}
+			}
+			if ("Sprachen und Schriften".equals(talentGroup) && (talent.getActual() == null || !talent.getActual().getBoolOrDefault("Muttersprache", false)
+					&& !talent.getActual().getBoolOrDefault("Zweitsprache", false) && !talent.getActual().getBoolOrDefault("Lehrsprache", false))) {
+				modifier -= 1;
+			}
+		}
+		modifier += charGenModifier;
 		final double multiplier = hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
 				&& (talent instanceof Spell || Arrays.asList("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) ? 0.5
 						: hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
 								&& (talent instanceof Spell || "Sprachen und Schriften".equals(talentGroup)) ? 0.75 : 1.0;
 		int result = 0;
 		for (int i = startLevel + 1; i <= targetLevel; ++i) {
+			if (charGen && i == maxLevel) {
+				modifier -= charGenModifier;
+			}
 			final int localModifier = i > 10 && "Selbststudium".equals(method) ? 2 : 0;
-			result += Math.round(getEnhancementCost(talent.getEnhancementCost(hero, i) + modifier + localModifier, i) * multiplier);
+			result += Math.round(getEnhancementCost(talent.getEnhancementCost(hero, i) + modifier + localModifier, i, charGen) * multiplier);
 		}
 		return result;
 	}
@@ -204,7 +275,7 @@ public class DSAUtil {
 		return Character.toString((char) ('@' + enhancement));
 	}
 
-	private static String getModificationString(final JSONObject modification, Map<String, Tuple<String, String>> units, boolean signed) {
+	private static String getModificationString(final JSONObject modification, final Map<String, Tuple<String, String>> units, final boolean signed) {
 		if (modification == null) return "—";
 		if (modification.containsKey("Text")) return modification.getString("Text");
 
@@ -357,7 +428,7 @@ public class DSAUtil {
 		return result.toString();
 	}
 
-	public static String getModificationString(final JSONObject modification, Units units, boolean signed) {
+	public static String getModificationString(final JSONObject modification, final Units units, final boolean signed) {
 		Map<String, Tuple<String, String>> unitMap = null;
 		switch (units) {
 		case TIME:
@@ -390,7 +461,7 @@ public class DSAUtil {
 		return (year - 993 + 2 * month + day) % 28;
 	}
 
-	public static String getRandomName(JSONArray generator, boolean male, boolean middleClass, boolean noble) {
+	public static String getRandomName(final JSONArray generator, final boolean male, final boolean middleClass, final boolean noble) {
 		final StringBuilder result = new StringBuilder();
 		final Map<Integer, Boolean> choices = new HashMap<>();
 		final JSONArray[] consonantic = new JSONArray[2];
@@ -454,7 +525,7 @@ public class DSAUtil {
 		return result.toString().trim();
 	}
 
-	public static String printProOrCon(JSONObject actual, String proOrConName, JSONObject proOrCon, boolean displayLevel) {
+	public static String printProOrCon(final JSONObject actual, final String proOrConName, final JSONObject proOrCon, final boolean displayLevel) {
 		final StringBuilder result = new StringBuilder(proOrConName.replace(' ', '\u00A0'));
 
 		if (proOrCon != null && (proOrCon.containsKey("Auswahl") || proOrCon.containsKey("Freitext"))) {
