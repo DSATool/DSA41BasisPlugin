@@ -375,8 +375,8 @@ public class ProOrCon {
 			actual.put("Profession:Modifikation", variants);
 		}
 		HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
-		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		this.description.set(description);
+		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		actual.notifyListeners(null);
 	}
 
@@ -413,8 +413,8 @@ public class ProOrCon {
 			actual.put("Profession:Modifikation", variants);
 		}
 		HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
-		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		this.variant.set(variant);
+		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		actual.notifyListeners(null);
 	}
 
