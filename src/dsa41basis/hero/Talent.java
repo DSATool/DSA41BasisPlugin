@@ -167,7 +167,7 @@ public class Talent {
 			if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
 				actualGroup.getArr(name.get()).remove(actual);
 			} else {
-				actualGroup.remove(actual);
+				actualGroup.removeKey(name.get());
 			}
 			actualGroup.notifyListeners(null);
 		}
