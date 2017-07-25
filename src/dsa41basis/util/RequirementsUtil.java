@@ -103,7 +103,8 @@ public class RequirementsUtil {
 		return false;
 	}
 
-	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String freeText) {
+	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String freeText,
+			final boolean includeManualMods) {
 		if (requirements == null) return true;
 
 		if (requirements.containsKey("Wahl")) {
@@ -112,7 +113,7 @@ public class RequirementsUtil {
 				boolean fulfilled = false;
 				final JSONArray currentChoices = choices.getArr(i);
 				for (int j = 0; j < currentChoices.size(); ++j) {
-					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, freeText)) {
+					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, freeText, includeManualMods)) {
 						fulfilled = true;
 						break;
 					}
@@ -149,7 +150,7 @@ public class RequirementsUtil {
 		if (requirements.containsKey("Eigenschaften")) {
 			final JSONObject requiredAttributes = requirements.getObj("Eigenschaften");
 			for (final String attribute : requiredAttributes.keySet()) {
-				if (HeroUtil.getCurrentValue(attributes.getObj(attribute), false) < requiredAttributes.getInt(attribute)) return false;
+				if (HeroUtil.getCurrentValue(attributes.getObj(attribute), includeManualMods) < requiredAttributes.getInt(attribute)) return false;
 			}
 		}
 
@@ -160,8 +161,9 @@ public class RequirementsUtil {
 			for (final String basicValue : requiredValues.keySet()) {
 				final int requiredValue = requiredValues.getInt(basicValue);
 				if (requiredValue < 0) {
-					if (HeroUtil.deriveValue(basicValues.getObj(basicValue), attributes, actualValues.getObj(basicValue), false) > -requiredValue) return false;
-				} else if (HeroUtil.deriveValue(basicValues.getObj(basicValue), attributes, actualValues.getObj(basicValue), false) < requiredValue)
+					if (HeroUtil.deriveValue(basicValues.getObj(basicValue), attributes, actualValues.getObj(basicValue), includeManualMods) > -requiredValue)
+						return false;
+				} else if (HeroUtil.deriveValue(basicValues.getObj(basicValue), attributes, actualValues.getObj(basicValue), includeManualMods) < requiredValue)
 					return false;
 			}
 		}
