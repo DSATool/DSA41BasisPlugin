@@ -21,8 +21,11 @@ import dsa41basis.util.HeroUtil;
 import dsa41basis.util.RequirementsUtil;
 import dsatool.resources.ResourceManager;
 import dsatool.util.Tuple3;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -47,6 +50,7 @@ public class ProOrCon {
 	protected final ChoiceOrTextEnum second;
 	protected final IntegerProperty value;
 	protected final StringProperty variant;
+	protected final BooleanProperty valid = new SimpleBooleanProperty(true);
 
 	protected final int min;
 	protected final int max;
@@ -138,6 +142,11 @@ public class ProOrCon {
 				}
 			}
 		}
+
+		if (hero != null) {
+			updateValid();
+			hero.addListener(o -> updateValid());
+		}
 	}
 
 	private Tuple3<Integer, Integer, Integer> calculateBounds(final JSONObject proOrCon) {
@@ -211,7 +220,7 @@ public class ProOrCon {
 			for (int i = 0; i < requirements.size(); ++i) {
 				final JSONObject requirement = requirements.getObj(i);
 				if (hero != null && RequirementsUtil.isRequirementFulfilled(hero, requirement, first == ChoiceOrTextEnum.CHOICE ? description.get() : null,
-						first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null)) {
+						first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null, false)) {
 					baseCost *= requirement.getDoubleOrDefault("Multiplikativ", 1.0);
 					baseCost /= requirement.getDoubleOrDefault("Divisor", 1.0);
 				}
@@ -329,6 +338,10 @@ public class ProOrCon {
 
 	public int getStep() {
 		return step;
+	}
+
+	public final boolean getValid() {
+		return valid.get();
 	}
 
 	public final int getValue() {
@@ -451,6 +464,17 @@ public class ProOrCon {
 				}
 			}
 		}
+	}
+
+	protected void updateValid() {
+		if (!proOrCon.containsKey("Voraussetzungen")) return;
+		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : null;
+		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null;
+		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice, text, true));
+	}
+
+	public final ReadOnlyBooleanProperty validProperty() {
+		return valid;
 	}
 
 	public final IntegerProperty valueProperty() {
