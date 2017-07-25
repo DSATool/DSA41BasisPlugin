@@ -179,7 +179,11 @@ public class Artifact extends InventoryItem {
 			trigger.put("Aktionen", triggerActions);
 			trigger.removeKey("Reaktion");
 		}
-		trigger.put("Beschreibung", triggerDesc);
+		if (triggerDesc.isEmpty()) {
+			trigger.removeKey("Beschreibung");
+		} else {
+			trigger.put("Beschreibung", triggerDesc);
+		}
 		this.triggerType.set(triggerType);
 		this.triggerActions.set(triggerActions);
 		this.triggerDesc.set(triggerDesc);
