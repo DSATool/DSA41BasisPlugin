@@ -861,6 +861,22 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					for (final Tuple<String, Runnable> extractor : extractors) {
 						if (extractor._1.equals(parser.getLocalName())) {
 							extractor._2.run();
+							int level = 0;
+							if (parser.getEventType() == XMLStreamConstants.START_ELEMENT) {
+								parser.next();
+							}
+							do {
+								if (parser.getEventType() == XMLStreamConstants.START_ELEMENT && extractor._1.equals(parser.getLocalName())) {
+									++level;
+								} else if (parser.getEventType() == XMLStreamConstants.END_ELEMENT && extractor._1.equals(parser.getLocalName())) {
+									if (level == 0) {
+										break;
+									} else {
+										--level;
+									}
+								}
+								parser.next();
+							} while (parser.hasNext());
 							break;
 						}
 					}
@@ -918,15 +934,16 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		}
 	}
 
-	private void enterSkill(final String name, final String choice, final String text, final boolean applyEffect, final boolean cheaperSkill) {
+	private JSONObject enterSkill(final String name, final String choice, final String text, final boolean applyEffect, final boolean cheaperSkill) {
 		final JSONObject skills = hero.getObj(cheaperSkill ? "Verbilligte Sonderfertigkeiten" : "Sonderfertigkeiten");
 		final JSONObject skill = HeroUtil.findSkill(name);
+		JSONObject currentSkill = null;
 		if (skill != null) {
 			if (skill.containsKey("Freitext") || skill.containsKey("Auswahl")) {
 				final JSONArray actualSkill = skills.getArr(name);
 				if (cheaperSkill) {
 					for (int i = 0; i < actualSkill.size(); ++i) {
-						final JSONObject currentSkill = actualSkill.getObj(i);
+						currentSkill = actualSkill.getObj(i);
 						if (skill.containsKey("Auswahl") && (choice == null || !choice.equals(currentSkill.getString("Auswahl")))) {
 							continue;
 						}
@@ -934,10 +951,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 							continue;
 						}
 						currentSkill.put("Verbilligungen", currentSkill.getIntOrDefault("Verbilligungen", 1) + 1);
-						return;
+						return currentSkill;
 					}
 				}
-				final JSONObject currentSkill = new JSONObject(actualSkill);
+				currentSkill = new JSONObject(actualSkill);
 				actualSkill.add(currentSkill);
 				if (skill.containsKey("Auswahl")) {
 					currentSkill.put("Auswahl", choice != null ? choice : "");
@@ -950,10 +967,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				}
 			} else {
 				if (cheaperSkill && skills.containsKey(name)) {
-					final JSONObject currentSkill = skills.getObj(name);
+					currentSkill = skills.getObj(name);
 					currentSkill.put("Verbilligungen", currentSkill.getIntOrDefault("Verbilligungen", 1) + 1);
 				} else {
-					final JSONObject currentSkill = new JSONObject(skills);
+					currentSkill = new JSONObject(skills);
 					skills.put(name, currentSkill);
 					if (applyEffect) {
 						HeroUtil.applyEffect(hero, name, skill, currentSkill);
@@ -961,6 +978,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				}
 			}
 		}
+		return currentSkill;
 	}
 
 	private Map<String, String> extract(final String end, final Tuple3<String, Supplier<String>, Supplier<String>>... extractors) {
@@ -2013,7 +2031,48 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			} else if ("Waffenmeister".equals(name)) {
 				apply("sonderfertigkeit", new Tuple<>("auswahl", () -> {
 					final Map<String, String> values = extract("auswahl", new Tuple3<>("wahl", () -> get("position"), () -> get("value")));
-					enterSkill("Waffenmeister", values.getOrDefault("1", ""), values.getOrDefault("0", ""), false, false);
+					final JSONObject skill = enterSkill("Waffenmeister", values.getOrDefault("1", ""), values.getOrDefault("0", ""), false, false);
+					for (int i = 3; i < 99; ++i) {
+						if (!values.containsKey(Integer.toString(i))) {
+							break;
+						}
+						final String value = values.get(Integer.toString(i));
+						if (value.startsWith("INI-Bonus:")) {
+							skill.put("Initiative:Modifikator", Integer.parseInt(value.substring(11)));
+						} else if ("TP/KK: -1/-1".equals(value)) {
+							final JSONObject tpkk = new JSONObject(skill);
+							tpkk.put("Schwellenwert", -1);
+							tpkk.put("Schadensschritte", -1);
+							skill.put("Trefferpunkte/Körperkraft", tpkk);
+						} else if (value.startsWith("AT:")) {
+							final JSONObject wm = skill.getObj("Waffenmodifikatoren");
+							wm.put("Attackemodifikator", Integer.parseInt(value.substring(4)));
+						} else if (value.startsWith("PA:")) {
+							final JSONObject wm = skill.getObj("Waffenmodifikatoren");
+							wm.put("Parademodifikator", Integer.parseInt(value.substring(4)));
+						} else if (value.startsWith("Reichweite FK:")) {
+							skill.put("Reichweite", Integer.parseInt(value.substring(16, 17)));
+						} else if ("Ladezeit halbieren".equals(value)) {
+							skill.put("Ladezeit", true);
+						} else if (value.startsWith("Probenerleichterung:")) {
+							final int separator = value.lastIndexOf(';');
+							final JSONObject maneuver = skill.getObj("Manöver:Erleichterung");
+							maneuver.put(value.substring(21, separator), Integer.parseInt(value.substring(separator + 3)));
+						} else if (value.startsWith("Gezielte Schüsse")) {
+							final JSONObject maneuver = skill.getObj("Manöver:Erleichterung");
+							maneuver.put("Gezielter Schuss", Integer.parseInt(value.substring(18)));
+						} else if (value.startsWith("Erlaubtes Manöver:")) {
+							final JSONArray maneuver = skill.getArr("Manöver:Zusätzlich");
+							maneuver.add(value.substring(19));
+						} else if (value.startsWith("Besondere Vorteile")) {
+							final JSONObject maneuver = skill.getObj("Vorteile");
+							maneuver.put(value.substring(24), Integer.parseInt(value.substring(20, 21)));
+						} else if (value.contains("zusätzliche Waffe:")) {
+							final int separator = value.indexOf(';');
+							final JSONArray weapons = skill.getArr("Waffen");
+							weapons.add(value.substring(22, separator));
+						}
+					}
 				}));
 				return;
 			} else if ("Akoluth".equals(name)) {
@@ -2210,6 +2269,13 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			in = in.substring(8);
 		} else if (in.startsWith("Liturgie:")) {
 			in = in.substring(10);
+			if (in.contains("(")) {
+				final int start = in.indexOf('(');
+				final int end = in.indexOf(')');
+				if (end - start > 4) {
+					in = in.substring(start + 1, end);
+				}
+			}
 		} else if (in.startsWith("Elfenlied")) {
 			in = in.substring(11);
 		} else if (in.startsWith("Hexenfluch")) {
