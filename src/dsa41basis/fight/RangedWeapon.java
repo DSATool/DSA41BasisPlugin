@@ -64,7 +64,6 @@ public class RangedWeapon extends OffensiveWeapon {
 	}
 
 	private String computeDistanceString() {
-		final JSONObject distances = item.getObjOrDefault("Reichweiten", baseItem.getObj("Reichweiten"));
 		final StringBuilder distancesString = new StringBuilder();
 		boolean isFirstDistance = true;
 		for (final String distance : new String[] { "Sehr Nah", "Nah", "Mittel", "Weit", "Extrem Weit" }) {
@@ -73,7 +72,7 @@ public class RangedWeapon extends OffensiveWeapon {
 			} else {
 				distancesString.append('/');
 			}
-			final int dist = distances == null ? 0 : distances.getIntOrDefault(distance, Integer.MIN_VALUE);
+			final int dist = HeroUtil.getDistance(hero, item, type.get(), distance);
 			if (dist == Integer.MIN_VALUE) {
 				distancesString.append("—");
 			} else {
@@ -167,7 +166,7 @@ public class RangedWeapon extends OffensiveWeapon {
 		super.recompute();
 
 		at.set(computeAt());
-		load.set(item.getIntOrDefault("Ladedauer", baseItem.getIntOrDefault("Ladedauer", 0)));
+		load.set(HeroUtil.getLoadTime(hero, item, type.get()));
 		distance.set(computeDistanceString());
 		distancetp.set(computeDistanceTPs());
 		final String ammunitionType = item.getStringOrDefault("Geschoss:Typ", baseItem.getString("Geschoss:Typ"));
@@ -192,11 +191,11 @@ public class RangedWeapon extends OffensiveWeapon {
 		item.notifyListeners(null);
 	}
 
-	public void setAmmunition(JSONObject ammunition) {
+	public void setAmmunition(final JSONObject ammunition) {
 		item.put("Munition", ammunition.clone(item));
 	}
 
-	public void setAmmunitionType(String ammunitionType) {
+	public void setAmmunitionType(final String ammunitionType) {
 		if (ammunitionType == null) {
 			item.removeKey("Geschoss:Typ");
 		} else {

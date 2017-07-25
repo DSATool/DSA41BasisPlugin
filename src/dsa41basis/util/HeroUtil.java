@@ -376,14 +376,19 @@ public class HeroUtil {
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 
 		final boolean hasSpecialisation = weapon != null
-				&& HeroUtil.hasSpecialisation(skills.getArr("Waffenspezialisierung"), type, weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+				&& HeroUtil.getSpecialisation(skills.getArr("Waffenspezialisierung"), type,
+						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"))) != null;
 		final JSONObject weaponModifiers = weapon == null ? null : weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
+
+		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(skills.getArr("Waffenmeister"), type,
+				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+		final int masteryAT = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Attackemodifikator", 0) : 0;
 
 		return deriveValue(ResourceManager.getResource("data/Basiswerte").getObj(closeCombat ? "Attacke-Basis" : "Fernkampf-Basis"),
 				hero.getObj("Eigenschaften"), hero.getObj("Basiswerte"), includeManualMods)
 				+ (closeCombat && weaponModifiers != null ? weaponModifiers.getIntOrDefault("Attackemodifikator", 0) : 0)
 				+ (actualTalent != null ? actualTalent.getIntOrDefault("AT", 0) : 0)
-				+ (hasSpecialisation ? !closeCombat || talent.getBoolOrDefault("NurAT", false) ? 2 : 1 : 0)
+				+ (hasSpecialisation ? !closeCombat || talent.getBoolOrDefault("NurAT", false) ? 2 : 1 : 0) + masteryAT
 				- Math.max(talent.getIntOrDefault("BEMultiplikativ", 1) * getBE(hero) + talent.getIntOrDefault("BEAdditiv", 0), 0)
 						/ (!closeCombat || talent.getBoolOrDefault("NurAT", false) ? 1 : 2);
 	}
@@ -600,6 +605,53 @@ public class HeroUtil {
 		return actual.getIntOrDefault("Wert", 0) + (includeManualMod ? actual.getIntOrDefault("Modifikator:Manuell", 0) : 0);
 	}
 
+	public static int getDistance(final JSONObject hero, JSONObject weapon, final String type, final String distance) {
+		final JSONObject baseWeapon = weapon;
+		if (weapon != null && weapon.containsKey("Fernkampfwaffe")) {
+			weapon = weapon.getObj("Fernkampfwaffe");
+		}
+		final JSONObject weaponMastery = hero == null || weapon == null ? null
+				: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArr("Waffenmeister"), type,
+						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+
+		final JSONObject weaponDistances = weapon.getObjOrDefault("Reichweiten", baseWeapon.getObj("Reichweiten"));
+
+		final int dist = weaponDistances.getIntOrDefault(distance, Integer.MIN_VALUE);
+		if (dist == Integer.MIN_VALUE) return Integer.MIN_VALUE;
+		return (int) Math.round(dist * (1 + (weaponMastery != null ? weaponMastery.getIntOrDefault("Reichweite", 0) * 0.1 : 0)));
+	}
+
+	public static int getLoadTime(final JSONObject hero, JSONObject weapon, final String type) {
+		final JSONObject baseWeapon = weapon;
+		if (weapon != null && weapon.containsKey("Fernkampfwaffe")) {
+			weapon = weapon.getObj("Fernkampfwaffe");
+		}
+
+		double loadTime = weapon.getIntOrDefault("Ladedauer", baseWeapon.getIntOrDefault("Ladedauer", 0));
+
+		if (hero != null) {
+			if ("Bogen".equals(type)) {
+				if (hero.getObj("Sonderfertigkeiten").containsKey("Schnellladen (Bogen)")) {
+					loadTime -= 1;
+				}
+				loadTime = Math.max(loadTime, 1);
+			} else if ("Armbrust".equals(type)) {
+				if (hero.getObj("Sonderfertigkeiten").containsKey("Schnellladen (Armbrust)")) {
+					loadTime *= 0.75;
+				}
+
+				final JSONObject weaponMastery = weapon == null ? null
+						: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArr("Waffenmeister"), type,
+								weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+				if (weaponMastery != null && weaponMastery.getBoolOrDefault("Ladezeit", false)) {
+					loadTime *= 0.5;
+				}
+			}
+		}
+
+		return (int) Math.round(loadTime);
+	}
+
 	public static Integer getPA(final JSONObject hero, JSONObject weapon, final String type, final boolean wrongHand, final boolean includeManualMods) {
 		final JSONObject talent = ResourceManager.getResource("data/Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
 
@@ -616,16 +668,38 @@ public class HeroUtil {
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 
 		final boolean hasSpecialisation = weapon != null
-				&& HeroUtil.hasSpecialisation(skills.getArr("Waffenspezialisierung"), type, weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+				&& HeroUtil.getSpecialisation(skills.getArr("Waffenspezialisierung"), type,
+						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"))) != null;
 		final JSONObject weaponModifiers = weapon == null ? null : weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
+
+		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(skills.getArr("Waffenmeister"), type,
+				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+		final int masteryPA = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Parademodifikator", 0) : 0;
 
 		if (ATonly) return null;
 
 		return deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero.getObj("Eigenschaften"), hero.getObj("Basiswerte"),
 				includeManualMods) + (weaponModifiers == null ? 0 : weaponModifiers.getIntOrDefault("Parademodifikator", 0))
-				+ (actualTalent != null ? actualTalent.getIntOrDefault("PA", 0) : 0) + (hasSpecialisation ? 1 : 0)
+				+ (actualTalent != null ? actualTalent.getIntOrDefault("PA", 0) : 0) + (hasSpecialisation ? 1 : 0) + masteryPA
 				- Math.max(talent.getIntOrDefault("BEMultiplikativ", 1) * getBE(hero) + talent.getIntOrDefault("BEAdditiv", 0) + (ATonly ? 0 : 1), 0)
 						/ (ATonly ? 1 : 2);
+	}
+
+	public static JSONObject getSpecialisation(final JSONArray specialisations, final String talent, final String specialisation) {
+		if (specialisations == null || specialisation == null) return null;
+		for (int i = 0; i < specialisations.size(); ++i) {
+			final JSONObject skill = specialisations.getObj(i);
+			if (talent.equals(skill.getString("Auswahl"))) {
+				if (specialisation.equals(skill.getStringOrDefault("Freitext", ""))) return skill;
+				if (skill.containsKey("Waffen")) {
+					final JSONArray weapons = skill.getArr("Waffen");
+					for (int j = 0; j < weapons.size(); ++j) {
+						if (specialisation.equals(weapons.getString(j))) return skill;
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	public static int getSpellBaseComplexity(final String spellName, final String representation) {
@@ -1077,15 +1151,6 @@ public class HeroUtil {
 		}
 
 		return RS;
-	}
-
-	public static boolean hasSpecialisation(final JSONArray specialisations, final String talent, final String specialisation) {
-		if (specialisations == null || specialisation == null) return false;
-		for (int j = 0; j < specialisations.size(); ++j) {
-			final JSONObject skill = specialisations.getObj(j);
-			if (talent.equals(skill.getString("Auswahl")) && specialisation.equals(skill.getStringOrDefault("Freitext", ""))) return true;
-		}
-		return false;
 	}
 
 	public static Integer interpretSpellRoll(final JSONObject hero, final String talentName, final String representation, final String specialization,
