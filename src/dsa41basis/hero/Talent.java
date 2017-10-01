@@ -170,6 +170,7 @@ public class Talent {
 				actualGroup.removeKey(name.get());
 			}
 			actualGroup.notifyListeners(null);
+			actual = null;
 		}
 	}
 
