@@ -180,12 +180,6 @@ public class HeroSelector {
 	}
 
 	public void load() {
-		ResourceManager.addPathListener("characters/", (discard) -> {
-			if (!discard) {
-				reload();
-			}
-		});
-
 		final MultipleSelectionModel<String> listModel = list.getSelectionModel();
 		listModel.selectedIndexProperty().addListener((final ObservableValue<? extends Number> observable, final Number oldValue, final Number newValue) -> {
 			if (oldValue.intValue() != newValue.intValue() && newValue.intValue() > -1) {
@@ -194,7 +188,12 @@ public class HeroSelector {
 		});
 
 		reload();
-		setHero(0);
+
+		ResourceManager.addPathListener("characters/", (discard) -> {
+			if (!discard) {
+				reload();
+			}
+		});
 	}
 
 	@FXML
@@ -237,7 +236,6 @@ public class HeroSelector {
 		final int index = heroes.indexOf(selectedHero);
 		if (listModel.getSelectedIndex() != index || listModel.getSelectedIndex() == -1) {
 			listModel.clearAndSelect(Math.max(0, index));
-			setHero(listModel.getSelectedIndex());
 		}
 	}
 
