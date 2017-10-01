@@ -31,18 +31,19 @@ public class FightTalent extends Talent {
 	private final StringProperty be;
 	private final IntegerProperty pa;
 
-	public FightTalent(String name, JSONObject talentGroup, JSONObject talent, JSONObject actual, JSONObject actualGroup) {
+	public FightTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
 		super(name, talentGroup, talent, actual, actualGroup);
 
 		attackOnly = new SimpleBooleanProperty(talent.getBoolOrDefault("NurAT", false) || talent.getBoolOrDefault("FK", false));
 
-		at = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("AT", 0));
-
 		if (attackOnly.get()) {
+			actual.put("AT", value.get());
 			pa = new SimpleIntegerProperty(Integer.MIN_VALUE);
 		} else {
 			pa = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("PA", 0));
 		}
+
+		at = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("AT", 0));
 
 		final int beAdd = talent.getIntOrDefault("BEAdditiv", 0);
 		final int beMul = talent.getIntOrDefault("BEMultiplikativ", 0);
@@ -99,7 +100,7 @@ public class FightTalent extends Talent {
 		return pa;
 	}
 
-	public final void setAt(int at) {
+	public final void setAt(final int at) {
 		if (!attackOnly.get()) {
 			pa.set(value.get() - at);
 			actual.put("PA", pa.get());
@@ -109,7 +110,7 @@ public class FightTalent extends Talent {
 		this.at.set(at);
 	}
 
-	public final void setPa(int pa) {
+	public final void setPa(final int pa) {
 		if (attackOnly.get()) return;
 		at.set(value.get() - pa);
 		actual.put("AT", at.get());
@@ -119,7 +120,7 @@ public class FightTalent extends Talent {
 	}
 
 	@Override
-	public final void setValue(int value) {
+	public final void setValue(final int value) {
 		super.setValue(value);
 
 		if (attackOnly.get()) {
