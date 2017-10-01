@@ -246,6 +246,17 @@ public class ProOrCon {
 				: "Veteran".equals(name.get()) ? "Profession:Variante" : proOrCon.getStringOrDefault("Auswahl", proOrCon.getString("Freitext"));
 		final Set<String> choices = HeroUtil.getChoices(hero, choice, null);
 
+		if (proOrCon.containsKey("Voraussetzungen")) {
+			final JSONObject requirements = proOrCon.getObj("Voraussetzungen");
+			if (requirements.containsKey("Auswahl")) {
+				final JSONArray possible = requirements.getArr("Auswahl");
+				choices.removeIf(name -> !possible.contains(name));
+			} else if (!proOrCon.containsKey("Auswahl") && requirements.containsKey("Freitext")) {
+				final JSONArray possible = requirements.getArr("Freitext");
+				choices.removeIf(name -> !possible.contains(name));
+			}
+		}
+
 		if (onlyUnused && hero != null && second == ChoiceOrTextEnum.NONE) {
 			final JSONObject pros = hero.getObj("Vorteile");
 			final JSONObject cons = hero.getObj("Nachteile");
@@ -303,6 +314,14 @@ public class ProOrCon {
 		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession:Variante" : proOrCon.getString("Freitext");
 		final Set<String> choices = HeroUtil.getChoices(hero, choice, description != null ? description.get() : null);
 		if (choice == null) return choices;
+
+		if (proOrCon.containsKey("Voraussetzungen")) {
+			final JSONObject requirements = proOrCon.getObj("Voraussetzungen");
+			if (requirements.containsKey("Freitext")) {
+				final JSONArray possible = requirements.getArr("Freitext");
+				choices.removeIf(name -> !possible.contains(name));
+			}
+		}
 
 		if (onlyUnused && hero != null) {
 			final JSONObject pros = hero.getObj("Vorteile");
@@ -432,7 +451,7 @@ public class ProOrCon {
 	}
 
 	protected void updateCost(final int value, final String choice, final String text) {
-		cost.setValue((int) (getBaseCost() * (stepwise ? value : 1)));
+		cost.set((int) Math.round(getBaseCost() * (stepwise ? value : 1)));
 		if (actual.containsKey("Kosten")) {
 			cost.set(actual.getDouble("Kosten").intValue());
 		} else if (hero != null) {
