@@ -152,6 +152,7 @@ public abstract class OffensiveWeapon extends InventoryItem {
 	}
 
 	public final void setType(final String type) {
+		item.put("Waffentyp:Primär", type);
 		this.type.set(type);
 	}
 
