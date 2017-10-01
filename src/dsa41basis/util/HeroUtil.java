@@ -561,7 +561,7 @@ public class HeroUtil {
 					choices.add(specializations.getString(i));
 				}
 			}
-			final JSONObject spell = ResourceManager.getResource("data/Zauber").getObj(other);
+			final JSONObject spell = ResourceManager.getResource("data/Zauber").getObjOrDefault(other, null);
 			if (spell != null) {
 				if (spell.containsKey("Spontane Modifikationen")) {
 					final JSONArray spoMos = spell.getArr("Spontane Modifikationen");
