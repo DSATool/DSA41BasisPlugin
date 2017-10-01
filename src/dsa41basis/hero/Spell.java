@@ -115,12 +115,15 @@ public class Spell extends Talent {
 					actualSpell.removeKey(representation.get());
 				}
 			} else {
-				actualSpell.remove(representation.get());
+				actualSpell.removeKey(representation.get());
 			}
 			if (actualSpell.size() == 0) {
-				actualGroup.remove(name.get());
+				actualGroup.removeKey(name.get());
+				actualGroup.notifyListeners(null);
 			}
 			actualSpell.notifyListeners(null);
+			actualSpell = null;
+			actual = null;
 		}
 	}
 
