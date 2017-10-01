@@ -1873,6 +1873,20 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					variants.add(variant);
 				}
 			}
+		}), new Tuple<>("groesse", () -> {
+			bio.put("Größe", Integer.parseInt(get("value")));
+			bio.put("Gewicht", Integer.parseInt(get("gewicht")));
+		}), new Tuple<>("aussehen", () -> {
+			bio.put("Augenfarbe", get("augenfarbe"));
+			bio.put("Haarfarbe", get("haarfarbe"));
+			bio.put("Geburtstag", Integer.parseInt(get("gbtag")));
+			bio.put("Geburtsmonat", Integer.parseInt(get("gbmonat")));
+			bio.put("Geburtsjahr", Integer.parseInt(get("gbjahr")));
+		}), new Tuple<>("variante", () -> {
+			final String mod = get("name");
+			if (!raceName.equals(mod)) {
+				bio.getArr("Rasse:Modifikation").add(mod);
+			}
 		}));
 
 		final JSONArray mods = new JSONArray(bio);
@@ -1924,22 +1938,6 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		if (mods.size() > 0) {
 			bio.put("Rasse:Modifikation", mods);
 		}
-
-		apply("rasse", new Tuple<>("groesse", () -> {
-			bio.put("Größe", Integer.parseInt(get("value")));
-			bio.put("Gewicht", Integer.parseInt(get("gewicht")));
-		}), new Tuple<>("aussehen", () -> {
-			bio.put("Augenfarbe", get("augenfarbe"));
-			bio.put("Haarfarbe", get("haarfarbe"));
-			bio.put("Geburtstag", Integer.parseInt(get("gbtag")));
-			bio.put("Geburtsmonat", Integer.parseInt(get("gbmonat")));
-			bio.put("Geburtsjahr", Integer.parseInt(get("gbjahr")));
-		}), new Tuple<>("variante", () -> {
-			final String mod = get("name");
-			if (!raceName.equals(mod)) {
-				bio.getArr("Rasse:Modifikation").add(mod);
-			}
-		}));
 	}
 
 	private void parseSkills() {
