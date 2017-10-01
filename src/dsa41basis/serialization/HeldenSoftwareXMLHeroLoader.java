@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -38,13 +40,15 @@ import dsatool.resources.ResourceManager;
 import dsatool.util.ErrorLogger;
 import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
 @SuppressWarnings("unchecked")
 public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
-	private static Map<String, String> goddesses;
 	private static Map<String, String> proConReplacements;
 	private static Map<String, String> ritualKnowledge;
 	private static Map<String, String> repReplacements;
@@ -87,6 +91,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		talentReplacements.put("Stoffe färben", "Stoffe Färben");
 		talentReplacements.put("Sprachen kennen Alt-Imperial/Aureliani", "Aureliani");
 		talentReplacements.put("Sprachen kennen Urtulamidya", "Ur-Tulamidya");
+		talentReplacements.put("Lesen/Schreiben Altes Amulashtra", "Amulashtra");
 		talentReplacements.put("Lesen/Schreiben Altes Kemi", "Altes Kemi (Schrift)");
 		talentReplacements.put("Lesen/Schreiben Angram", "Angram (Schrift)");
 		talentReplacements.put("Lesen/Schreiben Gimaril-Glyphen", "Gimaril");
@@ -192,23 +197,6 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 	}
 
 	static {
-		goddesses = new HashMap<>();
-		goddesses.put("Greif", "Praios");
-		goddesses.put("Schwert", "Rondra");
-		goddesses.put("Delphin", "Efferd");
-		goddesses.put("Gans", "Travia");
-		goddesses.put("Rabe", "Boron");
-		goddesses.put("Schlange", "Hesinde");
-		goddesses.put("Eisbär", "Firun");
-		goddesses.put("Eidechse", "Tsa");
-		goddesses.put("Fuchs", "Phex");
-		goddesses.put("Storch", "Peraine");
-		goddesses.put("Hammer/Amboss", "Ingerimm");
-		goddesses.put("Stute", "Rahja");
-		goddesses.put("Sternenleere", "Namenloser");
-	}
-
-	static {
 		repReplacements = new HashMap<>();
 		repReplacements.put("Achaz", "Kristallomantisch");
 		repReplacements.put("Borbaradianer", "Borbaradianisch");
@@ -241,14 +229,12 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		raceReplacements.put("Halbelfe thorwalscher Abstammung", "Halbelf thorwalscher Abstammung");
 		raceReplacements.put("in elfischer Kultur aufgewachsen", "bei Elfen großgezogen");
 		raceReplacements.put("Brillantzwerge", "Brillantzwerg");
-		raceReplacements.put("Erz-/Hügelzwerge", "Erzzwerg");
 		raceReplacements.put("Ambosszwerge", "Ambosszwerg");
 		raceReplacements.put("Wilde Zwerge", "Wilder Zwerg");
 	}
 
 	static {
 		cultureReplacements = new HashMap<>();
-		cultureReplacements.put("AndergastNostria", "Andergast und Nostria");
 		cultureReplacements.put("ArchaischeAchaz", "Archaische Achaz");
 		cultureReplacements.put("AuelfenSippe", "Auelfische Sippe");
 		cultureReplacements.put("Dschungelstaemme", "Dschungelstämme");
@@ -343,7 +329,6 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		professionReplacements.put("WindUndWettermagus", "Bordzauberer");
 		professionReplacements.put("Zaubertaenzer", "Tänzer");
 		professionReplacements.put("AlAnfa", "Al'Anfa");
-		professionReplacements.put("Gareth oder Arivor", "Gareth");
 		professionReplacements.put("Stabsfähnrich aus Wehrheim", "Wehrheim");
 		professionReplacements.put("Stabsfähnrich aus Vinsalt", "Vinsalt");
 		professionReplacements.put("städtischer Bogenschütze (UdW)", "Stadtgardist|Städtischer Bogenschütze");
@@ -394,26 +379,18 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		professionReplacements.put("Premer Seesöldner (UdW)", "Premer Seesöldner");
 		professionReplacements.put("Tempelwache Achaz", "Achaz-Stammeskrieger|Tempelwache");
 		professionReplacements.put("Stafettenläufer", "Zwergischer Stafettenläufer");
-		professionReplacements.put("Bergungs-, Schwamm- oder Korallentaucher", "Bergungstaucher");
 		professionReplacements.put("Robbenjäger (UdW)", "Robbenjäger");
 		professionReplacements.put("Fallensteller (UdW)", "Robbenjäger|Fallensteller");
-		professionReplacements.put("Goldsucher oder Prospektor", "Prospektor");
-		professionReplacements.put("Walfänger/Haijäger", "Walfänger");
 		professionReplacements.put("Skalde aus der Runajasko (UdW)", "Skalde aus der Runajasko");
 		professionReplacements.put("Akrobat/Tänzer", "Akrobat");
 		professionReplacements.put("Taugenichts/Stutzer", "Stutzer");
 		professionReplacements.put("Taugenichts/Dilettant", "Dilettant");
 		professionReplacements.put("Erzieher", "Erzieher der Achaz");
-		professionReplacements.put("Baumeister/Deichmeister", "Baumeister");
-		professionReplacements.put("Hüttenkundiger/Bronzegießer/Eisengießer", "Hüttenkundiger");
 		professionReplacements.put("traditioneller Schiffbauer (UdW)", "Traditioneller Schiffbauer");
-		professionReplacements.put("Philosoph/Metaphysiker", "Philosoph");
-		professionReplacements.put("Völkerkundler/Sagenkundler", "Völkerkundler");
 		professionReplacements.put("zwergischer Bastler", "Bastler");
 		professionReplacements.put("zwergischer, dörflicher Bastler", "Bastler|dörflicher Handwerker");
 		professionReplacements.put("Sesh'shem", "Sesh'shemet");
 		professionReplacements.put("Schauermann", "Schauerleute");
-		professionReplacements.put("Quacksalber/Zahnreißer", "Quacksalber");
 		professionReplacements.put("Brutfleger", "Brutpfleger der Achaz");
 		professionReplacements.put("Bund des Roten Salamanders (Andergast)", "Bund des Roten Salamanders|Andergast");
 		professionReplacements.put("Bund des Roten Salamanders (Andergast, magiebegabt)", "Magiebegabter Alchimist|Bund des Roten Salamanders|Andergast");
@@ -854,6 +831,8 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 	private XMLStreamReader parser;
 
+	private String boronCult = null;
+
 	private void apply(final String end, final Tuple<String, Runnable>... extractors) {
 		try {
 			while (parser.hasNext()) {
@@ -888,6 +867,27 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		} catch (final XMLStreamException e) {
 			ErrorLogger.logError(e);
 		}
+	}
+
+	private String ask(final String title, final String text, final String... choices) {
+		final Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.setTitle(title);
+		alert.setHeaderText(text);
+
+		final Map<ButtonType, String> results = new LinkedHashMap<>();
+
+		for (int i = 0; i < choices.length; i += 2) {
+			results.put(new ButtonType(choices[i]), choices[i + 1]);
+		}
+
+		alert.getButtonTypes().setAll(results.keySet());
+
+		final Optional<ButtonType> result = alert.showAndWait();
+
+		if (result.isPresent())
+			return results.get(result.get());
+		else
+			return choices[1];
 	}
 
 	private void cleanupCheaperSkills() {
@@ -1093,7 +1093,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 	private void parseCulture() {
 		final JSONObject bio = hero.getObj("Biografie");
-		final String replaced = getLastPart(get("name"), cultureReplacements);
+		String replaced = getLastPart(get("name"), cultureReplacements);
+		if ("AndergastNostria".equals(replaced)) {
+			replaced = ask("Variante auswählen", "Variante für Kultur Andergast und Nostria auswählen", "Andergast", "Andergast", "Nostria", "Nostria");
+		}
 		final String[] split = replaced.split("\\|");
 		final String cultureName = split[0];
 		bio.put("Kultur", cultureName);
@@ -1374,14 +1377,57 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				apply("ausbildung", new Tuple<>("variante", () -> {
 					final String name = get("name");
 					if ("Fähnrich zur See".equals(finalName) && "Fähnrich zur See".equals(name)) {
-						variants.add("Grangor");
+						variants.add(ask("Variante auswählen", "Variante für Profession Fähnrich zur See auswählen", "Grangor", "Grangor", "Methumis",
+								"Methumis", "Perricum", "Perricum"));
 					} else if ("Geode".equals(finalName) && "Brobim".equals(name)) {
 						variants.add("Brobim-Geode");
 					} else if ("Tänzer".equals(finalName) && "Gaukler".equals(name)) {
 						variants.add("Gaukler-Tänzer");
 					} else {
 						for (final String variant : professionReplacements.getOrDefault(name, name).split("\\|")) {
-							variants.add(variant);
+							final String var;
+							switch (variant) {
+							case "Gareth oder Arivor":
+								var = ask("Variante auswählen", "Variante für Profession Fähnrich der Kavallerie auswählen", "Gareth", "Gareth", "Arivor",
+										"Arivor");
+								break;
+							case "Bergungs-, Schwamm- oder Korallentaucher":
+								var = ask("Variante auswählen", "Variante für Profession Fischer auswählen", "Bergungstaucher", "Bergungstaucher",
+										"Schwammtaucher", "Schwammtaucher", "Korallentaucher", "Korallentaucher");
+								break;
+							case "Goldsucher oder Prospektor":
+								var = ask("Variante auswählen", "Variante für Profession Prospektor auswählen", "Prospektor", "Prospektor", "Goldsucher",
+										"Goldsucher");
+								break;
+							case "Walfänger/Haijäger":
+								var = ask("Variante auswählen", "Variante für Profession Seefahrer auswählen", "Walfänger", "Wahlfänger", "Haijäger",
+										"Haijäger");
+								break;
+							case "Baumeister/Deichmeister":
+								var = ask("Variante auswählen", "Variante für Profession Edelhandwerker auswählen", "Baumeister", "Baumeister", "Deichmeister",
+										"Deichmeister");
+								break;
+							case "Hüttenkundiger/Bronzegießer/Eisengießer":
+								var = ask("Variante auswählen", "Variante für Profession Edelhandwerker auswählen", "Hüttenkundiger", "Hüttenkundiger",
+										"Bronzegießer", "Bronzegießer", "Eisengießer", "Eisengießer");
+								break;
+							case "Philosoph/Metaphysiker":
+								var = ask("Variante auswählen", "Variante für Profession Gelehrter auswählen", "Philosoph", "Philosoph", "Metaphysiker",
+										"Metaphysiker");
+								break;
+							case "Völkerkundler/Sagenkundler":
+								var = ask("Variante auswählen", "Variante für Profession Gelehrter auswählen", "Völkerkundler", "Völkerkundler", "Sagenkundler",
+										"Sagenkundler");
+								break;
+							case "Quacksalber/Zahnreißer":
+								var = ask("Variante auswählen", "Variante für Profession Wundarzt auswählen", "Quacksalber", "Quacksalber", "Zahnreißer",
+										"Zahnreißer");
+								break;
+							default:
+								var = variant;
+								break;
+							}
+							variants.add(var);
 						}
 					}
 				}));
@@ -1853,7 +1899,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 	private void parseRace() {
 		final JSONObject bio = hero.getObj("Biografie");
-		final String replaced = getLastPart(get("name"), raceReplacements);
+		String replaced = getLastPart(get("name"), raceReplacements);
+		if ("Erz-/Hügelzwerge".equals(replaced)) {
+			replaced = ask("Variante auswählen", "Variante für Rasse Zwerg auswählen", "Erzzwerg", "Erzzwerg", "Hügelzwerg", "Hügelzwerg");
+		}
 		final String[] split = replaced.split("\\|");
 		final String raceName = split[0];
 		bio.put("Rasse", raceName);
@@ -1989,6 +2038,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				name = "Ritualkenntnis";
 			} else if (name.startsWith("Liturgiekenntnis")) {
 				choice = name.substring(18, name.length() - 1);
+				if ("Boron".equals(choice)) {
+					choice = selectBoronCult();
+				}
 				name = "Liturgiekenntnis";
 			} else if ("Kulturkunde".equals(name)) {
 				final Set<String> values = extract("sonderfertigkeit", new Tuple3<>("kultur", () -> get("name"), () -> null)).keySet();
@@ -2131,6 +2183,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				name = "Ritualkenntnis";
 			} else if (name.startsWith("Liturgiekenntnis")) {
 				choice = name.substring(18, name.length() - 1);
+				if ("Boron".equals(choice)) {
+					choice = selectBoronCult();
+				}
 				name = "Liturgiekenntnis";
 			} else if ("Kulturkunde".equals(name) || "Scharfschütze".equals(name) || "Meisterschütze".equals(name) || "Akoluth".equals(name)) {
 				final Set<String> values = extract("verbilligtesonderfertigkeit", new Tuple3<>("auswahl", () -> get("auswahl"), () -> null)).keySet();
@@ -2332,9 +2387,19 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			in = in.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getOrDefault(in, in);
 		} else if (in.startsWith("Liturgiekenntnis")) {
 			in = in.substring(18, in.length() - 1);
+			if ("Boron".equals(in)) {
+				in = selectBoronCult();
+			}
 		}
 
 		return in;
+	}
+
+	private String selectBoronCult() {
+		if (boronCult == null) {
+			boronCult = ask("Ritus auswählen", "Boron-Ritus auswählen:", "Puniner Ritus", "Boron (Punin)", "Al'Anfaner Ritus", "Boron (Al'Anfa)");
+		}
+		return boronCult;
 	}
 
 }
