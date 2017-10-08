@@ -18,6 +18,9 @@ package dsa41basis.serialization;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -194,6 +197,8 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		skillReplacements.put("Satinavs Siegel", "Zusatzzeichen Satinavs Siegel");
 		skillReplacements.put("Schutzsiegel", "Zusatzzeichen Schutzsiegel");
 		skillReplacements.put("Arngrims Höhle", "Arngrimms Höhle");
+		skillReplacements.put("Elementarharmonisierte Aura (Humus/Eis)", "Elementarharmonisierte Aura (Eis/Humus)");
+		skillReplacements.put("Elementarharmonisierte Aura (Luft/Erz)", "Elementarharmonisierte Aura (Erz/Luft)");
 	}
 
 	static {
@@ -1281,6 +1286,17 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 		hero = new JSONObject(null);
 
+		// Ensure nice order of entries
+		hero.put("Spieler", hero.getStringOrDefault("Spieler", ""));
+		hero.getObj("Biografie");
+		hero.getObj("Eigenschaften");
+		hero.getObj("Basiswerte");
+		hero.getObj("Vorteile");
+		hero.getObj("Nachteile");
+		hero.getObj("Sonderfertigkeiten");
+		hero.getObj("Verbilligte Sonderfertigkeiten");
+		hero.getObj("Talente");
+
 		final JSONObject bio = new JSONObject(hero);
 		hero.put("Biografie", bio);
 
@@ -1290,7 +1306,8 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		}
 
 		apply("held", new Tuple<>("basis", () -> parseBasis()), new Tuple<>("eigenschaften", () -> parseAttributes()), new Tuple<>("vt", () -> parseProsCons()),
-				new Tuple<>("sf", () -> parseSkills()), new Tuple<>("talentliste", () -> parseTalents()), new Tuple<>("zauberliste", () -> parseSpells()),
+				new Tuple<>("sf", () -> parseSkills()), new Tuple<>("ereignisse", () -> parseHistory()), new Tuple<>("talentliste", () -> parseTalents()),
+				new Tuple<>("zauberliste", () -> parseSpells()),
 				new Tuple<>("kampf", () -> parseFight()), new Tuple<>("gegenstände", () -> parseInventory()), new Tuple<>("geldboerse", () -> parseMoney()));
 
 		cleanupCheaperSkills();
@@ -1301,6 +1318,371 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 	private void parseHeroes(final List<JSONObject> heroes) {
 		apply("helden", new Tuple<>("held", () -> heroes.add(parseHero())));
+	}
+
+	private void parseHistory() {
+		final JSONArray history = hero.getArr("Steigerungshistorie");
+
+		final int[] ap = new int[] { 0 };
+
+		apply("ereignisse", new Tuple<>("ereignis", () -> {
+			final String type = get("text");
+
+			JSONObject historyEntry = null;
+			final LocalDate entryDate = LocalDate.from(Instant.ofEpochMilli(Long.parseLong(get("time"))).atZone(ZoneId.systemDefault()));
+
+			switch (type) {
+			case "Talent steigern":
+			case "Nahkampftalent steigern":
+				String talentName = replaceTalent(get("obj"));
+
+				historyEntry = new JSONObject(history);
+
+				historyEntry.put("Typ", "Talent");
+
+				if (talentName.startsWith("Kraftschub")) {
+					historyEntry.put("Auswahl", talentName.substring(12, talentName.length() - 1));
+					talentName = "Kräfteschub";
+				} else if (talentName.startsWith("Talentschub")) {
+					historyEntry.put("Auswahl", talentName.substring(13, talentName.length() - 1));
+					talentName = "Talentschub";
+				}
+
+				historyEntry.put("Talent", talentName);
+
+				final String oldV = get("Alt");
+				final int oldIndex = oldV.indexOf(';');
+				historyEntry.put("Von", Integer.parseInt(oldIndex < 0 ? oldV : oldV.substring(0, oldIndex)));
+				final String newV = get("Neu");
+				final int newIndex = newV.indexOf(';');
+				historyEntry.put("Auf", Integer.parseInt(newIndex < 0 ? newV : newV.substring(0, newIndex)));
+
+				String talentMethod = get("Info");
+				if (talentMethod == null) {
+					historyEntry = null;
+					break;
+				}
+				if (talentMethod.startsWith("SE")) {
+					historyEntry.put("SEs", 1);
+					talentMethod = talentMethod.substring(4);
+				}
+				if ("Freie Steigerung".equals(talentMethod)) {
+					historyEntry.put("Methode", "Gegenseitiges Lehren");
+					historyEntry.put("AP", 0);
+				} else {
+					historyEntry.put("Methode", talentMethod);
+					final String talentAp = get("Abenteuerpunkte");
+					historyEntry.put("AP", talentAp != null ? -Integer.parseInt(talentAp) : 0);
+				}
+
+				final JSONObject lastPossibleTalent = history.size() == 0 ? null : history.getObj(history.size() - 1);
+				if (lastPossibleTalent != null && "Talent".equals(lastPossibleTalent.getString("Typ"))
+						&& entryDate.equals(LocalDate.parse(lastPossibleTalent.getString("Datum")))
+						&& lastPossibleTalent.getString("Talent").equals(talentName)
+						&& (!lastPossibleTalent.containsKey("Auswahl") || lastPossibleTalent.getString("Auswahl").equals(historyEntry.getString("Auswahl")))
+						&& (!lastPossibleTalent.containsKey("Freitext") || lastPossibleTalent.getString("Freitext").equals(historyEntry.getString("Freitext")))
+						&& lastPossibleTalent.getString("Methode").equals(historyEntry.getString("Methode"))
+						&& lastPossibleTalent.getInt("Auf") == historyEntry.getInt("Von")) {
+					lastPossibleTalent.put("Auf", historyEntry.getInt("Auf"));
+					if (historyEntry.containsKey("SEs")) {
+						lastPossibleTalent.put("SEs", lastPossibleTalent.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+					}
+					lastPossibleTalent.put("AP", lastPossibleTalent.getInt("AP") + historyEntry.getInt("AP"));
+					historyEntry = null;
+				}
+
+				break;
+			case "Talent aktivieren":
+				String activatedTalentName = replaceTalent(get("obj"));
+
+				historyEntry = new JSONObject(history);
+
+				historyEntry.put("Typ", "Talent");
+				if (activatedTalentName.startsWith("Kraftschub")) {
+					historyEntry.put("Auswahl", activatedTalentName.substring(12, activatedTalentName.length() - 1));
+					activatedTalentName = "Kräfteschub";
+				} else if (activatedTalentName.startsWith("Talentschub")) {
+					historyEntry.put("Auswahl", activatedTalentName.substring(13, activatedTalentName.length() - 1));
+					activatedTalentName = "Talentschub";
+				}
+
+				historyEntry.put("Talent", activatedTalentName);
+
+				historyEntry.put("Auf", 0);
+
+				if ("SE".equals(get("Info"))) {
+					historyEntry.put("SEs", 1);
+				}
+
+				historyEntry.put("Methode", "Gegenseitiges Lehren");
+				final String activatedTalentAp = get("Abenteuerpunkte");
+				historyEntry.put("AP", activatedTalentAp != null ? -Integer.parseInt(activatedTalentAp) : 0);
+
+				break;
+			case "Zauber steigern":
+				historyEntry = new JSONObject(history);
+
+				final String spellName = get("obj");
+				String spell = spellName.substring(0, spellName.indexOf('[') - 1);
+				spell = spellReplacements.getOrDefault(spell, spell);
+				if ("Dämonenbann".equals(spell)) {
+					spell = spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')) + "bann";
+				} else if ("Adlerschwinge Wolfsgestalt".equals(spell)) {
+					historyEntry.put("Freitext", spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')));
+				}
+
+				historyEntry.put("Typ", "Zauber");
+				historyEntry.put("Zauber", spell);
+				historyEntry.put("Repräsentation",
+						representations.getOrDefault(spellName.substring(spellName.indexOf('[') + 1, spellName.indexOf(']')), "Mag"));
+
+				historyEntry.put("Von", Integer.parseInt(get("Alt")));
+				historyEntry.put("Auf", Integer.parseInt(get("Neu")));
+
+				String spellMethod = get("Info");
+				if (spellMethod == null) {
+					historyEntry = null;
+					break;
+				}
+				if (spellMethod.startsWith("SE")) {
+					historyEntry.put("SEs", 1);
+					spellMethod = spellMethod.substring(4);
+				}
+				if ("Freie Steigerung".equals(spellMethod)) {
+					historyEntry.put("Methode", "Gegenseitiges Lehren");
+					historyEntry.put("AP", 0);
+				} else {
+					historyEntry.put("Methode", spellMethod);
+					final String spellAp = get("Abenteuerpunkte");
+					historyEntry.put("AP", spellAp != null ? -Integer.parseInt(spellAp) : 0);
+				}
+
+				final JSONObject lastPossibleSpell = history.size() == 0 ? null : history.getObj(history.size() - 1);
+				if (lastPossibleSpell != null && "Zauber".equals(lastPossibleSpell.getString("Typ"))
+						&& entryDate.equals(LocalDate.parse(lastPossibleSpell.getString("Datum")))
+						&& lastPossibleSpell.getString("Zauber").equals(spell)
+						&& lastPossibleSpell.getString("Repräsentation").equals(historyEntry.getString("Repräsentation"))
+						&& (!lastPossibleSpell.containsKey("Auswahl") || lastPossibleSpell.getString("Auswahl").equals(historyEntry.getString("Auswahl")))
+						&& (!lastPossibleSpell.containsKey("Freitext") || lastPossibleSpell.getString("Freitext").equals(historyEntry.getString("Freitext")))
+						&& lastPossibleSpell.getString("Methode").equals(historyEntry.getString("Methode"))
+						&& lastPossibleSpell.getInt("Auf") == historyEntry.getInt("Von")) {
+					lastPossibleSpell.put("Auf", historyEntry.getInt("Auf"));
+					if (historyEntry.containsKey("SEs")) {
+						lastPossibleSpell.put("SEs", lastPossibleSpell.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+					}
+					lastPossibleSpell.put("AP", lastPossibleSpell.getInt("AP") + historyEntry.getInt("AP"));
+					historyEntry = null;
+				}
+
+				break;
+			case "Zauber aktivieren":
+				historyEntry = new JSONObject(history);
+
+				final String activatedSpellName = get("obj");
+				String activatedSpell = activatedSpellName.substring(0, activatedSpellName.indexOf('[') - 1);
+				activatedSpell = spellReplacements.getOrDefault(activatedSpell, activatedSpell);
+				if ("Dämonenbann".equals(activatedSpell)) {
+					activatedSpell = activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']')) + "bann";
+				} else if ("Adlerschwinge Wolfsgestalt".equals(activatedSpell)) {
+					historyEntry.put("Freitext", activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']')));
+				}
+
+				historyEntry.put("Typ", "Zauber");
+				historyEntry.put("Zauber", activatedSpell);
+				historyEntry.put("Repräsentation",
+						representations.getOrDefault(activatedSpellName.substring(activatedSpellName.indexOf('[') + 1, activatedSpellName.indexOf(']')),
+								"Mag"));
+
+				historyEntry.put("Auf", 0);
+
+				if ("SE".equals(get("Info"))) {
+					historyEntry.put("SEs", 1);
+				}
+
+				historyEntry.put("Methode", "Gegenseitiges Lehren");
+				final String activatedSpellAp = get("Abenteuerpunkte");
+				historyEntry.put("AP", activatedSpellAp != null ? -Integer.parseInt(activatedSpellAp) : 0);
+
+				break;
+			case "Eigenschaft steigern":
+				final JSONObject attributes = ResourceManager.getResource("data/Eigenschaften");
+				String attributeName = get("obj");
+
+				if ("Sozialstatus".equals(attributeName)) {
+					break;
+				}
+
+				historyEntry = new JSONObject(history);
+
+				String entryType = "Basiswert";
+				for (final String attribute : attributes.keySet()) {
+					if (attributes.getObj(attribute).getString("Name").equals(attributeName)) {
+						attributeName = attribute;
+						entryType = "Eigenschaft";
+						break;
+					}
+				}
+
+				historyEntry.put("Typ", entryType);
+				historyEntry.put(entryType, attributeName);
+
+				historyEntry.put("Von", Integer.parseInt(get("Alt")));
+				historyEntry.put("Auf", Integer.parseInt(get("Neu")));
+
+				if ("SE".equals(get("Info"))) {
+					historyEntry.put("SEs", 1);
+				}
+				final String attributeAp = get("Abenteuerpunkte");
+				historyEntry.put("AP", attributeAp != null ? -Integer.parseInt(attributeAp) : 0);
+
+				final JSONObject lastPossibleAttribute = history.size() == 0 ? null : history.getObj(history.size() - 1);
+				if (lastPossibleAttribute != null && entryType.equals(lastPossibleAttribute.getString("Typ"))
+						&& entryDate.equals(LocalDate.parse(lastPossibleAttribute.getString("Datum")))
+						&& lastPossibleAttribute.getString(entryType).equals(attributeName)
+						&& lastPossibleAttribute.getInt("Auf") == historyEntry.getInt("Von")) {
+					lastPossibleAttribute.put("Auf", historyEntry.getInt("Auf"));
+					if (historyEntry.containsKey("SEs")) {
+						lastPossibleAttribute.put("SEs", lastPossibleAttribute.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+					}
+					lastPossibleAttribute.put("AP", lastPossibleAttribute.getInt("AP") + historyEntry.getInt("AP"));
+					historyEntry = null;
+				}
+
+				break;
+			case "Sonderfertigkeit hinzugefügt":
+				historyEntry = new JSONObject(history);
+				historyEntry.put("Typ", "Sonderfertigkeit");
+				String skillName = replaceSkill(get("obj"));
+
+				if (skillName.startsWith("Talentspezialisierung")) {
+					final String talent = replaceTalent(skillName.substring(22, skillName.indexOf('(') - 1));
+					historyEntry.put("Auswahl", talent);
+					final String specialization = skillName.substring(skillName.indexOf('(') + 1, skillName.lastIndexOf(')'));
+					historyEntry.put("Freitext", specialization);
+					final JSONObject talents = ResourceManager.getResource("data/Talente");
+					if (talents.getObj("Nahkampftalente").containsKey(talent) || talents.getObj("Fernkampftalente").containsKey(talent)) {
+						skillName = "Waffenspezialisierung";
+					} else {
+						skillName = "Talentspezialisierung";
+					}
+				} else if (skillName.startsWith("Zauberspezialisierung")) {
+					String spellChoice = skillName.substring(22, skillName.indexOf('[') - 1);
+					spellChoice = spellReplacements.getOrDefault(spellChoice, spellChoice);
+					if ("Dämonenbann".equals(spellChoice)) {
+						spellChoice = skillName.substring(skillName.lastIndexOf('[') + 1, skillName.lastIndexOf(']')) + "bann";
+					}
+					historyEntry.put("Auswahl", spellChoice);
+					final String specialization = skillName.substring(skillName.indexOf('(') + 1, skillName.lastIndexOf(')'));
+					historyEntry.put("Freitext", specialization);
+					skillName = "Zauberspezialisierung";
+				} else if (skillName.startsWith("Merkmalskenntnis")) {
+					String trait = skillName.substring(18);
+					if ("Elementar".equals(trait)) {
+						trait = "Elementar (gesamt)";
+					} else if ("Dämonisch".equals(trait)) {
+						trait = "Dämonisch (gesamt)";
+					}
+					historyEntry.put("Auswahl", trait);
+					skillName = "Merkmalskenntnis";
+				} else if (skillName.startsWith("Repräsentation")) {
+					String rep = skillName.substring(16);
+					rep = repReplacements.getOrDefault(rep, rep);
+					historyEntry.put("Auswahl", rep);
+					skillName = "Repräsentation";
+				} else if (skillName.startsWith("Ritualkenntnis")) {
+					String choice = skillName.substring(16);
+					choice = ritualKnowledge.getOrDefault(choice, choice);
+					historyEntry.put("Auswahl", choice);
+					skillName = "Ritualkenntnis";
+				} else if (skillName.startsWith("Liturgiekenntnis")) {
+					String goddess = skillName.substring(18, skillName.length() - 1);
+					if ("Boron".equals(goddess)) {
+						goddess = selectBoronCult();
+					}
+					historyEntry.put("Auswahl", goddess);
+					skillName = "Liturgiekenntnis";
+				} else if (skillName.startsWith("Kulturkunde")) {
+					final String culture = skillName.substring(13, skillName.length() - 1);
+					historyEntry.put("Auswahl", culture);
+					skillName = "Kulturkunde";
+				} else if (skillName.startsWith("Ortskenntnis")) {
+					final String location = skillName.substring(14, skillName.length() - 1);
+					historyEntry.put("Freitext", location);
+					skillName = "Ortskenntnis";
+				} else if (skillName.startsWith("Berufsgeheimnis")) {
+					final String text = skillName.substring(skillName.lastIndexOf(';') + 2, skillName.length() - 1);
+					historyEntry.put("Freitext", text);
+					skillName = "Berufsgeheimnis";
+				} else if (skillName.startsWith("Scharfschütze")) {
+					final String talent = skillName.substring(15, skillName.length() - 1);
+					historyEntry.put("Auswahl", talent);
+					skillName = "Scharfschütze";
+				} else if (skillName.startsWith("Meisterschütze")) {
+					final String talent = skillName.substring(16, skillName.length() - 1);
+					historyEntry.put("Auswahl", talent);
+					skillName = "Meisterschütze";
+				} else if (skillName.startsWith("Rüstungsgewöhnung I") && !skillName.startsWith("Rüstungsgewöhnung II")) {
+					final String armor = skillName.substring(21, skillName.length() - 1);
+					historyEntry.put("Freitext", armor);
+					skillName = "Rüstungsgewöhnung I";
+				} else if (skillName.startsWith("Waffenmeister") && !"Waffenmeister (Schild)".equals(skillName)) {
+					final int talentIndex = skillName.indexOf(';') + 1;
+					final String talent = skillName.substring(talentIndex + 1, skillName.indexOf(';', talentIndex));
+					historyEntry.put("Auswahl", talent);
+					final String weapon = skillName.substring(15, talentIndex - 1);
+					historyEntry.put("Freitext", weapon);
+					skillName = "Waffenmeister";
+				} else if (skillName.startsWith("Akoluth")) {
+					String goddess = skillName.substring(9, skillName.length() - 1);
+					if ("Boron".equals(goddess)) {
+						goddess = selectBoronCult();
+					}
+					historyEntry.put("Auswahl", goddess);
+					skillName = "Akoluth";
+				}
+
+				final JSONObject skill = HeroUtil.findSkill(skillName);
+				if (skill.containsKey("Auswahl") && !historyEntry.containsKey("Auswahl")) {
+					final int choiceIndex = skillName.indexOf('(');
+					historyEntry.put("Auswahl", skillName.substring(choiceIndex + 1, skillName.length() - 1));
+					skillName = skillName.substring(0, choiceIndex - 1);
+				} else if (skill.containsKey("Freitext") && !historyEntry.containsKey("Freitext")) {
+					final int textIndex = skillName.indexOf('(');
+					historyEntry.put("Freitext", skillName.substring(textIndex + 1, skillName.length() - 1));
+					skillName = skillName.substring(0, textIndex - 1);
+				}
+
+				historyEntry.put("Sonderfertigkeit", skillName);
+				final String skillAp = get("Abenteuerpunkte");
+				historyEntry.put("AP", skillAp != null ? -Integer.parseInt(skillAp) : 0);
+				break;
+			case "Abenteuerpunkte":
+				if (get("obj") == null || "gesamt".equals(get("obj"))) {
+					historyEntry = new JSONObject(history);
+					historyEntry.put("Typ", "Abenteuerpunkte");
+					historyEntry.put("Von", Integer.parseInt(get("Alt")));
+					final int newAP = Integer.parseInt(get("Neu"));
+					historyEntry.put("Auf", newAP);
+					ap[0] = newAP;
+				}
+				break;
+			case "Ereignis eingeben":
+				final String event = get("obj");
+				if ("Abenteuerpunkte (Hinzugewinn)".equals(event) && ap[0] != 0) {
+					historyEntry = new JSONObject(history);
+					historyEntry.put("Typ", "Abenteuerpunkte");
+					historyEntry.put("Von", ap[0]);
+					ap[0] += Integer.parseInt(get("Abenteuerpunkte"));
+					historyEntry.put("Auf", ap[0]);
+				}
+				break;
+			}
+
+			if (historyEntry != null) {
+				historyEntry.put("Datum", entryDate.toString());
+				history.add(historyEntry);
+			}
+		}));
 	}
 
 	private void parseInventory() {
@@ -2020,6 +2402,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					choice = parts[1] + "bann";
 				}
 				text = values.get("Spez");
+			} else if ("Elementarharmonisierte Aura".equals(name)) {
+				final Map<String, String> value = extract("sonderfertigkeit", new Tuple3<>("auswahl", () -> "Auswahl", () -> get("name")));
+				name = replaceSkill("Elementarharmonisierte Aura (" + value.get("Auswahl") + ")");
 			} else if (name.startsWith("Merkmalskenntnis")) {
 				choice = name.substring(18);
 				if ("Elementar".equals(choice)) {
