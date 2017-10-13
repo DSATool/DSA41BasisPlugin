@@ -184,7 +184,7 @@ public class DSAUtil {
 
 	public static int getEnhancementCost(final Talent talent, final JSONObject hero, final String method, final int startLevel,
 			final int targetLevel, final boolean charGen) {
-		int modifier = "Lehrmeister".equals(method) ? -1 : 0;
+		int modifier = "Lehrmeister".equals(method) ? -1 : "Selbststudium".equals(method) ? 1 : 0;
 		final String talentGroup = HeroUtil.findTalent(talent.getName())._2;
 		int charGenModifier = 0;
 		int maxLevel = 10;
@@ -262,7 +262,7 @@ public class DSAUtil {
 			if (charGen && i == maxLevel) {
 				modifier -= charGenModifier;
 			}
-			final int localModifier = i > 10 && "Selbststudium".equals(method) ? 2 : 0;
+			final int localModifier = i > 10 && "Selbststudium".equals(method) ? 1 : 0;
 			result += Math.round(getEnhancementCost(talent.getEnhancementCost(hero, i) + modifier + localModifier, i, charGen) * multiplier);
 		}
 		return result;
