@@ -63,6 +63,26 @@ public class HeroUtil {
 		}, races);
 	}
 
+	public static void addMoney(final JSONObject hero, final int kreutzer) {
+		final JSONObject money = hero.getObj("Besitz").getObj("Geld");
+		int current = kreutzer;
+		for (final String unit : new String[] { "Kreuzer", "Heller", "Silbertaler" }) {
+			int newValue = money.getIntOrDefault(unit, 0) + current;
+			if (newValue < 0) {
+				current = -(int) Math.ceil(-newValue / 10.0);
+				newValue -= current * 10;
+			} else if (newValue >= 10) {
+				current = (int) Math.floor(newValue / 10.0);
+				newValue -= current * 10;
+			} else {
+				current = 0;
+			}
+			money.put(unit, newValue);
+		}
+		money.put("Dukaten", money.getIntOrDefault("Dukaten", 0) + current);
+		money.notifyListeners(null);
+	}
+
 	public static void applyEffect(final JSONObject hero, final String effectorName, final JSONObject effector, final JSONObject actual) {
 		final JSONObject effect = effector.getObjOrDefault("Effekte", null);
 		if (hero == null || effect == null) return;
