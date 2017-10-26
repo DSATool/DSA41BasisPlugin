@@ -271,19 +271,18 @@ public class HeroUtil {
 		for (int i = 0; i < derivationAttributes.size(); ++i) {
 			value += getCurrentValue(attributes.getObj(derivationAttributes.getString(i)), false);
 		}
-		if (derivation.getParent() instanceof JSONObject) {
-			if ("Astralenergie".equals(((JSONObject) derivation.getParent()).keyOf(derivation))) {
-				if (attributes.getParent() instanceof JSONObject) {
-					final JSONObject hero = (JSONObject) attributes.getParent();
-					if (hero.containsKey("Sonderfertigkeiten") && hero.getObj("Sonderfertigkeiten").containsKey("Gefäß der Sterne")) {
-						value += getCurrentValue(attributes.getObj("CH"), false);
-					}
+		final JSONObject derivedValues = ResourceManager.getResource("data/Basiswerte");
+		if (derivation == derivedValues.getObj("Astralenergie")) {
+			if (attributes.getParent() instanceof JSONObject) {
+				final JSONObject hero = (JSONObject) attributes.getParent();
+				if (hero.containsKey("Sonderfertigkeiten") && hero.getObj("Sonderfertigkeiten").containsKey("Gefäß der Sterne")) {
+					value += getCurrentValue(attributes.getObj("CH"), false);
 				}
-			} else if ("Geschwindigkeit".equals(((JSONObject) derivation.getParent()).keyOf(derivation))) {
-				final int GE = attributes.getObj("GE").getIntOrDefault("Wert", 1);
-				final int geModifier = GE > 15 ? 1 : GE < 11 ? -1 : 0;
-				value += geModifier;
 			}
+		} else if (derivation == derivedValues.getObj("Geschwindigkeit")) {
+			final int GE = attributes.getObj("GE").getIntOrDefault("Wert", 1);
+			final int geModifier = GE > 15 ? 1 : GE < 11 ? -1 : 0;
+			value += geModifier;
 		}
 		return value * derivation.getDoubleOrDefault("Multiplikator", 1.0);
 	}
@@ -1374,6 +1373,7 @@ public class HeroUtil {
 							if (proConSkill.getBoolOrDefault("Abgestuft", false)) {
 								actualProConSkill.put("Stufe",
 										actualProConSkill.getIntOrDefault("Stufe", 0) - currentProConSkillChange.getIntOrDefault("Stufe", 0));
+								actualProConSkill.notifyListeners(null);
 								if (actualProConSkill.getInt("Stufe") == 0) {
 									actualProConSkills.remove(actualProConSkill);
 								}
@@ -1382,7 +1382,6 @@ public class HeroUtil {
 								actualProConSkills.remove(actualProConSkill);
 								unapplyEffect(hero, proConSkillName, proConSkill, currentProConSkillChange);
 							}
-							actualProConSkill.notifyListeners(null);
 							break;
 						}
 					}
@@ -1391,6 +1390,7 @@ public class HeroUtil {
 					if (proConSkill.getBoolOrDefault("Abgestuft", false)) {
 						actualProConSkill.put("Stufe",
 								actualProConSkill.getIntOrDefault("Stufe", 0) - proConSkillChanges.getObj(proConSkillName).getIntOrDefault("Stufe", 0));
+						actualProConSkill.notifyListeners(null);
 						if (actualProConSkill.getInt("Stufe") == 0) {
 							target.removeKey(proConSkillName);
 						}
@@ -1399,8 +1399,8 @@ public class HeroUtil {
 						target.removeKey(proConSkillName);
 						unapplyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
 					}
-					actualProConSkill.notifyListeners(null);
 				}
+				target.notifyListeners(null);
 			}
 		}
 
