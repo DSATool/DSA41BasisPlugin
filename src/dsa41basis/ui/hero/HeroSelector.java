@@ -261,14 +261,17 @@ public class HeroSelector {
 	}
 
 	private void saveHero(final int index) {
+		final JSONObject hero = heroes.get(index);
+
 		final FileChooser dialog = new FileChooser();
 
 		dialog.setTitle("Datei speichern");
+		dialog.setInitialFileName(hero.getObj("Biografie").getString("Vorname") + ".json");
 		dialog.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("*.json", "*.json"));
 
 		final File file = dialog.showSaveDialog(null);
 		if (file != null) {
-			ResourceManager.saveResource(heroes.get(index), file.getAbsolutePath());
+			ResourceManager.saveResource(hero, file.getAbsolutePath());
 		}
 	}
 
