@@ -85,12 +85,21 @@ public class InventoryItem {
 	}
 
 	public final void setNotes(final String notes) {
-		item.put("Anmerkungen", notes);
+		if (notes == null || "".equals(notes)) {
+			item.removeKey("Anmerkungen");
+		} else {
+			item.put("Anmerkungen", notes);
+		}
 		item.notifyListeners(null);
 	}
 
 	public void setWeight(final double weight) {
-		baseItem.put("Gewicht", weight);
+		item.removeKey("Gewicht");
+		if (weight != 0) {
+			baseItem.removeKey("Gewicht");
+		} else {
+			baseItem.put("Gewicht", weight);
+		}
 		baseItem.notifyListeners(null);
 	}
 
