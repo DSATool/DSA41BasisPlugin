@@ -117,12 +117,22 @@ public class RangedWeapon extends OffensiveWeapon {
 		return ammunition.get();
 	}
 
+	public final int getAmmunitionMax() {
+		if (baseItem.containsKey("Munition"))
+			return item.getObjOrDefault("Munition", baseItem.getObj("Munition")).getIntOrDefault("Gesamt", 1);
+		else
+			return item.getObj("Munition").getIntOrDefault("Gesamt", 1);
+	}
+
 	public final String getAmmunitionType() {
 		return ammunitionType.get();
 	}
 
 	public JSONObject getAmmunitionTypes() {
-		return item.getObjOrDefault("Munition", baseItem.getObj("Munition"));
+		if (baseItem.containsKey("Munition"))
+			return item.getObjOrDefault("Munition", baseItem.getObj("Munition"));
+		else
+			return item.getObj("Munition");
 	}
 
 	public final int getAt() {
@@ -192,7 +202,12 @@ public class RangedWeapon extends OffensiveWeapon {
 	}
 
 	public void setAmmunition(final JSONObject ammunition) {
-		item.put("Munition", ammunition.clone(item));
+		if (ammunition == null) {
+			item.removeKey("Munition");
+		} else {
+			item.put("Munition", ammunition.clone(item));
+		}
+		item.notifyListeners(null);
 	}
 
 	public void setAmmunitionType(final String ammunitionType) {
@@ -279,6 +294,15 @@ public class RangedWeapon extends OffensiveWeapon {
 
 	public final void setLoad(final int load) {
 		item.put("Ladedauer", load);
+		item.notifyListeners(null);
+	}
+
+	public final void setMaxAmmunition(final int amount) {
+		if (amount == 0) {
+			item.removeKey("Anzahl");
+		} else {
+			item.getObj("Anzahl").put("Gesamt", amount);
+		}
 		item.notifyListeners(null);
 	}
 }
