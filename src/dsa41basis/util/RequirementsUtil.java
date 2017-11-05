@@ -80,6 +80,80 @@ public class RequirementsUtil {
 		return true;
 	}
 
+	private static boolean hasChoice(final JSONArray skill, final int requiredLevel, String requiredChoice, final String choice, final String text,
+			final boolean matchText, final boolean negate, final boolean strictMatching) {
+		boolean found = false;
+
+		if ("Auswahl".equals(requiredChoice)) {
+			requiredChoice = choice;
+		} else if ("Freitext".equals(requiredChoice)) {
+			requiredChoice = text;
+		}
+		if (requiredChoice == null && strictMatching) return false;
+
+		for (int i = 0; i < skill.size() && !found; ++i) {
+			final JSONObject actualSkill = skill.getObj(i);
+			if (requiredChoice == null || requiredChoice.equals(actualSkill.getString(matchText ? "Freitext" : "Auswahl")) ^ negate) {
+				found = actualSkill.getIntOrDefault("Stufe", 0) >= requiredLevel;
+			}
+		}
+
+		return found;
+	}
+
+	private static boolean hasProConSkill(final JSONObject hero, final String name, final JSONObject requiredSkill, final String choice, final String text,
+			final boolean strictMatching) {
+		final JSONObject pros = hero.getObj("Vorteile");
+		final JSONObject cons = hero.getObj("Nachteile");
+		final JSONObject actualSkills = hero.getObj("Sonderfertigkeiten");
+
+		JSONValue skill = null;
+		if (pros.containsKey(name)) {
+			skill = (JSONValue) pros.getUnsafe(name);
+		} else if (cons.containsKey(name)) {
+			skill = (JSONValue) cons.getUnsafe(name);
+		} else if (actualSkills.containsKey(name)) {
+			skill = (JSONValue) actualSkills.getUnsafe(name);
+		} else
+			return false;
+
+		final int requiredLevel = requiredSkill.getIntOrDefault("Stufe", 0);
+
+		for (int kind = 0; kind < 2; ++kind) {
+			if (requiredSkill.containsKey(kind == 0 ? "Auswahl" : "Freitext")) {
+				final JSONArray arr = (JSONArray) skill;
+
+				final JSONObject skillChoice = requiredSkill.getObj(kind == 0 ? "Auswahl" : "Freitext");
+				if (skillChoice.containsKey("Muss")) {
+					if (!hasChoice(arr, requiredLevel, skillChoice.getString("Muss"), choice, text, kind != 0, false, strictMatching)) return false;
+				}
+				if (skillChoice.containsKey("Wahl")) {
+					final JSONArray choiceChoice = skillChoice.getArr("Wahl");
+					boolean found = false;
+					for (int i = 0; i < choiceChoice.size() && !found; ++i) {
+						if (hasChoice(arr, requiredLevel, choiceChoice.getString(i), choice, text, kind != 0, false, strictMatching)) {
+							found = true;
+						}
+					}
+					if (!found) return false;
+				}
+				if (skillChoice.containsKey("Nicht")) {
+					if (!hasChoice(arr, requiredLevel, skillChoice.getString("Nicht"), choice, text, kind != 0, true, strictMatching)) return false;
+				}
+			}
+		}
+
+		if (!requiredSkill.containsKey("Auswahl") && !requiredSkill.containsKey("Freitext")) {
+			if (skill instanceof JSONObject) {
+				if (((JSONObject) skill).getIntOrDefault("Stufe", 0) < requiredLevel) return false;
+			} else {
+				if (!hasChoice((JSONArray) skill, requiredLevel, "Auswahl", null, null, false, false, false)) return false;
+			}
+		}
+
+		return true;
+	}
+
 	private static boolean hasRKP(final JSONObject hero, final String category, final String name, final JSONObject rkp, final boolean isProfession) {
 		final JSONObject biography = hero.getObj("Biografie");
 		final JSONObject pros = hero.getObj("Vorteile");
@@ -103,7 +177,7 @@ public class RequirementsUtil {
 		return false;
 	}
 
-	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String freeText,
+	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String text,
 			final boolean includeManualMods) {
 		if (requirements == null) return true;
 
@@ -113,7 +187,7 @@ public class RequirementsUtil {
 				boolean fulfilled = false;
 				final JSONArray currentChoices = choices.getArr(i);
 				for (int j = 0; j < currentChoices.size(); ++j) {
-					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, freeText, includeManualMods)) {
+					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, text, includeManualMods)) {
 						fulfilled = true;
 						break;
 					}
@@ -138,7 +212,7 @@ public class RequirementsUtil {
 			final JSONArray choices = requirements.getArr("Freitext");
 			boolean found = false;
 			for (int i = 0; i < choices.size(); ++i) {
-				if (choices.getString(i).equals(freeText)) {
+				if (choices.getString(i).equals(text)) {
 					found = true;
 					break;
 				}
@@ -195,7 +269,7 @@ public class RequirementsUtil {
 					if ("Auswahl".equals(talent)) {
 						talent = choice;
 					} else if ("Freitext".equals(talent)) {
-						talent = freeText;
+						talent = text;
 					}
 					if (!isTalentRequirementFulfilled(hero, talent, value)) return false;
 				}
@@ -210,7 +284,7 @@ public class RequirementsUtil {
 						if ("Auswahl".equals(talent)) {
 							talent = choice;
 						} else if ("Freitext".equals(talent)) {
-							talent = freeText;
+							talent = text;
 						}
 						if (isTalentRequirementFulfilled(hero, talent, value)) {
 							match = true;
@@ -295,434 +369,34 @@ public class RequirementsUtil {
 		}
 
 		if (requirements.containsKey("Vorteile/Nachteile/Sonderfertigkeiten")) {
-			final JSONObject pros = hero.getObj("Vorteile");
-			final JSONObject cons = hero.getObj("Nachteile");
-
 			final JSONObject skills = requirements.getObj("Vorteile/Nachteile/Sonderfertigkeiten");
 			if (skills.containsKey("Muss")) {
 				final JSONObject must = skills.getObj("Muss");
-				for (final String requiredSkillName : must.keySet()) {
-					final JSONObject requiredSkill = must.getObj(requiredSkillName);
-					JSONValue skill = null;
-					if (pros.containsKey(requiredSkillName)) {
-						skill = (JSONValue) pros.getUnsafe(requiredSkillName);
-					} else if (cons.containsKey(requiredSkillName)) {
-						skill = (JSONValue) cons.getUnsafe(requiredSkillName);
-					} else if (actualSkills.containsKey(requiredSkillName)) {
-						skill = (JSONValue) actualSkills.getUnsafe(requiredSkillName);
-					} else
-						return false;
-					if (requiredSkill.containsKey("Auswahl")) {
-						final JSONObject skillChoice = requiredSkill.getObj("Auswahl");
-						if (skillChoice.containsKey("Muss")) {
-							String choiceMust = skillChoice.getString("Muss");
-							boolean found = false;
-							if (choice != null && "Auswahl".equals(choiceMust)) {
-								choiceMust = choice;
-							} else if (freeText != null && "Freitext".equals(choiceMust)) {
-								choiceMust = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (choiceMust.equals(actualSkill.getString("Auswahl"))) {
-									found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-											: true;
-									break;
-								}
-							}
-							if (!found) return false;
-						}
-						if (skillChoice.containsKey("Wahl")) {
-							final JSONArray choiceChoice = skillChoice.getArr("Wahl");
-							boolean found = false;
-							for (int i = 0; i < choiceChoice.size(); ++i) {
-								String curChoiceChoice = choiceChoice.getString(i);
-								if (choice != null && "Auswahl".equals(curChoiceChoice)) {
-									curChoiceChoice = choice;
-								} else if (freeText != null && "Freitext".equals(curChoiceChoice)) {
-									curChoiceChoice = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (curChoiceChoice.equals(actualSkill.getString("Auswahl"))) {
-										found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-												: true;
-										break;
-									}
-								}
-								if (found) {
-									break;
-								}
-							}
-							if (!found) return false;
-						}
-						if (skillChoice.containsKey("Nicht")) {
-							String choiceNot = skillChoice.getString("Nicht");
-							boolean found = false;
-							if (choice != null && "Auswahl".equals(choiceNot)) {
-								choiceNot = choice;
-							} else if (freeText != null && "Freitext".equals(choiceNot)) {
-								choiceNot = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (!choiceNot.equals(actualSkill.getString("Auswahl"))) {
-									found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-											: true;
-									if (found) {
-										break;
-									}
-								}
-							}
-							if (!found) return false;
-						}
-					}
-					if (requiredSkill.containsKey("Freitext")) {
-						final JSONObject skillText = requiredSkill.getObj("Freitext");
-						if (skillText.containsKey("Muss")) {
-							String textMust = skillText.getString("Muss");
-							boolean found = false;
-							if (choice != null && "Auswahl".equals(textMust)) {
-								textMust = choice;
-							} else if (freeText != null && "Freitext".equals(textMust)) {
-								textMust = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (textMust.equals(actualSkill.getString("Freitext"))) {
-									found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-											: true;
-									break;
-								}
-							}
-							if (!found) return false;
-						}
-						if (skillText.containsKey("Wahl")) {
-							final JSONArray textChoice = skillText.getArr("Wahl");
-							boolean found = false;
-							for (int i = 0; i < textChoice.size(); ++i) {
-								String curTextChoice = textChoice.getString(i);
-								if (choice != null && "Auswahl".equals(curTextChoice)) {
-									curTextChoice = choice;
-								} else if (freeText != null && "Freitext".equals(curTextChoice)) {
-									curTextChoice = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (curTextChoice.equals(actualSkill.getString("Freitext"))) {
-										found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-												: true;
-										break;
-									}
-								}
-								if (found) {
-									break;
-								}
-							}
-							if (!found) return false;
-						}
-						if (skill != null && skillText.containsKey("Nicht")) {
-							String textNot = skillText.getString("Nicht");
-							boolean found = false;
-							if (choice != null && "Auswahl".equals(textNot)) {
-								textNot = choice;
-							} else if (freeText != null && "Freitext".equals(textNot)) {
-								textNot = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (!textNot.equals(actualSkill.getString("Freitext"))) {
-									found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-											: true;
-									if (found) {
-										break;
-									}
-								}
-							}
-							if (!found) return false;
-						}
-					}
-					if (requiredSkill.containsKey("Stufe") && !requiredSkill.containsKey("Auswahl") && !requiredSkill.containsKey("Freitext")) {
-						if (((JSONObject) skill).getIntOrDefault("Stufe", 0) < requiredSkill.getInt("Stufe")) return false;
-					}
+				for (final String name : must.keySet()) {
+					final JSONObject skill = must.getObj(name);
+					if (!hasProConSkill(hero, name, skill, choice, text, false)) return false;
 				}
 			}
 			if (skills.containsKey("Wahl")) {
 				final JSONArray choices = skills.getArr("Wahl");
 				for (int i = 0; i < choices.size(); ++i) {
 					final JSONObject curChoice = choices.getObj(i);
-					boolean match = false;
-					for (final String requiredSkillName : curChoice.keySet()) {
-						final JSONObject requiredSkill = curChoice.getObj(requiredSkillName);
-						JSONValue skill = null;
-						if (pros.containsKey(requiredSkillName)) {
-							skill = (JSONValue) pros.getUnsafe(requiredSkillName);
-						} else if (cons.containsKey(requiredSkillName)) {
-							skill = (JSONValue) cons.getUnsafe(requiredSkillName);
-						} else if (actualSkills.containsKey(requiredSkillName)) {
-							skill = (JSONValue) actualSkills.getUnsafe(requiredSkillName);
-						} else {
-							continue;
+					boolean found = false;
+					for (final String name : curChoice.keySet()) {
+						final JSONObject skill = curChoice.getObj(name);
+						if (hasProConSkill(hero, name, skill, choice, text, false)) {
+							found = true;
+							break;
 						}
-						if (requiredSkill.containsKey("Auswahl")) {
-							final JSONObject skillChoice = requiredSkill.getObj("Auswahl");
-							if (skillChoice.containsKey("Muss")) {
-								String choiceMust = skillChoice.getString("Muss");
-								boolean found = false;
-								if (choice != null && "Auswahl".equals(choiceMust)) {
-									choiceMust = choice;
-								} else if (freeText != null && "Freitext".equals(choiceMust)) {
-									choiceMust = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (choiceMust.equals(actualSkill.getString("Auswahl"))) {
-										found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-												: true;
-										break;
-									}
-								}
-								if (!found) {
-									continue;
-								}
-							}
-							if (skillChoice.containsKey("Wahl")) {
-								final JSONArray choiceChoice = skillChoice.getArr("Wahl");
-								boolean found = false;
-								for (int j = 0; j < choiceChoice.size(); ++j) {
-									String curChoiceChoice = choiceChoice.getString(j);
-									if (choice != null && "Auswahl".equals(curChoiceChoice)) {
-										curChoiceChoice = choice;
-									} else if (freeText != null && "Freitext".equals(curChoiceChoice)) {
-										curChoiceChoice = freeText;
-									}
-									for (int k = 0; k < skill.size(); ++k) {
-										final JSONObject actualSkill = ((JSONArray) skill).getObj(k);
-										if (curChoiceChoice.equals(actualSkill.getString("Auswahl"))) {
-											found = requiredSkill.containsKey("Stufe")
-													? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe") : true;
-											break;
-										}
-									}
-									if (found) {
-										break;
-									}
-								}
-								if (!found) {
-									continue;
-								}
-							}
-							if (skillChoice.containsKey("Nicht")) {
-								String choiceNot = skillChoice.getString("Nicht");
-								boolean found = false;
-								if (choice != null && "Auswahl".equals(choiceNot)) {
-									choiceNot = choice;
-								} else if (freeText != null && "Freitext".equals(choiceNot)) {
-									choiceNot = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (!choiceNot.equals(actualSkill.getString("Auswahl"))) {
-										found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-												: true;
-										if (found) {
-											break;
-										}
-									}
-								}
-								if (!found) {
-									continue;
-								}
-							}
-						}
-						if (requiredSkill.containsKey("Freitext")) {
-							final JSONObject skillText = requiredSkill.getObj("Freitext");
-							if (skillText.containsKey("Muss")) {
-								String textMust = skillText.getString("Muss");
-								boolean found = false;
-								if (choice != null && "Auswahl".equals(textMust)) {
-									textMust = choice;
-								} else if (freeText != null && "Freitext".equals(textMust)) {
-									textMust = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (textMust.equals(actualSkill.getString("Freitext"))) {
-										found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-												: true;
-										break;
-									}
-								}
-								if (!found) {
-									continue;
-								}
-							}
-							if (skillText.containsKey("Wahl")) {
-								final JSONArray textChoice = skillText.getArr("Wahl");
-								boolean found = false;
-								for (int j = 0; j < textChoice.size(); ++j) {
-									String curTextChoice = textChoice.getString(j);
-									if (choice != null && "Auswahl".equals(curTextChoice)) {
-										curTextChoice = choice;
-									} else if (freeText != null && "Freitext".equals(curTextChoice)) {
-										curTextChoice = freeText;
-									}
-									for (int k = 0; k < skill.size(); ++k) {
-										final JSONObject actualSkill = ((JSONArray) skill).getObj(k);
-										if (curTextChoice.equals(actualSkill.getString("Freitext"))) {
-											found = requiredSkill.containsKey("Stufe")
-													? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe") : true;
-											break;
-										}
-									}
-									if (found) {
-										break;
-									}
-								}
-								if (!found) {
-									continue;
-								}
-							}
-							if (skill != null && skillText.containsKey("Nicht")) {
-								String textNot = skillText.getString("Nicht");
-								boolean found = false;
-								if (choice != null && "Auswahl".equals(textNot)) {
-									textNot = choice;
-								} else if (freeText != null && "Freitext".equals(textNot)) {
-									textNot = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (!textNot.equals(actualSkill.getString("Freitext"))) {
-										found = requiredSkill.containsKey("Stufe") ? actualSkill.getIntOrDefault("Stufe", 0) >= requiredSkill.getInt("Stufe")
-												: true;
-										if (found) {
-											break;
-										}
-									}
-								}
-								if (!found) {
-									continue;
-								}
-							}
-						}
-						match = true;
-						break;
 					}
-					if (!match) return false;
+					if (!found) return false;
 				}
 			}
 			if (skills.containsKey("Nicht")) {
-				final JSONObject not = skills.getObj("Nicht");
-				for (final String prohibitedSkillName : not.keySet()) {
-					final JSONObject prohibitedSkill = not.getObj(prohibitedSkillName);
-					final boolean choiceOrText = prohibitedSkill.containsKey("Auswahl") || prohibitedSkill.containsKey("Freitext");
-					JSONValue skill = null;
-					if (pros.containsKey(prohibitedSkillName)) {
-						skill = (JSONValue) pros.getUnsafe(prohibitedSkillName);
-					} else if (cons.containsKey(prohibitedSkillName)) {
-						skill = (JSONValue) cons.getUnsafe(prohibitedSkillName);
-					} else if (actualSkills.containsKey(prohibitedSkillName)) {
-						skill = (JSONValue) actualSkills.getUnsafe(prohibitedSkillName);
-					}
-					if (!choiceOrText && skill != null) return prohibitedSkill.containsKey("Stufe")
-							? ((JSONObject) skill).getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe") : false;
-					if (skill != null & prohibitedSkill.containsKey("Auswahl")) {
-						final JSONObject skillChoice = prohibitedSkill.getObj("Auswahl");
-						if (skillChoice.containsKey("Muss")) {
-							String choiceMust = skillChoice.getString("Muss");
-							if (choice != null && "Auswahl".equals(choiceMust)) {
-								choiceMust = choice;
-							} else if (freeText != null && "Freitext".equals(choiceMust)) {
-								choiceMust = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (choiceMust.equals(actualSkill.getString("Auswahl")) && (!prohibitedSkill.containsKey("Stufe")
-										|| actualSkill.getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe")))
-									return false;
-							}
-						}
-						if (skillChoice.containsKey("Wahl")) {
-							final JSONArray choiceChoice = skillChoice.getArr("Wahl");
-							for (int i = 0; i < choiceChoice.size(); ++i) {
-								String curChoiceChoice = choiceChoice.getString(i);
-								if (choice != null && "Auswahl".equals(curChoiceChoice)) {
-									curChoiceChoice = choice;
-								} else if (freeText != null && "Freitext".equals(curChoiceChoice)) {
-									curChoiceChoice = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (curChoiceChoice.equals(actualSkill.getString("Auswahl")) && (!prohibitedSkill.containsKey("Stufe")
-											|| actualSkill.getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe")))
-										return false;
-								}
-							}
-						}
-						if (skillChoice.containsKey("Nicht")) {
-							String choiceNot = skillChoice.getString("Nicht");
-							if (choice != null && "Auswahl".equals(choiceNot)) {
-								choiceNot = choice;
-							} else if (freeText != null && "Freitext".equals(choiceNot)) {
-								choiceNot = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (!choiceNot.equals(actualSkill.getString("Auswahl")) && (!prohibitedSkill.containsKey("Stufe")
-										|| actualSkill.getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe")))
-									return false;
-							}
-						}
-					}
-					if (skill != null && prohibitedSkill.containsKey("Freitext")) {
-						final JSONObject skillText = prohibitedSkill.getObj("Freitext");
-						if (skillText.containsKey("Muss")) {
-							String textMust = skillText.getString("Muss");
-							if (choice != null && "Auswahl".equals(textMust)) {
-								textMust = choice;
-							} else if (freeText != null && "Freitext".equals(textMust)) {
-								textMust = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (textMust.equals(actualSkill.getString("Freitext")) && (!prohibitedSkill.containsKey("Stufe")
-										|| actualSkill.getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe")))
-									return false;
-							}
-						}
-						if (skillText.containsKey("Wahl")) {
-							final JSONArray textChoice = skillText.getArr("Wahl");
-							for (int i = 0; i < textChoice.size(); ++i) {
-								String curTextChoice = textChoice.getString(i);
-								if (choice != null && "Auswahl".equals(curTextChoice)) {
-									curTextChoice = choice;
-								} else if (freeText != null && "Freitext".equals(curTextChoice)) {
-									curTextChoice = freeText;
-								}
-								for (int j = 0; j < skill.size(); ++j) {
-									final JSONObject actualSkill = ((JSONArray) skill).getObj(j);
-									if (curTextChoice.equals(actualSkill.getString("Freitext")) && (!prohibitedSkill.containsKey("Stufe")
-											|| actualSkill.getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe")))
-										return false;
-								}
-							}
-						}
-						if (skillText.containsKey("Nicht")) {
-							String textNot = skillText.getString("Nicht");
-							if (choice != null && "Auswahl".equals(textNot)) {
-								textNot = choice;
-							} else if (freeText != null && "Freitext".equals(textNot)) {
-								textNot = freeText;
-							}
-							for (int i = 0; i < skill.size(); ++i) {
-								final JSONObject actualSkill = ((JSONArray) skill).getObj(i);
-								if (!textNot.equals(actualSkill.getString("Freitext")) && (!prohibitedSkill.containsKey("Stufe")
-										|| actualSkill.getIntOrDefault("Stufe", 0) >= prohibitedSkill.getInt("Stufe")))
-									return false;
-							}
-						}
-					}
+				final JSONObject must = skills.getObj("Nicht");
+				for (final String name : must.keySet()) {
+					final JSONObject skill = must.getObj(name);
+					if (hasProConSkill(hero, name, skill, choice, text, true)) return false;
 				}
 			}
 		}
@@ -731,7 +405,9 @@ public class RequirementsUtil {
 	}
 
 	private static boolean isTalentRequirementFulfilled(final JSONObject hero, final String talentName, final int value) {
-		if ("Lesen/Schreiben".equals(talentName)) {
+		if (talentName == null)
+			return true;
+		else if ("Lesen/Schreiben".equals(talentName)) {
 			final JSONObject languages = hero.getObj("Talente").getObj("Sprachen und Schriften");
 			for (final String language : languages.keySet()) {
 				if (!HeroUtil.findTalent(language)._1.getBoolOrDefault("Schrift", false)) {
