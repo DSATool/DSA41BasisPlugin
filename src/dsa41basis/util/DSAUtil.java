@@ -42,7 +42,7 @@ public class DSAUtil {
 	public static final Random random = new Random();
 
 	public static final String[] months = { "Praios", "Rondra", "Efferd", "Travia", "Boron", "Hesinde", "Firun", "Tsa", "Phex", "Peraine", "Ingerimm", "Rahja",
-			"Namenloser Tag" };
+			"Namenloser" };
 
 	public static final String[] weekdays = { "Erdtag", "Markttag", "Praiostag", "Rohalstag", "Feuertag", "Wassertag", "Windstag" };
 
