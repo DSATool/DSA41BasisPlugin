@@ -1321,7 +1321,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 	}
 
 	private void parseHistory() {
-		final JSONArray history = hero.getArr("Steigerungshistorie");
+		final JSONArray history = hero.getArr("Historie");
 
 		final int[] ap = new int[] { 0 };
 

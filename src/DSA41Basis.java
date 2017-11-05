@@ -17,9 +17,11 @@
 import java.util.Arrays;
 
 import dsa41basis.datePicker.DatePickerController;
+import dsa41basis.util.ResourceSanitizer;
 import dsatool.credits.Credits;
 import dsatool.gui.Main;
 import dsatool.plugins.Plugin;
+import dsatool.resources.ResourceManager;
 import dsatool.resources.Settings;
 import dsatool.settings.StringChoiceSetting;
 import dsatool.util.Util;
@@ -50,10 +52,18 @@ public class DSA41Basis extends Plugin {
 	@Override
 	public void initialize() {
 		getNotifications = true;
+
+		ResourceManager.setDiscriminatingAttribute("Bücher");
+		ResourceManager.setPriorities(Settings.getSettingArray("Allgemein", "Bücher").getStrings());
+
+		ResourceManager.addResourceSanitizer(ResourceSanitizer.historySanitizer);
+		ResourceManager.addResourceSanitizer(ResourceSanitizer.heroSanitizer);
+
 		Settings.addSetting(new StringChoiceSetting("Jahreswechsel", "Jahreswechsel", Arrays.asList("Jahreswechsel", "Jahreszeiten", "Astronomisch"),
 				"Allgemein", "Jahreswechsel"));
 		Settings.addSetting(new StringChoiceSetting("Rüstungsart", "Zonenrüstung", Arrays.asList("Zonenrüstung", "Gesamtrüstung", "Zonengesamtrüstung"),
 				"Kampf", "Rüstungsart"));
+
 		Credits.credits.add(0,
 				new Credits(
 						"DAS SCHWARZE AUGE, AVENTURIEN, DERE, MYRANOR, THARUN, UTHURIA und RIESLAND sind eingetragene Marken der Significant Fantasy Medienrechte GbR. Ohne vorherige schriftliche Genehmigung der Ulisses Medien und Spiel Distribution GmbH ist eine Verwendung der genannten Markenzeichen nicht gestattet.",
