@@ -288,13 +288,15 @@ public class HeroUtil {
 	}
 
 	public static Tuple<JSONValue, JSONObject> findActualTalent(final JSONObject hero, final String talentName) {
-		final JSONObject actualTalentGroups = hero.getObj("Talente");
-		for (final String talentGroupName : actualTalentGroups.keySet()) {
-			final JSONObject talentGroup = actualTalentGroups.getObj(talentGroupName);
-			if (talentGroup.containsKey(talentName)) return new Tuple<>((JSONValue) talentGroup.getUnsafe(talentName), talentGroup);
+		if (hero != null) {
+			final JSONObject actualTalentGroups = hero.getObj("Talente");
+			for (final String talentGroupName : actualTalentGroups.keySet()) {
+				final JSONObject talentGroup = actualTalentGroups.getObj(talentGroupName);
+				if (talentGroup.containsKey(talentName)) return new Tuple<>((JSONValue) talentGroup.getUnsafe(talentName), talentGroup);
+			}
+			final JSONObject spells = hero.getObjOrDefault("Zauber", null);
+			if (spells != null && spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), spells);
 		}
-		final JSONObject spells = hero.getObjOrDefault("Zauber", null);
-		if (spells != null && spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), spells);
 		return new Tuple<>(null, null);
 	}
 
