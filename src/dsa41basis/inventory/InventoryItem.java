@@ -96,11 +96,11 @@ public class InventoryItem {
 	public void setWeight(final double weight) {
 		item.removeKey("Gewicht");
 		if (weight != 0) {
-			baseItem.removeKey("Gewicht");
-		} else {
 			baseItem.put("Gewicht", weight);
+		} else {
+			baseItem.removeKey("Gewicht");
 		}
-		baseItem.notifyListeners(null);
+		item.notifyListeners(null);
 	}
 
 	public final DoubleProperty weightProperty() {

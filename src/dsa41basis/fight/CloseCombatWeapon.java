@@ -233,7 +233,7 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 	public final void setWM(final int atMod, final int paMod) {
 		final JSONObject wm = item.getObj("Waffenmodifikatoren");
 		wm.put("Attackemodifikator", atMod);
-		wm.put("Parademodifikatior", paMod);
+		wm.put("Parademodifikator", paMod);
 		wm.notifyListeners(null);
 	}
 

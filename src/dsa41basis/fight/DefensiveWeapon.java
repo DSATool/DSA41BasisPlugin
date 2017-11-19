@@ -153,10 +153,10 @@ public class DefensiveWeapon extends InventoryItem {
 	}
 
 	public final void setBf(final int bf) {
+		item.removeKey("Bruchfaktor");
 		if (bf != Integer.MIN_VALUE) {
 			baseItem.put("Bruchfaktor", bf);
 		} else {
-			item.removeKey("Bruchfaktor");
 			baseItem.removeKey("Bruchfaktor");
 		}
 		item.notifyListeners(null);
@@ -175,7 +175,7 @@ public class DefensiveWeapon extends InventoryItem {
 	public final void setWM(final int atMod, final int paMod) {
 		final JSONObject wm = item.getObj("Waffenmodifikatoren");
 		wm.put("Attackemodifikator", atMod);
-		wm.put("Parademodifikatior", paMod);
+		wm.put("Parademodifikator", paMod);
 		wm.notifyListeners(null);
 	}
 

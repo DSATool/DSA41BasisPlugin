@@ -118,10 +118,10 @@ public class RangedWeapon extends OffensiveWeapon {
 	}
 
 	public final int getAmmunitionMax() {
-		if (baseItem.containsKey("Munition"))
-			return item.getObjOrDefault("Munition", baseItem.getObj("Munition")).getIntOrDefault("Gesamt", 1);
+		if (baseItem.containsKey("Anzahl"))
+			return item.getObjOrDefault("Anzahl", baseItem.getObj("Anzahl")).getIntOrDefault("Gesamt", 1);
 		else
-			return item.getObj("Munition").getIntOrDefault("Gesamt", 1);
+			return item.getObj("Anzahl").getIntOrDefault("Gesamt", 1);
 	}
 
 	public final String getAmmunitionType() {
