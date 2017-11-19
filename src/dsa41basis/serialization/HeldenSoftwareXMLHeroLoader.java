@@ -1261,7 +1261,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			if (group != null) {
 				final JSONObject talent = actualTalents.getObj(group).getObj(name);
 				final Map<String, String> values = extract("kampfwerte", new Tuple3<>("attacke", () -> "at", () -> get("value")),
-						new Tuple3<>("parade", () -> "at", () -> get("value")));
+						new Tuple3<>("parade", () -> "pa", () -> get("value")));
 				final int actualAt = Integer.parseInt(values.getOrDefault("at", "0")) - at;
 				final int actualPa = Integer.parseInt(values.getOrDefault("pa", "0")) - pa;
 				final int taw = talent.getIntOrDefault("TaW", 0);
@@ -2231,14 +2231,18 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					final JSONArray actualPro = actualPros.getArr(name);
 					final JSONObject currentPro = new JSONObject(actualPro);
 					actualPro.add(currentPro);
-					if (pro.containsKey("Auswahl")) {
+					if (pro.containsKey("Auswahl") && choice != null) {
 						currentPro.put("Auswahl", choice);
 					}
-					if (pro.containsKey("Freitext")) {
+					if (pro.containsKey("Freitext") && text != null) {
 						currentPro.put("Freitext", text);
 					}
 					if (pro.getBoolOrDefault("Abgestuft", false)) {
-						currentPro.put("Stufe", Integer.parseInt(value));
+						if ("Besonderer Besitz".equals(name)) {
+							currentPro.put("Stufe", Integer.parseInt(value.substring(6)));
+						} else {
+							currentPro.put("Stufe", Integer.parseInt(value));
+						}
 					}
 				} else {
 					final JSONObject currentPro = new JSONObject(actualPros);
