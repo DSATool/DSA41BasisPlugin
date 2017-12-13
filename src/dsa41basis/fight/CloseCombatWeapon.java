@@ -113,8 +113,12 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 	}
 
 	public final Tuple<Integer, Integer> getTpkkRaw() {
-		final JSONObject TPKKValues = item.getObjOrDefault("Trefferpunkte/Körperkraft", baseItem.getObj("Trefferpunkte/Körperkraft"));
-		return new Tuple<>(TPKKValues.getIntOrDefault("Schwellenwert", 1), TPKKValues.getIntOrDefault("Schadensschritte", 1));
+		if (item.containsKey("Trefferpunkte/Körperkraft") || baseItem.containsKey("Trefferpunkte/Körperkraft")) {
+			final JSONObject TPKKValues = item.getObjOrDefault("Trefferpunkte/Körperkraft", baseItem.getObj("Trefferpunkte/Körperkraft"));
+			return new Tuple<>(TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE),
+					TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE));
+		}
+		return new Tuple<>(Integer.MIN_VALUE, Integer.MIN_VALUE);
 	}
 
 	public final String getWM() {
@@ -156,7 +160,9 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 		length.set(item.getIntOrDefault("Länge", baseItem.getIntOrDefault("Länge", 0)));
 
 		final JSONObject TPKKValues = item.getObjOrDefault("Trefferpunkte/Körperkraft", baseItem.getObj("Trefferpunkte/Körperkraft"));
-		tpkk.set(TPKKValues.getIntOrDefault("Schwellenwert", 1).toString() + "/" + TPKKValues.getIntOrDefault("Schadensschritte", 1));
+		final int threshold = TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE);
+		final int step = TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE);
+		tpkk.set((threshold != Integer.MIN_VALUE ? Integer.toString(threshold) : "—") + "/" + (step != Integer.MIN_VALUE ? step : "—"));
 
 		final JSONObject weaponModifier = item.getObjOrDefault("Waffenmodifikatoren", baseItem.getObj("Waffenmodifikatoren"));
 		wm.set(weaponModifier.getIntOrDefault("Attackemodifikator", 0).toString() + "/" + weaponModifier.getIntOrDefault("Parademodifikator", 0));
@@ -224,10 +230,16 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 	}
 
 	public final void setTPKK(final int threshold, final int step) {
-		final JSONObject TPKKValues = item.getObj("Trefferpunkte/Körperkraft");
-		TPKKValues.put("Schwellenwert", threshold);
-		TPKKValues.put("Schadensschritte", step);
-		TPKKValues.notifyListeners(null);
+		if (threshold == Integer.MIN_VALUE || step == Integer.MIN_VALUE) {
+			item.removeKey("Trefferpunkte/Körperkraft");
+			baseItem.removeKey("Trefferpunkte/Körperkraft");
+			item.notifyListeners(null);
+		} else {
+			final JSONObject TPKKValues = item.getObj("Trefferpunkte/Körperkraft");
+			TPKKValues.put("Schwellenwert", threshold);
+			TPKKValues.put("Schadensschritte", step);
+			TPKKValues.notifyListeners(null);
+		}
 	}
 
 	public final void setWM(final int atMod, final int paMod) {
