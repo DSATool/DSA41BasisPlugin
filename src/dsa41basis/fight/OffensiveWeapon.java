@@ -64,7 +64,7 @@ public abstract class OffensiveWeapon extends InventoryItem {
 				talents.get().add(weaponTypes.getString(i));
 			}
 		}
-		type = new SimpleStringProperty(weaponTypes.size() == 0 ? combatTalents.containsKey("Raufen") ? "Raufen" : "Wurfmesser" : weaponTypes.getString(0));
+		type = new SimpleStringProperty(weaponTypes.size() == 0 ? "" : weaponTypes.getString(0));
 
 		final String primaryType = weapon.getStringOrDefault("Waffentyp:Primär", baseWeapon.getString("Waffentyp:Primär"));
 		if (weaponTypes.size() > 1 && primaryType != null) {

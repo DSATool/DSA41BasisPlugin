@@ -60,7 +60,9 @@ public class RangedWeapon extends OffensiveWeapon {
 	}
 
 	private int computeAt() {
-		return hero != null ? HeroUtil.getAT(hero, item, type.get(), false, false, true) : 0;
+		if (hero == null) return 0;
+		final Integer at = HeroUtil.getAT(hero, item, type.get(), false, false, true);
+		return at != null ? at : 0;
 	}
 
 	private String computeDistanceString() {

@@ -54,10 +54,10 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 
 	private Tuple<Integer, Integer> computeAtPa() {
 		if (hero != null && type.get() != null) {
-			final int AT = HeroUtil.getAT(hero, item, type.get(), true, false, true);
-			final Integer PA = HeroUtil.getPA(hero, item, type.get(), false, true);
+			final Integer at = HeroUtil.getAT(hero, item, type.get(), true, false, true);
+			final Integer pa = HeroUtil.getPA(hero, item, type.get(), false, true);
 
-			return new Tuple<>(AT, PA != null ? PA : Integer.MIN_VALUE);
+			return new Tuple<>(at != null ? at : 0, pa != null ? pa : Integer.MIN_VALUE);
 		} else
 			return new Tuple<>(0, 0);
 	}

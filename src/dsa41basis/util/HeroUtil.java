@@ -391,7 +391,7 @@ public class HeroUtil {
 		return null;
 	}
 
-	public static int getAT(final JSONObject hero, JSONObject weapon, final String type, final boolean closeCombat, final boolean wrongHand,
+	public static Integer getAT(final JSONObject hero, JSONObject weapon, final String type, final boolean closeCombat, final boolean wrongHand,
 			final boolean includeManualMods) {
 		final JSONObject baseWeapon = weapon;
 		if (weapon != null && weapon.containsKey(closeCombat ? "Nahkampfwaffe" : "Fernkampfwaffe")) {
@@ -401,9 +401,9 @@ public class HeroUtil {
 		final JSONObject talent = ResourceManager.getResource("data/Talente").getObj(closeCombat ? "Nahkampftalente" : "Fernkampftalente").getObjOrDefault(type,
 				null);
 
-		if (talent == null) return 0;
+		if (talent == null) return null;
 
-		final JSONObject actualTalent = hero.getObj("Talente").getObj(closeCombat ? "Nahkampftalente" : "Fernkampftalente").getObj(type);
+		final JSONObject actualTalent = hero.getObj("Talente").getObj(closeCombat ? "Nahkampftalente" : "Fernkampftalente").getObjOrDefault(type, null);
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 
 		final boolean hasSpecialisation = weapon != null
@@ -690,7 +690,7 @@ public class HeroUtil {
 	public static Integer getPA(final JSONObject hero, JSONObject weapon, final String type, final boolean wrongHand, final boolean includeManualMods) {
 		final JSONObject talent = ResourceManager.getResource("data/Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
 
-		if (talent == null) return 0;
+		if (talent == null) return null;
 
 		final boolean ATonly = talent.getBoolOrDefault("NurAT", false);
 
@@ -699,7 +699,7 @@ public class HeroUtil {
 			weapon = weapon.getObj("Nahkampfwaffe");
 		}
 
-		final JSONObject actualTalent = hero.getObj("Talente").getObj("Nahkampftalente").getObj(type);
+		final JSONObject actualTalent = hero.getObj("Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 
 		final boolean hasSpecialisation = weapon != null
