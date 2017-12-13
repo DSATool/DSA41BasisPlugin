@@ -2189,7 +2189,6 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			} else if (name.startsWith("Angst") || name.startsWith("Vorurteile") || name.startsWith("Weltfremd")) {
 				if (name.startsWith("Angst") && name.charAt(10) != '(') {
 					text = name.substring(10);
-					value = get("value");
 				} else {
 					final Map<String, String> values = extract("vorteil", new Tuple3<>("auswahl", () -> get("position"), () -> get("value")));
 					text = values.getOrDefault("1", "");
@@ -2231,11 +2230,11 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					final JSONArray actualPro = actualPros.getArr(name);
 					final JSONObject currentPro = new JSONObject(actualPro);
 					actualPro.add(currentPro);
-					if (pro.containsKey("Auswahl") && choice != null) {
-						currentPro.put("Auswahl", choice);
+					if (pro.containsKey("Auswahl")) {
+						currentPro.put("Auswahl", choice != null && !choice.equals(value) ? choice : pro.getString("Auswahl"));
 					}
-					if (pro.containsKey("Freitext") && text != null) {
-						currentPro.put("Freitext", text);
+					if (pro.containsKey("Freitext")) {
+						currentPro.put("Freitext", text != null && !text.equals(value) && !text.equals(choice) ? text : pro.getString("Freitext"));
 					}
 					if (pro.getBoolOrDefault("Abgestuft", false)) {
 						if ("Besonderer Besitz".equals(name)) {
@@ -2261,10 +2260,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					final JSONObject currentCon = new JSONObject(actualCon);
 					actualCon.add(currentCon);
 					if (con.containsKey("Auswahl")) {
-						currentCon.put("Auswahl", choice);
+						currentCon.put("Auswahl", choice != null && !choice.equals(value) ? choice : con.getString("Auswahl"));
 					}
 					if (con.containsKey("Freitext")) {
-						currentCon.put("Freitext", text);
+						currentCon.put("Freitext", text != null && !text.equals(value) && !text.equals(choice) ? text : con.getString("Freitext"));
 					}
 					if (con.getBoolOrDefault("Abgestuft", false)) {
 						currentCon.put("Stufe", Integer.parseInt(value));
