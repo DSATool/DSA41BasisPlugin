@@ -16,6 +16,8 @@
 package dsa41basis.hero;
 
 import java.util.Arrays;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import dsa41basis.util.DSAUtil;
@@ -31,6 +33,26 @@ import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
 public class Talent {
+	private static Map<JSONObject, Talent> talentCache = new IdentityHashMap<>();
+
+	public static Talent getTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual,
+			final JSONObject actualGroup) {
+		if (talentCache.containsKey(actual))
+			return talentCache.get(actual);
+		final JSONObject talents = (JSONObject) talentGroup.getParent();
+		Talent newTalent;
+		if (talentGroup == talents.getObj("Nahkampftalente") || talentGroup == talents.getObj("Fernkampftalente")) {
+			newTalent = new FightTalent(name, talentGroup, talent, actual, actualGroup);
+		} else if (talentGroup == talents.getObj("Körperliche Talente")) {
+			newTalent = new PhysicalTalent(name, talentGroup, talent, actual, actualGroup);
+		} else if (talentGroup == talents.getObj("Sprachen und Schriften")) {
+			newTalent = new LanguageTalent(name, talentGroup, talent, actual, actualGroup);
+		} else {
+			newTalent = new Talent(name, talentGroup, talent, actual, actualGroup);
+		}
+		talentCache.put(actual, newTalent);
+		return newTalent;
+	}
 
 	protected final StringProperty name;
 	protected final StringProperty displayName;
@@ -44,7 +66,7 @@ public class Talent {
 	protected JSONObject talent;
 	protected final StringProperty variant;
 
-	public Talent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
+	protected Talent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
 		this.name = new SimpleStringProperty(name);
 		this.talent = talent;
 		this.actual = actual;

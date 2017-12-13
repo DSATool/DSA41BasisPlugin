@@ -15,6 +15,9 @@
  */
 package dsa41basis.hero;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 import dsa41basis.util.DSAUtil;
 import dsa41basis.util.HeroUtil;
 import javafx.beans.property.BooleanProperty;
@@ -27,12 +30,25 @@ import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
 public class Spell extends Talent {
+	private static Map<JSONObject, Spell> spellCache = new IdentityHashMap<>();
+
+	public static Spell getSpell(final String name, final JSONObject spell, final JSONObject actualRepresentation, final JSONObject actualSpell,
+			final JSONObject actualGroup, final String representation) {
+		if (spellCache.containsKey(actualRepresentation))
+			return spellCache.get(actualRepresentation);
+		final Spell newSpell = new Spell(name, spell, actualRepresentation, actualSpell, actualGroup, representation);
+		spellCache.put(actualRepresentation, newSpell);
+		return newSpell;
+	}
+
 	private JSONObject actualSpell;
 	private final StringProperty complexity;
+
 	private final StringProperty representation;
+
 	private final BooleanProperty primarySpell;
 
-	public Spell(final String name, final JSONObject spell, final JSONObject actualRepresentation, final JSONObject actualSpell, final JSONObject actualGroup,
+	private Spell(final String name, final JSONObject spell, final JSONObject actualRepresentation, final JSONObject actualSpell, final JSONObject actualGroup,
 			final String representation) {
 		super(name, null, spell, actualRepresentation, actualGroup);
 

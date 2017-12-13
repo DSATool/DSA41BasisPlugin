@@ -26,7 +26,7 @@ public class LanguageTalent extends Talent {
 	private final IntegerProperty complexity;
 	private final StringProperty mlsltl;
 
-	public LanguageTalent(String name, JSONObject talentGroup, JSONObject talent, JSONObject actual, JSONObject actualGroup) {
+	protected LanguageTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
 		super(name, talentGroup, talent, actual, actualGroup);
 
 		boolean ml;
@@ -70,7 +70,7 @@ public class LanguageTalent extends Talent {
 		return mlsltl;
 	}
 
-	public final void setMlsltl(String mlsltl) {
+	public final void setMlsltl(final String mlsltl) {
 		switch (mlsltl) {
 		case "MS":
 			actual.removeKey("Zweitsprache");

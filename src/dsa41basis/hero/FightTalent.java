@@ -31,7 +31,7 @@ public class FightTalent extends Talent {
 	private final StringProperty be;
 	private final IntegerProperty pa;
 
-	public FightTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
+	protected FightTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
 		super(name, talentGroup, talent, actual, actualGroup);
 
 		attackOnly = new SimpleBooleanProperty(talent.getBoolOrDefault("NurAT", false) || talent.getBoolOrDefault("FK", false));

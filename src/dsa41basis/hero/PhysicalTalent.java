@@ -25,7 +25,7 @@ public class PhysicalTalent extends Talent {
 
 	private final StringProperty be;
 
-	public PhysicalTalent(String name, JSONObject talentGroup, JSONObject talent, JSONObject actual, JSONObject actualGroup) {
+	protected PhysicalTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual, final JSONObject actualGroup) {
 		super(name, talentGroup, talent, actual, actualGroup);
 
 		be = new SimpleStringProperty(DSAUtil.getBEString(talent));
