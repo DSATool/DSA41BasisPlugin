@@ -219,8 +219,10 @@ public class ProOrCon {
 			final JSONArray requirements = proOrCon.getArr("Kosten:Voraussetzungen");
 			for (int i = 0; i < requirements.size(); ++i) {
 				final JSONObject requirement = requirements.getObj(i);
-				if (hero != null && RequirementsUtil.isRequirementFulfilled(hero, requirement, first == ChoiceOrTextEnum.CHOICE ? description.get() : null,
-						first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null, false)) {
+				final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : "";
+				final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : "";
+				if (hero != null
+						&& RequirementsUtil.isRequirementFulfilled(hero, requirement, choice.isEmpty() ? null : choice, text.isEmpty() ? null : text, false)) {
 					baseCost *= requirement.getDoubleOrDefault("Multiplikativ", 1.0);
 					baseCost /= requirement.getDoubleOrDefault("Divisor", 1.0);
 				}
@@ -487,9 +489,10 @@ public class ProOrCon {
 
 	protected void updateValid() {
 		if (!proOrCon.containsKey("Voraussetzungen")) return;
-		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : null;
-		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null;
-		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice, text, true));
+		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : "";
+		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : "";
+		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice.isEmpty() ? null : choice,
+				text.isEmpty() ? null : text, true));
 	}
 
 	public final ReadOnlyBooleanProperty validProperty() {
