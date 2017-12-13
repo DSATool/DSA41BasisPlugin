@@ -35,8 +35,8 @@ public class Energy extends DerivedValue {
 
 	protected final int enhancementCost;
 
-	public Energy(String name, JSONObject derivation, JSONObject attributes, JSONObject basicValues) {
-		super(name, derivation, attributes, basicValues);
+	public Energy(final String name, final JSONObject derivation, final JSONObject hero) {
+		super(name, derivation, hero);
 
 		bought = new SimpleIntegerProperty(actual.getIntOrDefault("Kauf", 0));
 		permanent = new SimpleIntegerProperty(actual.getIntOrDefault("Permanent", 0));
@@ -48,7 +48,7 @@ public class Energy extends DerivedValue {
 
 		enhancementCost = derivation.getIntOrDefault("Zukauf", 8);
 
-		recalculate(derivation, attributes);
+		recalculate(derivation, hero);
 	}
 
 	public final IntegerProperty boughtProperty() {
@@ -96,23 +96,23 @@ public class Energy extends DerivedValue {
 	}
 
 	@Override
-	protected void recalculate(JSONObject derivation, JSONObject attributes) {
-		super.recalculate(derivation, attributes);
+	protected void recalculate(final JSONObject derivation, final JSONObject hero) {
+		super.recalculate(derivation, hero);
 
 		if (derivation.getIntOrDefault("Zukauf", -1) != -1) {
-			buyableMaximum.set(HeroUtil.deriveValue(derivation.getObj("Zukauf:Maximum"), attributes, null, false));
+			buyableMaximum.set(HeroUtil.deriveValue(derivation.getObj("Zukauf:Maximum"), hero, null, false));
 			bought.set(actual.getIntOrDefault("Kauf", 0));
 		} else {
 			bought.set(Integer.MIN_VALUE);
 		}
 
-		final int value = HeroUtil.deriveValue(derivation, attributes, actual, false);
+		final int value = HeroUtil.deriveValue(derivation, hero, actual, false);
 		permanent.set(actual.getIntOrDefault("Permanent", 0));
 		max.set(value);
 		current.bind(max.add(manualModifier));
 	}
 
-	public final void setBought(int bought) {
+	public final void setBought(final int bought) {
 		if (bought == 0) {
 			actual.removeKey("Kauf");
 		} else {
@@ -121,7 +121,7 @@ public class Energy extends DerivedValue {
 		actual.notifyListeners(null);
 	}
 
-	public final void setPermanent(int permanent) {
+	public final void setPermanent(final int permanent) {
 		if (permanent == 0) {
 			actual.removeKey("Permanent");
 		} else {

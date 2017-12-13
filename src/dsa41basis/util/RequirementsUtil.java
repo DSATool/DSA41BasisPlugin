@@ -235,9 +235,9 @@ public class RequirementsUtil {
 			for (final String basicValue : requiredValues.keySet()) {
 				final int requiredValue = requiredValues.getInt(basicValue);
 				if (requiredValue < 0) {
-					if (HeroUtil.deriveValue(basicValues.getObj(basicValue), attributes, actualValues.getObj(basicValue), includeManualMods) > -requiredValue)
+					if (HeroUtil.deriveValue(basicValues.getObj(basicValue), hero, actualValues.getObj(basicValue), includeManualMods) > -requiredValue)
 						return false;
-				} else if (HeroUtil.deriveValue(basicValues.getObj(basicValue), attributes, actualValues.getObj(basicValue), includeManualMods) < requiredValue)
+				} else if (HeroUtil.deriveValue(basicValues.getObj(basicValue), hero, actualValues.getObj(basicValue), includeManualMods) < requiredValue)
 					return false;
 			}
 		}

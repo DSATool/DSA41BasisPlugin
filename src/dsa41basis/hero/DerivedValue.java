@@ -32,8 +32,11 @@ public class DerivedValue {
 	private final StringProperty name;
 	protected IntegerProperty ses;
 
-	public DerivedValue(String name, JSONObject derivation, JSONObject attributes, JSONObject basicValues) {
+	public DerivedValue(final String name, final JSONObject derivation, final JSONObject hero) {
 		this.name = new SimpleStringProperty(name);
+
+		final JSONObject attributes = hero.getObj("Eigenschaften");
+		final JSONObject basicValues = hero.getObj("Basiswerte");
 
 		actual = basicValues.getObj(name);
 
@@ -42,10 +45,10 @@ public class DerivedValue {
 			basicValues.put(name, actual);
 		}
 
-		attributes.addListener(o -> recalculate(derivation, attributes));
-		actual.addListener(o -> recalculate(derivation, attributes));
+		attributes.addListener(o -> recalculate(derivation, hero));
+		actual.addListener(o -> recalculate(derivation, hero));
 
-		final int value = HeroUtil.deriveValue(derivation, attributes, actual, false);
+		final int value = HeroUtil.deriveValue(derivation, hero, actual, false);
 		manualModifier = new SimpleIntegerProperty(actual.getIntOrDefault("Modifikator:Manuell", 0));
 
 		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
@@ -85,8 +88,8 @@ public class DerivedValue {
 		return name;
 	}
 
-	protected void recalculate(JSONObject derivation, JSONObject attributes) {
-		final int value = HeroUtil.deriveValue(derivation, attributes, actual, false);
+	protected void recalculate(final JSONObject derivation, final JSONObject hero) {
+		final int value = HeroUtil.deriveValue(derivation, hero, actual, false);
 		manualModifier.set(actual.getIntOrDefault("Modifikator:Manuell", 0));
 		current.bind(manualModifier.add(value));
 	}
@@ -95,7 +98,7 @@ public class DerivedValue {
 		return ses;
 	}
 
-	public final void setManualModifier(int modifier) {
+	public final void setManualModifier(final int modifier) {
 		if (modifier == 0) {
 			actual.removeKey("Modifikator:Manuell");
 		} else {
@@ -105,7 +108,7 @@ public class DerivedValue {
 		actual.notifyListeners(null);
 	}
 
-	public final void setModifier(int modifier) {
+	public final void setModifier(final int modifier) {
 		if (modifier == 0) {
 			actual.removeKey("Modifikator");
 		} else {
@@ -114,7 +117,7 @@ public class DerivedValue {
 		actual.notifyListeners(null);
 	}
 
-	public void setSes(int ses) {
+	public void setSes(final int ses) {
 		if (actual == null) return;
 		if (ses == 0) {
 			actual.removeKey("SEs");

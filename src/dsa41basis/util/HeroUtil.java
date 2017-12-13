@@ -256,25 +256,34 @@ public class HeroUtil {
 		}
 	}
 
-	public static int deriveValue(final JSONObject derivation, final JSONObject attributes, final JSONObject actual, final boolean includeManualMods) {
+	public static int deriveValue(final JSONObject derivation, final JSONObject hero, final JSONObject actual, final boolean includeManualMods) {
 		int additional = 0;
 		if (actual != null) {
 			additional += actual.getIntOrDefault("Kauf", 0) + actual.getIntOrDefault("Permanent", 0) + actual.getIntOrDefault("Modifikator", 0)
 					+ (includeManualMods ? actual.getIntOrDefault("Modifikator:Manuell", 0) : 0) + actual.getIntOrDefault("Wert", 0);
 		}
-		return (int) Math.round(deriveValueRaw(derivation, attributes)) + additional;
+		return (int) Math.round(deriveValueRaw(derivation, hero)) + additional;
 	}
 
-	public static double deriveValueRaw(final JSONObject derivation, final JSONObject attributes) {
+	public static double deriveValueRaw(final JSONObject derivation, final JSONObject hero) {
 		int value = 0;
+
+		final JSONObject attributes = hero.getObj("Eigenschaften");
 		final JSONArray derivationAttributes = derivation.getArrOrDefault("Eigenschaften", new JSONArray(null));
 		for (int i = 0; i < derivationAttributes.size(); ++i) {
 			value += getCurrentValue(attributes.getObj(derivationAttributes.getString(i)), false);
 		}
+
 		final JSONObject derivedValues = ResourceManager.getResource("data/Basiswerte");
+		final JSONObject basicValues = hero.getObj("Basiswerte");
+		final JSONArray derivationBasicValues = derivation.getArrOrDefault("Basiswerte", new JSONArray(null));
+		for (int i = 0; i < derivationBasicValues.size(); ++i) {
+			final String derivedName = derivationBasicValues.getString(i);
+			value += deriveValue(derivedValues.getObj(derivedName), hero, basicValues.getObj(derivedName), false);
+		}
+
 		if (derivation == derivedValues.getObj("Astralenergie")) {
 			if (attributes.getParent() instanceof JSONObject) {
-				final JSONObject hero = (JSONObject) attributes.getParent();
 				if (hero.containsKey("Sonderfertigkeiten") && hero.getObj("Sonderfertigkeiten").containsKey("Gefäß der Sterne")) {
 					value += getCurrentValue(attributes.getObj("CH"), false);
 				}
@@ -284,6 +293,7 @@ public class HeroUtil {
 			final int geModifier = GE > 15 ? 1 : GE < 11 ? -1 : 0;
 			value += geModifier;
 		}
+
 		return value * derivation.getDoubleOrDefault("Multiplikator", 1.0);
 	}
 
@@ -405,8 +415,8 @@ public class HeroUtil {
 				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 		final int masteryAT = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Attackemodifikator", 0) : 0;
 
-		return deriveValue(ResourceManager.getResource("data/Basiswerte").getObj(closeCombat ? "Attacke-Basis" : "Fernkampf-Basis"),
-				hero.getObj("Eigenschaften"), hero.getObj("Basiswerte"), includeManualMods)
+		return deriveValue(ResourceManager.getResource("data/Basiswerte").getObj(closeCombat ? "Attacke-Basis" : "Fernkampf-Basis"), hero,
+				hero.getObj("Basiswerte"), includeManualMods)
 				+ (closeCombat && weaponModifiers != null ? weaponModifiers.getIntOrDefault("Attackemodifikator", 0) : 0)
 				+ (actualTalent != null ? actualTalent.getIntOrDefault("AT", 0) : 0)
 				+ (hasSpecialisation ? !closeCombat || talent.getBoolOrDefault("NurAT", false) ? 2 : 1 : 0) + masteryAT
@@ -523,6 +533,10 @@ public class HeroUtil {
 			break;
 		case "Gottheit":
 			choices.addAll(ResourceManager.getResource("data/Talente").getObj("Liturgiekenntnis").keySet());
+			break;
+		case "Erzdämon":
+			choices.addAll(ResourceManager.getResource("data/Erzdaemonen").keySet());
+			choices.add("Aphasmayra");
 			break;
 		case "Kultur":
 			final JSONObject cultures = ResourceManager.getResource("data/Kulturen");
@@ -699,8 +713,8 @@ public class HeroUtil {
 
 		if (ATonly) return null;
 
-		return deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero.getObj("Eigenschaften"), hero.getObj("Basiswerte"),
-				includeManualMods) + (weaponModifiers == null ? 0 : weaponModifiers.getIntOrDefault("Parademodifikator", 0))
+		return deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero, hero.getObj("Basiswerte"), includeManualMods)
+				+ (weaponModifiers == null ? 0 : weaponModifiers.getIntOrDefault("Parademodifikator", 0))
 				+ (actualTalent != null ? actualTalent.getIntOrDefault("PA", 0) : 0) + (hasSpecialisation ? 1 : 0) + masteryPA
 				- Math.max(talent.getIntOrDefault("BEMultiplikativ", 1) * getBE(hero) + talent.getIntOrDefault("BEAdditiv", 0) + (ATonly ? 0 : 1), 0)
 						/ (ATonly ? 1 : 2);
@@ -1085,11 +1099,13 @@ public class HeroUtil {
 
 		if (hero != null && (weapon.containsKey("Trefferpunkte/Körperkraft") || baseWeapon.containsKey("Trefferpunkte/Körperkraft"))) {
 			final JSONObject TPKKValues = weapon.getObjOrDefault("Trefferpunkte/Körperkraft", baseWeapon.getObj("Trefferpunkte/Körperkraft"));
-			final int threshold = TPKKValues.getInt("Schwellenwert");
+			final int threshold = TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE);
 			final int KK = HeroUtil.getCurrentValue(hero.getObj("Eigenschaften").getObj("KK"), true);
-			final int steps = TPKKValues.getInt("Schadensschritte");
-			final int TPKKModifier = (KK - threshold) / steps;
-			TPAdditive += TPKKModifier;
+			final int steps = TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE);
+			if (threshold != Integer.MIN_VALUE && steps != Integer.MIN_VALUE) {
+				final int TPKKModifier = (KK - threshold) / steps;
+				TPAdditive += TPKKModifier;
+			}
 		}
 
 		if (TPAdditive != 0) {

@@ -121,7 +121,7 @@ public class DefensiveWeapon extends InventoryItem {
 		int PA = weaponModifiers.getIntOrDefault("Parademodifikator", 0);
 
 		if (shield) {
-			final int PABase = HeroUtil.deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero.getObj("Eigenschaften"),
+			final int PABase = HeroUtil.deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero,
 					hero.getObj("Basiswerte").getObj("Parade-Basis"), true);
 			PA += PABase;
 
