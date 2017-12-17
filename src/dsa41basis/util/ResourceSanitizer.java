@@ -33,6 +33,7 @@ public class ResourceSanitizer {
 			result = new JSONObject(null);
 			result.put("Historie", object.getArr("Steigerungshistorie"));
 			result.addAll(object, false);
+			result.removeKey("Steigerungshistorie");
 		}
 		return result;
 	};
