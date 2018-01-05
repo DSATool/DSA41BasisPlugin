@@ -31,14 +31,14 @@ public class Ritual {
 
 	private final JSONObject actual;
 
-	public Ritual(String ritualGroup, String name, JSONObject actual) {
+	public Ritual(final String ritualGroup, final String name, final JSONObject actual) {
 		this.actual = actual;
 
 		this.name = new SimpleStringProperty(name);
 
-		final JSONObject ritual = ResourceManager.getResource("data/Rituale").getObj(ritualGroup).getObj(name);
+		final JSONObject ritual = ResourceManager.getResource("data/Rituale").getObj(ritualGroup).getObjOrDefault(name, null);
 
-		if (ritual.containsKey("Mehrfach")) {
+		if (ritual != null && ritual.containsKey("Mehrfach")) {
 			if ("Anzahl".equals(ritual.getString("Mehrfach"))) {
 				choice = new SimpleObjectProperty<>(actual.getIntOrDefault("Anzahl", 1));
 			} else {
@@ -65,7 +65,7 @@ public class Ritual {
 		return name;
 	}
 
-	public void setChoice(Object choice) {
+	public void setChoice(final Object choice) {
 		this.choice.set(choice);
 		if (choice instanceof Integer) {
 			actual.put("Anzahl", (Integer) choice);

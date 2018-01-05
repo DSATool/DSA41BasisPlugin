@@ -46,7 +46,7 @@ public class RitualObject extends InventoryItem {
 
 	private final String ritualGroupName;
 
-	public RitualObject(JSONObject item, JSONObject baseItem, String ritualGroupName) {
+	public RitualObject(final JSONObject item, final JSONObject baseItem, final String ritualGroupName) {
 		super(item, baseItem);
 
 		this.ritualGroupName = ritualGroupName;
@@ -54,7 +54,7 @@ public class RitualObject extends InventoryItem {
 
 		volume = new SimpleIntegerProperty(item.getIntOrDefault("Volumen", baseItem.getIntOrDefault("Volumen", ritualGroup.getIntOrDefault("Volumen", 0))));
 		material = new SimpleStringProperty(item.getStringOrDefault("Material", baseItem.getStringOrDefault("Material", "")));
-		type = new SimpleStringProperty(ritualGroup.getString("Ritualobjekt"));
+		type = new SimpleStringProperty(ritualGroup.getStringOrDefault("Ritualobjekt", "Bannschwert"));
 
 		recompute();
 	}
@@ -72,8 +72,8 @@ public class RitualObject extends InventoryItem {
 		final List<Ritual> result = new ArrayList<>();
 		final JSONObject ritualGroup = ResourceManager.getResource("data/Rituale").getObj(ritualGroupName);
 		for (final String ritualName : rituals.keySet()) {
-			final String multipleTimes = ritualGroup.getObj(ritualName).getString("Mehrfach");
-			if (multipleTimes != null && !"Anzahl".equals(multipleTimes)) {
+			final JSONObject ritual = ritualGroup.getObjOrDefault(ritualName, null);
+			if (ritual != null && ritual.containsKey("Mehrfach") && !"Anzahl".equals(ritual.getString("Mehrfach"))) {
 				final JSONArray choices = rituals.getArr(ritualName);
 				for (int i = 0; i < choices.size(); ++i) {
 					result.add(new Ritual(ritualGroupName, ritualName, choices.getObj(i)));
@@ -99,6 +99,9 @@ public class RitualObject extends InventoryItem {
 				result.add(ritualObject);
 			}
 		}, ritualGroups);
+		if (categories.contains("Bannschwert")) {
+			result.add("Bannschwert");
+		}
 		return result;
 	}
 
@@ -110,40 +113,40 @@ public class RitualObject extends InventoryItem {
 		return material;
 	}
 
-	public void setMaterial(String material) {
+	public void setMaterial(final String material) {
 		if ("".equals(material)) return;
 		this.material.set(material);
 		item.put("Material", material);
 		item.notifyListeners(null);
 	}
 
-	public void setRituals(List<Ritual> rituals) {
+	public void setRituals(final List<Ritual> rituals) {
 		final JSONObject actualRituals = item.getObjOrDefault("Rituale", baseItem.getObj("Rituale"));
 		actualRituals.clear();
 
 		final JSONObject ritualGroup = ResourceManager.getResource("data/Rituale").getObj(ritualGroupName);
 
-		for (final Ritual ritual : rituals) {
-			final String ritualName = ritual.getName();
-			final String multipleTimes = ritualGroup.getObj(ritualName).getString("Mehrfach");
-			if (multipleTimes != null) {
-				if ("Anzahl".equals(multipleTimes)) {
+		for (final Ritual actual : rituals) {
+			final String ritualName = actual.getName();
+			final JSONObject ritual = ritualGroup.getObjOrDefault(ritualName, null);
+			if (ritual != null && ritual.containsKey("Mehrfach")) {
+				if ("Anzahl".equals(ritual.getString("Mehrfach"))) {
 					final JSONObject newRitual = new JSONObject(actualRituals);
-					newRitual.put("Anzahl", (Integer) ritual.getChoice());
-					actualRituals.put(ritual.getName(), newRitual);
+					newRitual.put("Anzahl", (Integer) actual.getChoice());
+					actualRituals.put(actual.getName(), newRitual);
 				} else {
 					final JSONArray choices = actualRituals.getArr(ritualName);
 					final JSONObject newRitual = new JSONObject(choices);
-					newRitual.put("Auswahl", (String) ritual.getChoice());
+					newRitual.put("Auswahl", (String) actual.getChoice());
 					choices.add(newRitual);
 				}
 			} else {
-				actualRituals.put(ritual.getName(), new JSONObject(actualRituals));
+				actualRituals.put(actual.getName(), new JSONObject(actualRituals));
 			}
 		}
 	}
 
-	public void setTypes(List<String> types) {
+	public void setTypes(final List<String> types) {
 		final JSONArray categories = baseItem.getArr("Kategorien");
 		for (final String type : RitualObject.types) {
 			categories.remove(type);
@@ -153,7 +156,7 @@ public class RitualObject extends InventoryItem {
 		}
 	}
 
-	public void setVolume(int volume) {
+	public void setVolume(final int volume) {
 		if (volume == 0) return;
 		this.volume.set(volume);
 		item.put("Volumen", volume);
