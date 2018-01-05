@@ -128,6 +128,24 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		spellReplacements.put("Silentium", "Silentium Schweigekreis");
 		spellReplacements.put("Umbraporta Schattentüre", "Umbraporta Schattentür");
 		spellReplacements.put("Weiße Mähn und goldener Huf", "Weiße Mähn' und gold'ner Huf");
+		spellReplacements.put("Adamantium Erzstruktur (Agm)", "Adamantium Erzstruktur (Agrimoth)");
+		spellReplacements.put("Aeolitus Windgebraus (Agm)", "Aeolitus Windgebraus (Agrimoth)");
+		spellReplacements.put("Aerofugo Vakuum (Agm)", "Aerofugo Vakuum (Agrimoth)");
+		spellReplacements.put("Aerogelo Atemqual (Agm)", "Aerogelo Atemqual (Agrimoth)");
+		spellReplacements.put("Armatrutz (Agm)", "Armatrutz (Agrimoth)");
+		spellReplacements.put("Brenne, toter Stoff! (Agm)", "Brenne, toter Stoff! (Agrimoth)");
+		spellReplacements.put("Caldofrigo heiß und kalt (Agm)", "Caldofrigo heiß und kalt (Agrimoth)");
+		spellReplacements.put("Fortifex arkane Wand (Agm)", "Fortifex arkane Wand (Agrimoth)");
+		spellReplacements.put("Granit und Marmor (Agm)", "Granit und Marmor (Agrimoth)");
+		spellReplacements.put("Humofaxius (Agm)", "Humofaxius (Agrimoth)");
+		spellReplacements.put("Ignifaxius Flammenstrahl (Agm)", "Ignifaxius Flammenstrahl (Agrimoth)");
+		spellReplacements.put("Ignisphaero Feuerball (Agm)", "Ignisphaero Feuerball (Agrimoth)");
+		spellReplacements.put("Leib des Feuers (Agm)", "Leib des Feuers (Agrimoth)");
+		spellReplacements.put("Orcanofaxius (Agm)", "Orcanofaxius (Agrimoth)");
+		spellReplacements.put("Wand aus Dornen (Agm)", "Wand aus Dornen (Agrimoth)");
+		spellReplacements.put("Wand aus Erz (Agm)", "Wand aus Erz (Agrimoth)");
+		spellReplacements.put("Weiches erstarre! (Agm)", "Weiches erstarre! (Agrimoth)");
+		spellReplacements.put("Windhose (Agm)", "Windhose (Agrimoth)");
 	}
 
 	static {
