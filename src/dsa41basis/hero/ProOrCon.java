@@ -17,9 +17,11 @@ package dsa41basis.hero;
 
 import java.util.Set;
 
+import dsa41basis.util.DSAUtil;
 import dsa41basis.util.HeroUtil;
 import dsa41basis.util.RequirementsUtil;
 import dsatool.resources.ResourceManager;
+import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -81,41 +83,100 @@ public class ProOrCon {
 		final boolean hasVeteranVariant = "Veteran".equals(name) && profession != null && profession.containsKey("Varianten");
 
 		if (hasBGB) {
+			first = ChoiceOrTextEnum.CHOICE;
 			description = new SimpleStringProperty(
 					actual.getStringOrDefault("Profession", ResourceManager.getResource("data/Professionen").keySet().iterator().next()));
-			first = ChoiceOrTextEnum.CHOICE;
 		} else if (hasVeteranVariant) {
+			first = ChoiceOrTextEnum.TEXT;
 			final JSONArray variants = actual.getArrOrDefault("Profession:Modifikation", null);
 			description = new SimpleStringProperty(variants != null ? String.join(", ", variants.getStrings()) : "");
-			first = ChoiceOrTextEnum.TEXT;
 		} else if (hasChoice) {
-			final Set<String> choices = getFirstChoiceItems(false);
-			description = new SimpleStringProperty(actual.getStringOrDefault("Auswahl", choices.isEmpty() ? "" : choices.iterator().next()));
 			first = ChoiceOrTextEnum.CHOICE;
+			if (actual.containsKey("Auswahl")) {
+				description = new SimpleStringProperty(actual.getString("Auswahl"));
+			} else {
+				final Set<String> choices = getFirstChoiceItems(false);
+				if (choices.isEmpty()) {
+					description = new SimpleStringProperty("");
+				} else {
+					description = new SimpleStringProperty(choices.iterator().next());
+					for (final String currentChoice : choices) {
+						updateValid();
+						if (valid.get()) {
+							break;
+						}
+						description.set(currentChoice);
+					}
+					updateValid();
+					if (!valid.get()) {
+						description.set(choices.iterator().next());
+					}
+				}
+			}
 		} else if (text != null) {
-			final Set<String> choices = getSecondChoiceItems(false);
-			description = new SimpleStringProperty(actual.getStringOrDefault("Freitext", choices.isEmpty() ? text : choices.iterator().next()));
 			first = ChoiceOrTextEnum.TEXT;
+			if (actual.containsKey("Freitext")) {
+				description = new SimpleStringProperty(actual.getString("Freitext"));
+			} else {
+				final Set<String> choices = getSecondChoiceItems(false);
+				if (choices.isEmpty()) {
+					description = new SimpleStringProperty("");
+				} else {
+					description = new SimpleStringProperty(choices.iterator().next());
+					for (final String currentChoice : choices) {
+						updateValid();
+						if (valid.get()) {
+							break;
+						}
+						description.set(currentChoice);
+					}
+					updateValid();
+					if (!valid.get()) {
+						description.set(choices.iterator().next());
+					}
+				}
+			}
 		} else {
-			description = new SimpleStringProperty("");
 			first = ChoiceOrTextEnum.NONE;
+			description = new SimpleStringProperty("");
 		}
+		description.addListener((o, oldV, newV) -> updateValid());
 
 		if (hasBGBVariant) {
+			second = ChoiceOrTextEnum.TEXT;
 			final JSONArray variants = actual.getArrOrDefault("Profession:Modifikation", null);
 			variant = new SimpleStringProperty(variants != null ? String.join(", ", variants.getStrings()) : "");
-			second = ChoiceOrTextEnum.TEXT;
 		} else if (hasBGB) {
-			variant = new SimpleStringProperty("");
 			second = ChoiceOrTextEnum.TEXT;
+			variant = new SimpleStringProperty("");
 		} else if (hasChoice && text != null) {
-			final Set<String> choices = getSecondChoiceItems(false);
-			variant = new SimpleStringProperty(actual.getStringOrDefault("Freitext", choices.isEmpty() ? text : choices.iterator().next()));
 			second = ChoiceOrTextEnum.TEXT;
+			if (actual.containsKey("Freitext")) {
+				variant = new SimpleStringProperty(actual.getString("Freitext"));
+			} else {
+				final Set<String> choices = getSecondChoiceItems(false);
+				if (choices.isEmpty()) {
+					variant = new SimpleStringProperty("");
+				} else {
+					variant = new SimpleStringProperty(choices.iterator().next());
+					for (final String currentChoice : choices) {
+						updateValid();
+						if (valid.get()) {
+							break;
+						}
+						variant.set(currentChoice);
+					}
+					updateValid();
+					if (!valid.get()) {
+						variant.set(choices.iterator().next());
+					}
+				}
+			}
 		} else {
-			variant = new SimpleStringProperty("");
 			second = ChoiceOrTextEnum.NONE;
+			variant = new SimpleStringProperty("");
 		}
+		variant.addListener((o, oldV, newV) -> updateValid());
 
 		final Tuple3<Integer, Integer, Integer> bounds = calculateBounds(proOrCon);
 		min = bounds._1;
@@ -143,8 +204,8 @@ public class ProOrCon {
 			}
 		}
 
+		updateValid();
 		if (hero != null) {
-			updateValid();
 			hero.addListener(o -> updateValid());
 		}
 	}
@@ -200,19 +261,49 @@ public class ProOrCon {
 		double baseCost = 1.0;
 		if (proOrCon.containsKey("Kosten")) {
 			baseCost = proOrCon.getDouble("Kosten");
-		} else if (hero != null && proOrCon.containsKey("Grad")) {
-			final JSONObject liturgies = ResourceManager.getResource("data/Liturgien");
-			int level = proOrCon.getInt("Grad");
-			final JSONObject liturgyKnowledges = hero.getObj("Talente").getObj("Liturgiekenntnis");
-			if (!liturgyKnowledges.keySet().isEmpty()) {
-				final String deity = liturgyKnowledges.keySet().iterator().next();
-				final JSONObject deities = liturgies.getObj(name.get()).getObjOrDefault("Gottheiten", null);
-				if (deities != null && deities.containsKey(deity)) {
-					level = deities.getObj(deity).getIntOrDefault("Grad", level);
+		} else if (hero != null) {
+			if (name.get().endsWith("spezialisierung") && description.get() != null && !"".equals(description.get())) {
+				final String talentName = description.get();
+				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(talentName);
+				final String group = talentAndGroup._2;
+				int complexity = Integer.MAX_VALUE;
+				if ("Zauber".equals(group)) {
+					final JSONArray representations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", null);
+					if (representations != null) {
+						for (final JSONObject representation : representations.getObjs()) {
+							final String abbreviation = DSAUtil.getRepresentationAbbreviation(representation.getString("Auswahl"));
+							complexity = Math.min(HeroUtil.getSpellComplexity(hero, talentName, abbreviation, Integer.MAX_VALUE), complexity);
+						}
+					}
+				} else {
+					complexity = HeroUtil.getTalentComplexity(hero, talentName);
 				}
+				final JSONObject costs = ResourceManager.getResource("data/Steigerungskosten");
+				baseCost = 20 * costs.getObj(DSAUtil.getEnhancementGroupString(complexity)).getIntOrDefault("Faktor", 1);
+				final JSONArray specializations = hero.getObj("Sonderfertigkeiten").getArrOrDefault(name.get(), null);
+				if (specializations != null) {
+					int count = 0;
+					for (final JSONObject specialization : specializations.getObjs()) {
+						if (talentName.equals(specialization.getString("Auswahl"))) {
+							++count;
+						}
+					}
+					baseCost *= count + 1;
+				}
+			} else if (proOrCon.getParent() == ResourceManager.getResource("data/Liturgien")) {
+				final JSONObject liturgies = ResourceManager.getResource("data/Liturgien");
+				int level = proOrCon.getIntOrDefault("Grad", 1);
+				final JSONObject liturgyKnowledges = hero.getObj("Talente").getObj("Liturgiekenntnis");
+				if (!liturgyKnowledges.keySet().isEmpty()) {
+					final String deity = liturgyKnowledges.keySet().iterator().next();
+					final JSONObject deities = liturgies.getObj(name.get()).getObjOrDefault("Gottheiten", null);
+					if (deities != null && deities.containsKey(deity)) {
+						level = deities.getObj(deity).getIntOrDefault("Grad", level);
+					}
+				}
+				final JSONObject levels = ResourceManager.getResource("data/Liturgiegrade");
+				baseCost = levels.getObj("Grad " + level).getDoubleOrDefault("Kosten", level * 50.0);
 			}
-			final JSONObject levels = ResourceManager.getResource("data/Liturgiegrade");
-			baseCost = levels.getObj("Grad " + level).getDoubleOrDefault("Kosten", level * 50.0);
 		}
 
 		if (proOrCon.containsKey("Kosten:Voraussetzungen")) {
@@ -247,6 +338,12 @@ public class ProOrCon {
 		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession"
 				: "Veteran".equals(name.get()) ? "Profession:Variante" : proOrCon.getStringOrDefault("Auswahl", proOrCon.getString("Freitext"));
 		final Set<String> choices = HeroUtil.getChoices(hero, choice, null);
+
+		if ("Talentspezialisierung".equals(name.get())) {
+			final JSONObject talents = ResourceManager.getResource("data/Talente");
+			choices.removeAll(talents.getObj("Nahkampftalente").keySet());
+			choices.removeAll(talents.getObj("Fernkampftalente").keySet());
+		}
 
 		if (proOrCon.containsKey("Voraussetzungen")) {
 			final JSONObject requirements = proOrCon.getObj("Voraussetzungen");
@@ -488,7 +585,7 @@ public class ProOrCon {
 	}
 
 	protected void updateValid() {
-		if (!proOrCon.containsKey("Voraussetzungen")) return;
+		if (hero == null || !proOrCon.containsKey("Voraussetzungen")) return;
 		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : "";
 		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : "";
 		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice.isEmpty() ? null : choice,

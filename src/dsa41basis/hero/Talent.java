@@ -109,12 +109,12 @@ public class Talent {
 		return attributes.get();
 	}
 
-	public final String getDisplayName() {
-		return displayName.get();
+	public int getEnhancementComplexity(final JSONObject hero, final int targetTaW) {
+		return HeroUtil.getTalentComplexity(hero, name.get());
 	}
 
-	public int getEnhancementCost(final JSONObject hero, final int targetTaW) {
-		return HeroUtil.getTalentComplexity(hero, name.get());
+	public final String getDisplayName() {
+		return displayName.get();
 	}
 
 	public int getMaximum(final JSONObject hero) {

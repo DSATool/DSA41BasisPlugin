@@ -263,7 +263,7 @@ public class DSAUtil {
 				modifier -= charGenModifier;
 			}
 			final int localModifier = i > 10 && "Selbststudium".equals(method) ? 1 : 0;
-			result += Math.round(getEnhancementCost(talent.getEnhancementCost(hero, i) + modifier + localModifier, i, charGen) * multiplier);
+			result += Math.round(getEnhancementCost(talent.getEnhancementComplexity(hero, i) + modifier + localModifier, i, charGen) * multiplier);
 		}
 		return result;
 	}
@@ -523,6 +523,14 @@ public class DSAUtil {
 			}
 		}
 		return result.toString().trim();
+	}
+
+	public static String getRepresentationAbbreviation(final String representation) {
+		final JSONObject representations = ResourceManager.getResource("data/Repraesentationen");
+		for (final String abbreviation : representations.keySet()) {
+			if (representation.equals(representations.getObj(abbreviation).getString("Name"))) return abbreviation;
+		}
+		return null;
 	}
 
 	public static String printProOrCon(final JSONObject actual, final String proOrConName, final JSONObject proOrCon, final boolean displayLevel) {
