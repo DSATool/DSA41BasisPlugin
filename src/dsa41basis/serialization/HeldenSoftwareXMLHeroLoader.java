@@ -52,801 +52,18 @@ import jsonant.value.JSONObject;
 @SuppressWarnings("unchecked")
 public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
-	private static Map<String, String> proConReplacements;
-	private static Map<String, String> ritualKnowledge;
-	private static Map<String, String> repReplacements;
-	private static Map<String, String> raceReplacements;
-	private static Map<String, String> cultureReplacements;
-	private static Map<String, String> professionReplacements;
-	private static Map<String, String> talentReplacements;
-	private static Map<String, String> spellReplacements;
-	private static Map<String, String> groupReplacements;
-	private static Map<String, String> skillReplacements;
-	private static Map<String, String> representations;
-
-	static {
-		groupReplacements = new HashMap<>();
-		groupReplacements.put("Nahkampf", "Nahkampftalente");
-		groupReplacements.put("Fernkampf", "Fernkampftalente");
-		groupReplacements.put("Kampf", "Kampftalente");
-		groupReplacements.put("Körperlich", "Körperliche Talente");
-		groupReplacements.put("Gesellschaft", "Gesellschaftliche Talente");
-		groupReplacements.put("Natur", "Natur-Talente");
-		groupReplacements.put("Wissen", "Wissenstalente");
-		groupReplacements.put("Handwerk", "Handwerkstalente");
-	}
-
-	static {
-		talentReplacements = new HashMap<>();
-		talentReplacements.put("Zweihandhiebwaffen", "Zweihand-Hiebwaffen");
-		talentReplacements.put("Sich verstecken", "Sich Verstecken");
-		talentReplacements.put("Stimmen imitieren", "Stimmen Imitieren");
-		talentReplacements.put("Sich verkleiden", "Sich Verkleiden");
-		talentReplacements.put("Fallen stellen", "Fallenstellen");
-		talentReplacements.put("Götter und Kulte", "Götter/Kulte");
-		talentReplacements.put("Geografie", "Geographie");
-		talentReplacements.put("Sagen und Legenden", "Sagen/Legenden");
-		talentReplacements.put("Boote fahren", "Boote Fahren");
-		talentReplacements.put("Fahrzeug lenken", "Fahrzeug Lenken");
-		talentReplacements.put("Kartografie", "Kartographie");
-		talentReplacements.put("Schlösser knacken", "Schlösser Knacken");
-		talentReplacements.put("Schnaps brennen", "Schnaps Brennen");
-		talentReplacements.put("Stoffe färben", "Stoffe Färben");
-		talentReplacements.put("Sprachen kennen Alt-Imperial/Aureliani", "Aureliani");
-		talentReplacements.put("Sprachen kennen Urtulamidya", "Ur-Tulamidya");
-		talentReplacements.put("Lesen/Schreiben Altes Amulashtra", "Amulashtra");
-		talentReplacements.put("Lesen/Schreiben Altes Kemi", "Altes Kemi (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Angram", "Angram (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Gimaril-Glyphen", "Gimaril");
-		talentReplacements.put("Lesen/Schreiben Gjalskisch", "Gjalskisch (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Hjaldingsche Runen", "Hjaldingsche Runen");
-		talentReplacements.put("Lesen/Schreiben (Alt-)Imperiale Zeichen", "Imperiale Zeichen");
-		talentReplacements.put("Lesen/Schreiben Isdira/Asdharia", "Isdira (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Rogolan", "Rogolan (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Trollische Raumbilderschrift", "Raumbilderschrift");
-		talentReplacements.put("Lesen/Schreiben Tulamidya", "Tulamidya (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Urtulamidya", "Ur-Tulamidya (Schrift)");
-		talentReplacements.put("Lesen/Schreiben Zhayad", "Zhayad (Schrift)");
-	}
-
-	static {
-		spellReplacements = new HashMap<>();
-		spellReplacements.put("Analys Arkanstruktur", "Analys Arcanstruktur");
-		spellReplacements.put("Aquafaxius Wasserstrahl", "Aquafaxius");
-		spellReplacements.put("Archofaxius Erzstrahl", "Archofaxius");
-		spellReplacements.put("Brenne toter Stoff!", "Brenne, toter Stoff!");
-		spellReplacements.put("Frigifaxius Eisstrahl", "Frigifaxius");
-		spellReplacements.put("Frigisphaero Eisball", "Frigisphaero");
-		spellReplacements.put("Humofaxius Humusstrahl", "Humofaxius");
-		spellReplacements.put("Motoricus", "Motoricus Geisteshand");
-		spellReplacements.put("Orcanofaxius Luftstrahl", "Orcanofaxius");
-		spellReplacements.put("Orconosphaero Orkanball", "Orcanosphaero");
-		spellReplacements.put("Orkanwand", "Wand aus Luft");
-		spellReplacements.put("Reptilea Natternest", "Reptilea Natternnest");
-		spellReplacements.put("Respondami", "Respondami Wahrheitszwang");
-		spellReplacements.put("Skelettarius", "Skelettarius Totenherr");
-		spellReplacements.put("Silentium", "Silentium Schweigekreis");
-		spellReplacements.put("Umbraporta Schattentüre", "Umbraporta Schattentür");
-		spellReplacements.put("Weiße Mähn und goldener Huf", "Weiße Mähn' und gold'ner Huf");
-		spellReplacements.put("Adamantium Erzstruktur (Agm)", "Adamantium Erzstruktur (Agrimoth)");
-		spellReplacements.put("Aeolitus Windgebraus (Agm)", "Aeolitus Windgebraus (Agrimoth)");
-		spellReplacements.put("Aerofugo Vakuum (Agm)", "Aerofugo Vakuum (Agrimoth)");
-		spellReplacements.put("Aerogelo Atemqual (Agm)", "Aerogelo Atemqual (Agrimoth)");
-		spellReplacements.put("Armatrutz (Agm)", "Armatrutz (Agrimoth)");
-		spellReplacements.put("Brenne, toter Stoff! (Agm)", "Brenne, toter Stoff! (Agrimoth)");
-		spellReplacements.put("Caldofrigo heiß und kalt (Agm)", "Caldofrigo heiß und kalt (Agrimoth)");
-		spellReplacements.put("Fortifex arkane Wand (Agm)", "Fortifex arkane Wand (Agrimoth)");
-		spellReplacements.put("Granit und Marmor (Agm)", "Granit und Marmor (Agrimoth)");
-		spellReplacements.put("Humofaxius (Agm)", "Humofaxius (Agrimoth)");
-		spellReplacements.put("Ignifaxius Flammenstrahl (Agm)", "Ignifaxius Flammenstrahl (Agrimoth)");
-		spellReplacements.put("Ignisphaero Feuerball (Agm)", "Ignisphaero Feuerball (Agrimoth)");
-		spellReplacements.put("Leib des Feuers (Agm)", "Leib des Feuers (Agrimoth)");
-		spellReplacements.put("Orcanofaxius (Agm)", "Orcanofaxius (Agrimoth)");
-		spellReplacements.put("Wand aus Dornen (Agm)", "Wand aus Dornen (Agrimoth)");
-		spellReplacements.put("Wand aus Erz (Agm)", "Wand aus Erz (Agrimoth)");
-		spellReplacements.put("Weiches erstarre! (Agm)", "Weiches erstarre! (Agrimoth)");
-		spellReplacements.put("Windhose (Agm)", "Windhose (Agrimoth)");
-	}
-
-	static {
-		representations = new HashMap<>();
-		representations.put("Achaz", "Ach");
-		representations.put("Borbaradianer", "Bor");
-		representations.put("Druide", "Dru");
-		representations.put("Elf", "Elf");
-		representations.put("Hexe", "Hex");
-		representations.put("Schelm", "Sch");
-		representations.put("Scharlatan", "Srl");
-		representations.put("Magiedilletant", "ÜNB");
-	}
-
-	static {
-		proConReplacements = new HashMap<>();
-		proConReplacements.put("Begabung für [Merkmal]", "Begabung für Merkmal");
-		proConReplacements.put("Begabung für [Ritual]", "Begabung für Ritual");
-		proConReplacements.put("Begabung für [Talent]", "Begabung für Talent");
-		proConReplacements.put("Begabung für [Talentgruppe]", "Begabung für Talentgruppe");
-		proConReplacements.put("Begabung für [Zauber]", "Begabung für Zauber");
-		proConReplacements.put("Geweiht [Angrosch]", "Geweiht");
-		proConReplacements.put("Geweiht [Gravesh]", "Geweiht");
-		proConReplacements.put("Geweiht [H'Ranga]", "Geweiht");
-		proConReplacements.put("Geweiht [nicht-alveranische Gottheit]", "Geweiht");
-		proConReplacements.put("Geweiht [zwölfgöttliche Kirche]", "Geweiht");
-		proConReplacements.put("Gutaussehend", "Gut Aussehend");
-		proConReplacements.put("Herausragende Eigenschaft: Mut", "Herausragender Mut");
-		proConReplacements.put("Herausragende Eigenschaft: Klugheit", "Herausragende Klugheit");
-		proConReplacements.put("Herausragende Eigenschaft: Intuition", "Herausragende Intuition");
-		proConReplacements.put("Herausragende Eigenschaft: Charisma", "Herausragendes Charisma");
-		proConReplacements.put("Herausragende Eigenschaft: Gewandtheit", "Herausragende Gewandtheit");
-		proConReplacements.put("Herausragende Eigenschaft: Fingerfertigkeit", "Herausragende Fingerfertigkeit");
-		proConReplacements.put("Herausragende Eigenschaft: Konstitution", "Herausragende Konstitution");
-		proConReplacements.put("Herausragende Eigenschaft: Körperkraft", "Herausragende Körperkraft");
-		proConReplacements.put("Tierempathie (alle)", "Tierempathie");
-		proConReplacements.put("Tierempathie (speziell)", "Tierempathie (einzelne Tierart)");
-		proConReplacements.put("Madas Fluch (stark)", "Madas Fluch");
-		proConReplacements.put("Miserable Eigenschaft: Mut", "Miserabler Mut");
-		proConReplacements.put("Miserable Eigenschaft: Klugheit", "Miserable Klugheit");
-		proConReplacements.put("Miserable Eigenschaft: Intuition", "Miserable Intuition");
-		proConReplacements.put("Miserable Eigenschaft: Charisma", "Miserables Charisma");
-		proConReplacements.put("Miserable Eigenschaft: Gewandtheit", "Miserable Gewandtheit");
-		proConReplacements.put("Miserable Eigenschaft: Fingerfertigkeit", "Miserable Fingerfertigkeit");
-		proConReplacements.put("Miserable Eigenschaft: Konstitution", "Miserable Konstitution");
-		proConReplacements.put("Miserable Eigenschaft: Körperkraft", "Miserable Körperkraft");
-		proConReplacements.put("Schneller alternd", "Schneller Alternd");
-		proConReplacements.put("Unfähigkeit für [Merkmal]", "Unfähigkeit für Merkmal");
-		proConReplacements.put("Unfähigkeit für [Talent]", "Unfähigkeit für Talent");
-		proConReplacements.put("Unfähigkeit für [Talentgruppe]", "Unfähigkeit für Talentgruppe");
-	}
-
-	static {
-		skillReplacements = new HashMap<>();
-		skillReplacements.put("Beiß auf Granit", "Beiß auf Granit!");
-		skillReplacements.put("Beute", "Beute!");
-		skillReplacements.put("Pech an den Hals", "Pech an den Hals wünschen");
-		skillReplacements.put("Lied des Trostes (Firnelfische Variante)", "Firnelfisches Lied des Trostes");
-		skillReplacements.put("Wasserbann", "Geodischer Wasserbann");
-		skillReplacements.put("Fackel", "Ewige Flamme");
-		skillReplacements.put("Seil", "Seil des Adepten");
-		skillReplacements.put("Stabverlängerung", "Doppeltes Maß");
-		skillReplacements.put("Ruf des Krieges", "Der Ruf des Krieges");
-		skillReplacements.put("Schutz Rastullahs", "Der Schutz Rastullahs");
-		skillReplacements.put("Glyphe der Elementaren Attraktion", "Glyphe der elementaren Attraktion");
-		skillReplacements.put("Glyphe der Elementaren Bannung", "Glyphe der elementaren Bannung");
-		skillReplacements.put("Satinavs Siegel", "Zusatzzeichen Satinavs Siegel");
-		skillReplacements.put("Schutzsiegel", "Zusatzzeichen Schutzsiegel");
-		skillReplacements.put("Arngrims Höhle", "Arngrimms Höhle");
-		skillReplacements.put("Elementarharmonisierte Aura (Humus/Eis)", "Elementarharmonisierte Aura (Eis/Humus)");
-		skillReplacements.put("Elementarharmonisierte Aura (Luft/Erz)", "Elementarharmonisierte Aura (Erz/Luft)");
-	}
-
-	static {
-		repReplacements = new HashMap<>();
-		repReplacements.put("Achaz", "Kristallomantisch");
-		repReplacements.put("Borbaradianer", "Borbaradianisch");
-		repReplacements.put("Druide", "Druidisch");
-		repReplacements.put("Elf", "Elfisch");
-		repReplacements.put("Geode", "Geodisch");
-		repReplacements.put("Hexe", "Hexisch");
-		repReplacements.put("Magier", "Gildenmagisch");
-		repReplacements.put("Scharlatan", "Scharlatanisch");
-		repReplacements.put("Schelm", "Schelmisch");
-	}
-
-	static {
-		ritualKnowledge = new HashMap<>();
-		ritualKnowledge.put("Derwisch", "Derwische");
-		ritualKnowledge.put("Druide", "Druidisch");
-		ritualKnowledge.put("Geode", "Geodisch (Herren der Erde)");
-		ritualKnowledge.put("Gildenmagie", "Gildenmagisch");
-		ritualKnowledge.put("Hexe", "Hexisch");
-		ritualKnowledge.put("Kristallomantie", "Kristallomantisch");
-		ritualKnowledge.put("Scharlatan", "Scharlatanisch");
-	}
-
-	static {
-		raceReplacements = new HashMap<>();
-		raceReplacements.put("Mittellaender", "Mittelländer");
-		raceReplacements.put("Gjalsker", "Gjalskerländer");
-		raceReplacements.put("Halbelfe firnelfischer Abstammung", "Halbelf firnelfischer Abstammung");
-		raceReplacements.put("Halbelfe nivesischer Abstammung", "Halbelf nivesischer Abstammung");
-		raceReplacements.put("Halbelfe thorwalscher Abstammung", "Halbelf thorwalscher Abstammung");
-		raceReplacements.put("in elfischer Kultur aufgewachsen", "bei Elfen großgezogen");
-		raceReplacements.put("Brillantzwerge", "Brillantzwerg");
-		raceReplacements.put("Ambosszwerge", "Ambosszwerg");
-		raceReplacements.put("Wilde Zwerge", "Wilder Zwerg");
-	}
-
-	static {
-		cultureReplacements = new HashMap<>();
-		cultureReplacements.put("ArchaischeAchaz", "Archaische Achaz");
-		cultureReplacements.put("AuelfenSippe", "Auelfische Sippe");
-		cultureReplacements.put("Dschungelstaemme", "Dschungelstämme");
-		cultureReplacements.put("ElfischeSiedlung", "Elfische Siedlung");
-		cultureReplacements.put("FestumerGhetto", "Festumer Ghetto");
-		cultureReplacements.put("FirnelfenSippe", "Firnelfische Sippe");
-		cultureReplacements.put("Garetien", "Mittelländische Städte");
-		cultureReplacements.put("Gjalskerlaender", "Gjalskerland");
-		cultureReplacements.put("Huegelzwerge", "Hügelzwerge");
-		cultureReplacements.put("Mittelreich", "Mittelländische Landbevölkerung");
-		cultureReplacements.put("Nivesenstaemme", "Nivesenstämme");
-		cultureReplacements.put("Novadis", "Novadi");
-		cultureReplacements.put("NuanaaeLi", "Nuanaä-Lie");
-		cultureReplacements.put("StammesAchaz", "Stammes-Achaz");
-		cultureReplacements.put("SteppenelfenSippe", "Steppenelfische Sippe");
-		cultureReplacements.put("Suedaventurien", "Südaventurien");
-		cultureReplacements.put("Svellttal", "Svellttal und Nordlande");
-		cultureReplacements.put("SvellttalOkkupanten", "Svellttal-Besatzer");
-		cultureReplacements.put("TulamidischeStadtstaaten", "Tulamidische Stadtstaaten");
-		cultureReplacements.put("VerloreneStaemme", "Verlorene Stämme");
-		cultureReplacements.put("WaldelfenSippe", "Waldelfische Sippe");
-		cultureReplacements.put("WaldinselUtulus", "Waldinsel-Utulus");
-		cultureReplacements.put("Kannemünde / Mhanerhaven", "Kannemünde/Mhanerhaven");
-		cultureReplacements.put("Flüchtlinge aus borbaradianisch besetzten Städten", "Flüchtlinge aus borbaradianisch besetzten Gebieten");
-		cultureReplacements.put("Maraskanische Exilanten in Festum", "Maraskanische Exilanten");
-		cultureReplacements.put("Weiden/Greifenfurt", "Regionen Weiden und Greifenfurt");
-		cultureReplacements.put("Kasimit", "Kasimiten");
-		cultureReplacements.put("Maraskanische Exilanten in Khunchom", "Maraskanische Exilanten");
-		cultureReplacements.put("Wüstenoase (Männer)", "Wüstenoase");
-		cultureReplacements.put("Wüstenoase (Frauen)", "Wüstenoase");
-		cultureReplacements.put("Sippe (UdW)", "Sippe");
-		cultureReplacements.put("Ottajasko (UdW)", "Ottajasko");
-		cultureReplacements.put("Söldnerottajasko Hammerfaust in Vinay/Brabak (UdW)", "Söldnerottajasko Hammerfaust in Vinay/Brabak");
-		cultureReplacements.put("Söldnerottajasko Hammerfaust in Askja/Regenwald (UdW)", "Söldnerottajasko Hammerfaust in Askja/Regenwald");
-		cultureReplacements.put("Söldnerottajasko Bannerträger in Drolsash/Drol (UdW)", "Söldnerottajasko Bannerträger in Drôlsash/Drôl");
-		cultureReplacements.put("Söldnerottajasko Drachen von Llanka, heimatlos (UdW)", "Söldnerottajasko Drachen von Llanka, heimatlos");
-		cultureReplacements.put("Sippe aus dem Binnenland (UdW)", "Sippe|Binnenland");
-		cultureReplacements.put("Küstengebiet", "Küstengebiete");
-		cultureReplacements.put("Stadtstaat Al'Anfa", "Al'Anfa");
-		cultureReplacements.put("Maraskanische Exilanten in Al'Anfa", "Maraskanische Exilanten");
-		cultureReplacements.put("Stadtstaat Brabak", "Brabak");
-		cultureReplacements.put("Stadtstaat Charypso", "Charypso");
-		cultureReplacements.put("Stadtstaat Chorhop", "Chorhop");
-		cultureReplacements.put("Stadtstaat Hôt-Alem", "Hôt-Alem");
-		cultureReplacements.put("Stadtstaat Khefu", "Khefu");
-		cultureReplacements.put("Stadtstaat Mengbilla", "Mengbilla");
-		cultureReplacements.put("Stadtstaat Mirham", "Mirham");
-		cultureReplacements.put("Stadtstaat Sylla", "Sylla");
-		cultureReplacements.put("Kolonialhafen", "Kolonialhäfen");
-		cultureReplacements.put("Norbardensippe in Thorwal (UdW)", "Norbardensippe in Thorwal");
-		cultureReplacements.put("Südliche Mittellande (Almada, Garetien)", "Südliche Mittellande");
-		cultureReplacements.put("Großstadt (Lowangen, Punin)", "Großstadt");
-		cultureReplacements.put("Firnelfisch beeinflusste Siedlung (Olport, Keamonmund)", "Firnelfisch beeinflusste Siedlung");
-		cultureReplacements.put("Waldelfisch beeinflusste Siedlung (Donnerbach, Gerasim, Kvirasim)", "Waldelfisch beeinflusste Siedlung");
-		cultureReplacements.put("Ergoch (Sklaven)", "Ergoch");
-		cultureReplacements.put("Grishik (Bauern)", "Grishik");
-		cultureReplacements.put("Drasdech (Handwerker)", "Drasdech");
-		cultureReplacements.put("Khurkach (Krieger und Jäger)", "Khurkach");
-		cultureReplacements.put("Okwach (Elite-Krieger, Priester, Schamanen)", "Okwach");
-	}
-
-	static {
-		professionReplacements = new HashMap<>();
-		professionReplacements.put("Alchemist", "Alchimist");
-		professionReplacements.put("ArchaischerHandwerkerDerFerkinas", "Handwerker|Archaische Handwerker|Archaische Handwerker der Ferkinas");
-		professionReplacements.put("ArchaischerHandwerkerDesSuedens", "Handwerker|Archaische Handwerker|Archaische Handwerker Südaventuriens und der Achaz");
-		professionReplacements.put("Bordmagus", "Bordzauberer|Halbzauberer");
-		professionReplacements.put("FaehnrichFusskaemper", "Fähnrich|Fähnrich der Fußkämpfer");
-		professionReplacements.put("FaehnrichKavallerie", "Fähnrich|Fähnrich der Kavallerie");
-		professionReplacements.put("FaehnrichSee", "Fähnrich|Fähnrich zur See");
-		professionReplacements.put("Fernhaendler", "Fernhändler");
-		professionReplacements.put("Grenzjaeger", "Grenzjäger");
-		professionReplacements.put("Grosswildjaeger", "Großwildjäger");
-		professionReplacements.put("Haendler", "Händler");
-		professionReplacements.put("Hoefling", "Höfling");
-		professionReplacements.put("Hofkuenstler", "Hofkünstler");
-		professionReplacements.put("Jaeger", "Jäger");
-		professionReplacements.put("Jahrmarktskaempfer", "Jahrmarktskämpfer");
-		professionReplacements.put("Kaempfer", "Kämpfer");
-		professionReplacements.put("KaempferUdw", "Soldat");
-		professionReplacements.put("Karawanenfuehrer", "Karawanenführer");
-		professionReplacements.put("Legendensaenger", "Legendensänger");
-		professionReplacements.put("Lehrmeister", "Magier");
-		professionReplacements.put("Rattenfaenger", "Rattenfänger");
-		professionReplacements.put("Soeldner", "Söldner");
-		professionReplacements.put("Stabsfaehnrich", "Fähnrich|Stabsfähnrich");
-		professionReplacements.put("Strassenraeuber", "Straßenräuber");
-		professionReplacements.put("Tageloehner", "Tagelöhner");
-		professionReplacements.put("Tierbaendiger", "Tierbändiger");
-		professionReplacements.put("Tierkrieger", "Durro-Dûn");
-		professionReplacements.put("Wildnislaeufer", "Wildnisläufer");
-		professionReplacements.put("WindUndWettermagus", "Bordzauberer");
-		professionReplacements.put("Zaubertaenzer", "Tänzer");
-		professionReplacements.put("AlAnfa", "Al'Anfa");
-		professionReplacements.put("Stabsfähnrich aus Wehrheim", "Wehrheim");
-		professionReplacements.put("Stabsfähnrich aus Vinsalt", "Vinsalt");
-		professionReplacements.put("städtischer Bogenschütze (UdW)", "Stadtgardist|Städtischer Bogenschütze");
-		professionReplacements.put("Akademiegardist/Tempelgardist/Ehrengardist", "Akademiegardist");
-		professionReplacements.put("Kämpferschule Rekkerskola in Enqui (UdW)", "Gardist in Enqui");
-		professionReplacements.put("Festung der Tapferen zu Baburin", "Krieger aus Baburin");
-		professionReplacements.put("Akademie 'Schwert und Schild' zu Baliho", "Krieger aus Baliho");
-		professionReplacements.put("Herzögliche Kriegerakademie zu Elenvina", "Krieger aus Elenvina");
-		professionReplacements.put("Haus der Hohen Kriegskunst derer vom Berg in Eslamsgrund", "Krieger aus Eslamsgrund");
-		professionReplacements.put("Institut der Hohen Schule der Reiterei zu Gareth", "Krieger aus Gareth");
-		professionReplacements.put("Ruadas Ehr in Havena", "Krieger aus Havena");
-		professionReplacements.put("Kriegerakademie 'Mutter Rondra' auf Hylailos", "Krieger aus Hylailos");
-		professionReplacements.put("Kriegerschule Rabenschnabel zu Mengbilla", "Krieger aus Mengbilla");
-		professionReplacements.put("Die Rondragefällige und Theaterritterliche Kriegerschule der Bornländischen Lande zu Neersand", "Krieger aus Neersand");
-		professionReplacements.put("Freie Kämpferschule der Trutzburg zu Prem", "Krieger aus Prem");
-		professionReplacements.put("Freie Kämpferschule der Trutzburg zu Prem (UdW)", "Krieger aus Prem");
-		professionReplacements.put("Königliches Kriegerseminar zu Punin", "Krieger aus Punin");
-		professionReplacements.put("Kriegerschule Feuerlilie in Rommilys", "Krieger aus Rommilys");
-		professionReplacements.put("Gänseritter", "Krieger aus Rommilys|Gänseritter");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal", "Krieger aus Thorwal");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal/ Hetja Fotskari (UdW)", "Krieger aus Thorwal|Hetja der Fotskari");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal/ Hetja Riddari (UdW)", "Krieger aus Thorwal|Hetja der Riddari");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal/ Hetja Mangskari (UdW)", "Krieger aus Thorwal|Hetja der Mangskari");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal/ Hetja Herverkmader (UdW)", "Krieger aus Thorwal|Hetja der Herverkmader");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal/ Hetja Bogskari (UdW)", "Krieger aus Thorwal|Hetja der Bogskari");
-		professionReplacements.put("Kämpferschule Ugdalfskronir in Thorwal/ Hetja Sjahskari (UdW)", "Krieger aus Thorwal|Hetja der Sjahskari");
-		professionReplacements.put("Akademie der Kriegs- und Lebenskunst zu Vinsalt", "Krieger aus Vinsalt");
-		professionReplacements.put("Rondras Schwertkunst in Winhall", "Krieger aus Winhall");
-		professionReplacements.put("Knappe aus Andergast/Nostria (UdW)",
-				"Ritter alten Schlags|Knappe des traditionellen Ritters|Knappe aus den Streitenden Königreichen");
-		professionReplacements.put("Adersin", "Schwertgeselle nach Adersin");
-		professionReplacements.put("Uinin", "Schwertgeselle nach Uinin");
-		professionReplacements.put("Essalio Fedorino", "Schwertgeselle nach Fedorino");
-		professionReplacements.put("Rafim al-Halan", "Schwertgeselle nach al-Halan");
-		professionReplacements.put("Rekker der Hjalskari (Fotskari) (UdW)", "Rekker der Fotskari");
-		professionReplacements.put("Rekker der Hjalskari (Riddari) (UdW)", "Rekker der Riddari");
-		professionReplacements.put("Rekker der Hjalskari (Mangskari) (UdW)", "Rekker der Mangskari");
-		professionReplacements.put("Rekker der Hjalskari (Herverkmader) (UdW)", "Rekker der Fotskari|Rekker der Herverkmader");
-		professionReplacements.put("Rekker der Hjalskari (Bogskari) (UdW)", "Rekker der Bogskari");
-		professionReplacements.put("Rekker der Hjalskari (Sjahskari) (UdW)", "Rekker der Sjahskari");
-		professionReplacements.put("Kämpfer aus einer Ottajasko (UdW)", "Kämpfer einer Ottajasko");
-		professionReplacements.put("Kämpfer aus einer Sippe (UdW)", "Kämpfer einer Sippe");
-		professionReplacements.put("Kämpfer/Robbenjäger aus einer Ottajasko (UdW)", "Kämpfer einer Ottajasko|Robbenjäger");
-		professionReplacements.put("Kämpfer/Seefahrer aus einer Ottajasko (UdW)", "Kämpfer einer Ottajasko|Robbenjäger");
-		professionReplacements.put("Kämpfer/Robbenjäger aus einer Sippe (UdW)", "Kämpfer einer Sippe|Seefahrer");
-		professionReplacements.put("Kämpfer/Seefahrer aus einer Sippe (UdW)", "Kämpfer einer Sippe|Seefahrer");
-		professionReplacements.put("Leichtes Fußvolk (Anderthalbhänder)", "Leichtes Fußvolk|Anderthalbhänder");
-		professionReplacements.put("Premer Seesöldner (UdW)", "Premer Seesöldner");
-		professionReplacements.put("Tempelwache Achaz", "Achaz-Stammeskrieger|Tempelwache");
-		professionReplacements.put("Stafettenläufer", "Zwergischer Stafettenläufer");
-		professionReplacements.put("Robbenjäger (UdW)", "Robbenjäger");
-		professionReplacements.put("Fallensteller (UdW)", "Robbenjäger|Fallensteller");
-		professionReplacements.put("Skalde aus der Runajasko (UdW)", "Skalde aus der Runajasko");
-		professionReplacements.put("Akrobat/Tänzer", "Akrobat");
-		professionReplacements.put("Taugenichts/Stutzer", "Stutzer");
-		professionReplacements.put("Taugenichts/Dilettant", "Dilettant");
-		professionReplacements.put("Erzieher", "Erzieher der Achaz");
-		professionReplacements.put("traditioneller Schiffbauer (UdW)", "Traditioneller Schiffbauer");
-		professionReplacements.put("zwergischer Bastler", "Bastler");
-		professionReplacements.put("zwergischer, dörflicher Bastler", "Bastler|dörflicher Handwerker");
-		professionReplacements.put("Sesh'shem", "Sesh'shemet");
-		professionReplacements.put("Schauermann", "Schauerleute");
-		professionReplacements.put("Brutfleger", "Brutpfleger der Achaz");
-		professionReplacements.put("Bund des Roten Salamanders (Andergast)", "Bund des Roten Salamanders|Andergast");
-		professionReplacements.put("Bund des Roten Salamanders (Andergast, magiebegabt)", "Magiebegabter Alchimist|Bund des Roten Salamanders|Andergast");
-		professionReplacements.put("Bund des Roten Salamanders (Brabak)", "Bund des Roten Salamanders|Brabak");
-		professionReplacements.put("Bund des Roten Salamanders (Brabak, magiebegabt)", "Magiebegabter Alchimist|Bund des Roten Salamanders|Brabak");
-		professionReplacements.put("Bund des Roten Salamanders (Fasar)", "Bund des Roten Salamanders|Fasar");
-		professionReplacements.put("Bund des Roten Salamanders (Fasar, magiebegabt)", "Magiebegabter Alchimist|Bund des Roten Salamanders|Fasar");
-		professionReplacements.put("Bund des Roten Salamanders (Festum)", "Bund des Roten Salamanders|Festum");
-		professionReplacements.put("Bund des Roten Salamanders (Festum, magiebegabt)", "Magiebegabter Alchimist|Bund des Roten Salamanders|Festum");
-		professionReplacements.put("Gilde der Alchimisten zu Mengbilla (magiebegabt)", "Magiebegabter Alchimist|Gilde der Alchimisten zu Mengbilla");
-		professionReplacements.put("Alchimistische Fakultät der Universität von Al'Anfa (magiebegabt)",
-				"Magiebegabter Alchimist|Alchimistische Fakultät der Universität von Al'Anfa");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Arithmetik)",
-				"Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Arithmetik");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Arithmetik, magiebegabt)",
-				"Magiebegabter Alchimist|Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Arithmetik");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Geometrie)",
-				"Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Geometrie");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Geometrie, magiebegabt)",
-				"Magiebegabter Alchimist|Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Geometrie");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Musiklehre)",
-				"Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Musiklehre");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Musiklehre, magiebegabt)",
-				"Magiebegabter Alchimist|Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Musiklehre");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Astronomie)",
-				"Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Astronomie");
-		professionReplacements.put("Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis (Astronomie, magiebegabt)",
-				"Magiebegabter Alchimist|Fakultät der Alchimie der Herzog-Eolan-Universität zu Methumis|Quadrivium Astronomie");
-		professionReplacements.put("Spagyrischer Zweig der Halle des Lebens zu Norburg (magiebegabt)",
-				"Magiebegabter Alchimist|Spagyrischer Zweig der Halle des Lebens zu Norburg");
-		professionReplacements.put("Kammerjaeger", "Kammerjäger");
-		professionReplacements.put("Kammerjaeger (magiebegabt)", "Magiebegabter Alchimist|Kammerjäger");
-		professionReplacements.put("Alchimist aus Unau (magiebegabt)", "Magiebegabter Alchimist|Alchimist aus Unau");
-		professionReplacements.put("Konzilsdruide (Eiselementarist)", "Konzilsdruide|Eiselementarist");
-		professionReplacements.put("Konzilsdruide (Erzelementarist)", "Konzilsdruide|Erzelementarist");
-		professionReplacements.put("Konzilsdruide (Feuerelementarist)", "Konzilsdruide|Feuerelementarist");
-		professionReplacements.put("Konzilsdruide (Humuselementarist)", "Konzilsdruide|Humuselementarist");
-		professionReplacements.put("Konzilsdruide (Luftelementarist)", "Konzilsdruide|Luftelementarist");
-		professionReplacements.put("Konzilsdruide (Wasserelementarist)", "Konzilsdruide|Wasserelementarist");
-		professionReplacements.put("Verschwiegene Schwestern", "Verschwiegene Schwester");
-		professionReplacements.put("Schwestern des Wissens", "Schwester des Wissens");
-		professionReplacements.put("Universität von Al'Anfa - Leibmagier-Zweig", "Universität von Al'Anfa|Leibmagier-Zweig");
-		professionReplacements.put("Universität von Al'Anfa - Seekriegs-Zweig", "Universität von Al'Anfa|Seekriegs-Zweig");
-		professionReplacements.put("Akademie der Geistesreisen zu Belhanka", "Akademie der Geistreisen zu Belhanka");
-		professionReplacements.put("Seminar der elfischen Verständigung zu Donnerbach",
-				"Seminar der Elfischen Verständigung und natürlichen Heilung zu Donnerbach|Verständigungszweig");
-		professionReplacements.put("Seminar der natürlichen Heilung zu Donnerbach",
-				"Seminar der Elfischen Verständigung und natürlichen Heilung zu Donnerbach|Heilungszweig");
-		professionReplacements.put("Konzil der Elemente zu Drakonia - Eiselementarist", "Konzil der Elemente zu Drakonia|Eiselementarist");
-		professionReplacements.put("Konzil der Elemente zu Drakonia - Erzelementarist", "Konzil der Elemente zu Drakonia|Erzelementarist");
-		professionReplacements.put("Konzil der Elemente zu Drakonia - Feuerelementarist", "Konzil der Elemente zu Drakonia|Feuerelementarist");
-		professionReplacements.put("Konzil der Elemente zu Drakonia - Humuselementarist", "Konzil der Elemente zu Drakonia|Humuselementarist");
-		professionReplacements.put("Konzil der Elemente zu Drakonia - Luftelementarist", "Konzil der Elemente zu Drakonia|Luftelementarist");
-		professionReplacements.put("Konzil der Elemente zu Drakonia - Wasserelementarist", "Konzil der Elemente zu Drakonia|Wasserelementarist");
-		professionReplacements.put("Akademie der geistigen Kraft zu Fasar: Gemäßigter Zweig", "Akademie der geistigen Kraft zu Fasar|Gemäßigter Zweig");
-		professionReplacements.put("Akademie der geistigen Kraft zu Fasar: Harter Zweig", "Akademie der geistigen Kraft zu Fasar|Harter Zweig");
-		professionReplacements.put("Sulman Al-Nassori", "Drachenei-Akademie zu Khunchom|Magier der Sulman Al-Nassori");
-		professionReplacements.put("Runenzauberer (UdW)", "Runenzauberer");
-		professionReplacements.put("Arcanes Institut Punin - Metamagie, Beschwörungen, Herbeirufung",
-				"Akademie der hohen Magie & arcanes Institut zu Punin|Punin I");
-		professionReplacements.put("Arcanes Institut Punin - Metamagie, magische Hellsicht, Kraftlinien, Artefakte",
-				"Akademie der hohen Magie & arcanes Institut zu Punin|Punin II");
-		professionReplacements.put("Pentagramm-Akademie zu Rashdul (Elementarer Zweig)", "Pentagramm-Akademie zu Rashdul|Elementarer Zweig");
-		professionReplacements.put("Pentagramm-Akademie zu Rashdul (dämonischer Zweig)", "Pentagramm-Akademie zu Rashdul|Dämonischer Zweig");
-		professionReplacements.put("Stoerrebrandt-Kolleg zu Riva (Magischer Berater)", "Stoerrebrandt-Kolleg zu Riva|Magischer Berater");
-		professionReplacements.put("Stoerrebrandt-Kolleg zu Riva (Magischer Leibwächter)", "Stoerrebrandt-Kolleg zu Riva|Magischer Leibwächter");
-		professionReplacements.put("Informations-Institut zu Rommilys", "Informations-Institut Rommilys");
-		professionReplacements.put("Schule der vierfachen Verwandlung zu Sinoda", "Schule der Vierfachen Verwandlung zu Sinoda");
-		professionReplacements.put("Kreis der Einfühlung", "Kreis der Einfühlung in den nördlichen Salamandersteinen");
-		professionReplacements.put("Tulamidische Sharisad (magisch)", "Tulamidische Sharisad|Zaubertänzer");
-		professionReplacements.put("Novadische Sharisad (magisch)", "Novadische Sharisad|Zaubertänzer");
-		professionReplacements.put("Zahorischer Hazaqi (magisch)", "Zahorischer Hazaqi|Zaubertänzer");
-		professionReplacements.put("Aranischer Majuna (magisch)", "Aranischer Majuna|Zaubertänzer");
-		professionReplacements.put("Waldmenschen", "Stammeskrieger|Waldmenschen-Stammeskrieger");
-		professionReplacements.put("Fjarninger", "Stammeskrieger|Stammeskrieger der Fjarninger");
-		professionReplacements.put("Gjalskerländer", "Stammeskrieger|Stammeskrieger der Gjalskerländer");
-		professionReplacements.put("Ferkina", "Stammeskrieger|Ferkina-Krieger");
-		professionReplacements.put("Trollzacker", "Stammeskrieger|Stammeskrieger der Trollzacker");
-		professionReplacements.put("Goblin", "Stammeskrieger|Goblin-Stammeskrieger");
-		professionReplacements.put("Ork", "Stammeskrieger|Orkischer Stammeskrieger");
-		professionReplacements.put("Achaz", "Stammeskrieger|Achaz-Stammeskrieger");
-		professionReplacements.put("Brobim", "Stammeskrieger|Brobim-Stammeskrieger");
-		professionReplacements.put("Beni Dervez", "Stammeskrieger der Beni Dervez");
-		professionReplacements.put("Tarisharim", "Hadjinim|Tarisharim");
-		professionReplacements.put("Al'Drakorhim", "Hadjinim|Al'Drakorhim");
-		professionReplacements.put("Beni Uchakâni", "Hadjinim|Beni Uchakâni");
-		professionReplacements.put("Praios", "Geweihter des Praios");
-		professionReplacements.put("Praios (Hüterorden)", "Geweihter des Praios|Ordensgeweihter vom Hüterorden");
-		professionReplacements.put("Praios (Bannstrahler)", "Bannstrahler|Geweihtes Mitglied");
-		professionReplacements.put("Bannstrahler (ungeweiht)", "Bannstrahler|Nicht geweihtes Mitglied");
-		professionReplacements.put("Rondra", "Geweihter der Rondra");
-		professionReplacements.put("Rondra, Rhodenstein", "Geweihter der Rondra|Ordensgeweihter vom Rhodenstein");
-		professionReplacements.put("Rondra, Amazone", "Rondrageweihte Amazone");
-		professionReplacements.put("Efferd, Noviziat im Binnenland", "Geweihter des Efferd|Noviziat im Binnenland");
-		professionReplacements.put("Efferd, Noviziat am Rand der Khôm", "Geweihter des Efferd|Noviziat am Rand der Khôm");
-		professionReplacements.put("Efferd, Noviziat an der Küste", "Geweihter des Efferd|Noviziat an der Küste");
-		professionReplacements.put("Travia", "Geweihter der Travia");
-		professionReplacements.put("Travia, Badilakaner", "Geweihter der Travia|Geweihter Badilakaner");
-		professionReplacements.put("Travia aus Thorwal (UdW)", "Geweihter der Travia|Thorwal");
-		professionReplacements.put("Boron, Puniner Ritus", "Geweihter des Boron|Puniner Ritus");
-		professionReplacements.put("Boron, Al'Anfaner Ritus", "Geweihter des Boron|Al'Anfaner Ritus");
-		professionReplacements.put("Boron (Golgarit)", "Ordenskrieger der Golgariten|Geweihtes Mitglied");
-		professionReplacements.put("Golgarit (ungeweiht)", "Ordenskrieger der Golgariten|Nicht geweihtes Mitglied");
-		professionReplacements.put("Orden des schwarzen Raben (Rabengarde) zu Land", "Krieger vom Orden des Schwarzen Raben|Rabengarde zu Land");
-		professionReplacements.put("Orden des schwarzen Raben (Rabengarde) zur See", "Krieger vom Orden des Schwarzen Raben|Rabengarde zur See");
-		professionReplacements.put("Hesinde, Pastori", "Geweihter der Hesinde|Pastori");
-		professionReplacements.put("Hesinde, Satori", "Geweihter der Hesinde|Satori");
-		professionReplacements.put("Hesinde, Freidenker", "Geweihter der Hesinde|Freidenker");
-		professionReplacements.put("Hesinde, Draconiter", "Geweihter der Hesinde|Draconiter, sakraler Zweig");
-		professionReplacements.put("Firun, Waldläufer", "Geweihter des Firun|Waldläufer");
-		professionReplacements.put("Firun, Hüter der Jagd", "Geweihter des Firun|Hüter der Jagd");
-		professionReplacements.put("Firun aus Thorwal (UdW)", "Geweihter des Firun|Waldläufer|Thorwal");
-		professionReplacements.put("Tsa", "Geweihter der Tsa");
-		professionReplacements.put("Tsa, Koboldfreund", "Geweihter der Tsa|Koboldfreund");
-		professionReplacements.put("Tsa, Freiheitskämpfer", "Geweihter der Tsa|Freiheitskämpfer");
-		professionReplacements.put("Phex", "Geweihter des Phex");
-		professionReplacements.put("Phex, Beutelschneider", "Geweihter des Phex|Beutelschneider");
-		professionReplacements.put("Phex, Fassadenkletterer", "Geweihter des Phex|Fassadenkletterer");
-		professionReplacements.put("Phex, Betrüger", "Geweihter des Phex|Betrüger");
-		professionReplacements.put("Phex, Intrigant", "Geweihter des Phex|Intrigant");
-		professionReplacements.put("Phex, Händler", "Geweihter des Phex|Händler");
-		professionReplacements.put("Phex, Hehler", "Geweihter des Phex|Hehler");
-		professionReplacements.put("Peraine: Noviziat in einem städtischen Tempel", "Geweihter der Peraine|Noviziat in einem städtischen Tempel");
-		professionReplacements.put("Peraine: Noviziat auf dem Land", "Geweihter der Peraine|Noviziat auf dem Land");
-		professionReplacements.put("Peraine, Therbûnit", "Geweihter der Peraine|Peraine-Geweihter der Therbûniten");
-		professionReplacements.put("Ingerimm, Traditioneller Kult", "Geweihter des Ingerimm|Traditioneller Kult");
-		professionReplacements.put("Ingerimm, Ingra-Kult des Nordens", "Geweihter des Ingerimm|Ingra-Kult des Nordens");
-		professionReplacements.put("Rahja", "Geweihter der Rahja");
-		professionReplacements.put("Rahja, Güldenländischer Ritus", "Geweihter der Rahja|Güldenländischer Ritus");
-		professionReplacements.put("Rahja, Mhanadistanischer Ritus", "Geweihter der Rahja|Mhanadistanischer Ritus");
-		professionReplacements.put("Rahja, Tempel des Nordens", "Geweihter der Rahja|Tempel des Nordens");
-		professionReplacements.put("Rahja aus Andergast/Nostria (UdW)", "Geweihter der Rahja|Streitende Königreiche");
-		professionReplacements.put("Rahja aus Teshkal (Andergast) (UdW)", "Geweihter der Rahja|Streitende Königreiche|Teschkaler Rahjani");
-		professionReplacements.put("Kavalier Rahjas", "Rahja-Kavalier");
-		professionReplacements.put("Prediger vom Bund des wahren Glaubens", "Prediger vom Bund des Wahren Glaubens");
-		professionReplacements.put("Aves", "Geweihter des Aves");
-		professionReplacements.put("Nandus", "Geweihter des Nandus");
-		professionReplacements.put("Nandus (Marktschreiber)", "Geweihter des Nandus|Marktschreiber");
-		professionReplacements.put("Nandus (Volkslehrer)", "Geweihter des Nandus|Volkslehrer");
-		professionReplacements.put("Nandus (Rechtshelfer)", "Geweihter des Nandus|Rechtshelfer");
-		professionReplacements.put("Ifirn", "Geweihter der Ifirn");
-		professionReplacements.put("Ifirn aus Thorwal (UdW)", "Geweihter der Ifirn|Thorwal");
-		professionReplacements.put("Swafnir", "Geweihter des Swafnir");
-		professionReplacements.put("Swafnir, Hirte der Walwütigen", "Geweihter des Swafnir|Hirte der Walwütigen");
-		professionReplacements.put("Angrosch, Hüter der Esse", "Geweihter des Angrosch|Hüter der Esse");
-		professionReplacements.put("Angrosch, Hüter der Tradition", "Geweihter des Angrosch|Hüter der Tradition");
-		professionReplacements.put("Angrosch, Hüter der Wacht", "Geweihter des Angrosch|Hüter der Wacht");
-		professionReplacements.put("Priester von Rur und Gror", "Priester von Rur und Gror|Tempelpriester von Rur und Gror");
-		professionReplacements.put("Geheimer Priester von Rur und Gror",
-				"Priester von Rur und Gror|Tempelpriester von Rur und Gror|Geheimer Priester auf Schwarz-Maraskan");
-		professionReplacements.put("Wanderpriester von Rur und Gror", "Priester von Rur und Gror|Wanderpriester von Rur und Gror");
-		professionReplacements.put("Geheimer Wanderpriester von Rur und Gror",
-				"Priester von Rur und Gror|Wanderpriester von Rur und Gror|Geheimer Priester auf Schwarz-Maraskan");
-		professionReplacements.put("Medizinmann (Dschungelstämme)", "Medizinmann|Dschungelstämme");
-		professionReplacements.put("Medizinmann (Verlorene Stämme)", "Medizinmann|Verlorene Stämme");
-		professionReplacements.put("Medizinmann (Utulus)", "Medizinmann|Waldinsel-Utulus");
-		professionReplacements.put("Medizinmann (Miniwatu)", "Medizinmann|Miniwatu");
-		professionReplacements.put("Medizinmann (Tocamuyac)", "Medizinmann|Tocamuyac");
-		professionReplacements.put("Medizinmann (Darna)", "Medizinmann|Darna");
-		professionReplacements.put("Kasknuk (Nivesen-Schamane)", "Kasknuk");
-		professionReplacements.put("Nuranshar", "Nuranshâr");
-		professionReplacements.put("Nuranshâr (Mheresh)", "Nuranshâr|Mherech");
-		professionReplacements.put("Nuranshâr (Shai'aian)", "Nuranshâr|Shai'aian");
-		professionReplacements.put("Nuranshâr (Thalusien)", "Nuranshâr|Thalusien");
-		professionReplacements.put("Skuldrun: Heiler", "Skuldrun|Heiler");
-		professionReplacements.put("Skuldrun: Mammut-Seher", "Skuldrun|Mammut-Seher");
-		professionReplacements.put("Skuldrun: Zauberschmied", "Skuldrun|Zauberschmied");
-		professionReplacements.put("Geweihter Gravesh-Priester", "Gravesh-Priester|Geweihter Gravesh-Priester");
-		professionReplacements.put("Stammes-Schamanin der Goblins", "Goblin-Schamanin|Stammes-Schamanin");
-		professionReplacements.put("Festumer Schamanin der Goblins", "Goblin-Schamanin|Festumer Schamanin");
-		professionReplacements.put("Kammerjaegerin", "Kammerjäger");
-		professionReplacements.put("Kammerjaegerin (magiebegabt)", "Magiebegabter Alchimist|Kammerjäger");
-		professionReplacements.put("Erzählerin", "Erzähler");
-		professionReplacements.put("Skaldin", "Skalde");
-		professionReplacements.put("Skaldin aus der Runajasko (UdW)", "Skalde aus der Runajasko");
-		professionReplacements.put("Erntehelferin", "Erntehelfer");
-		professionReplacements.put("Feldsklavin", "Feldsklave");
-		professionReplacements.put("Freibäuerin", "Freibauer");
-		professionReplacements.put("Gärtnerin", "Gärtner");
-		professionReplacements.put("Gutsfrau", "Gutsherr");
-		professionReplacements.put("Leibeigene", "Leibeigener");
-		professionReplacements.put("Magd", "Knecht");
-		professionReplacements.put("Müllerin", "Müller");
-		professionReplacements.put("Pflanzerin", "Pflanzer");
-		professionReplacements.put("Viehzüchterin", "Viehzüchter");
-		professionReplacements.put("Winzerin", "Winzer");
-		professionReplacements.put("Pilzzüchterin", "Pilzzüchter");
-		professionReplacements.put("Schachtfegerin", "Schachtfeger");
-		professionReplacements.put("Botenläuferin", "Botenläufer");
-		professionReplacements.put("Botenreiterin", "Botenreiter");
-		professionReplacements.put("Erzieherin", "Erzieher der Achaz");
-		professionReplacements.put("Hausdienerin", "Hausdiener");
-		professionReplacements.put("Hausmagd", "Hausknecht");
-		professionReplacements.put("Haussklavin", "Haussklave");
-		professionReplacements.put("Haussklavin aus Al'Anfa", "Haussklave aus Al'Anfa");
-		professionReplacements.put("Kutscherin", "Kutscher");
-		professionReplacements.put("Zofe", "Leibdiener");
-		professionReplacements.put("Haindruidin", "Haindruide");
-		professionReplacements.put("Hüterin der Macht", "Hüter der Macht");
-		professionReplacements.put("Konzilsdruidin (Eiselementarist)", "Konzilsdruide|Eiselementarist");
-		professionReplacements.put("Konzilsdruidin (Erzelementaristin)", "Konzilsdruide|Erzelementarist");
-		professionReplacements.put("Konzilsdruidin (Feuerelementaristin)", "Konzilsdruide|Feuerelementarist");
-		professionReplacements.put("Konzilsdruidin (Humuselementaristin)", "Konzilsdruide|Humuselementarist");
-		professionReplacements.put("Konzilsdruidin (Luftelementaristin)", "Konzilsdruide|Luftelementarist");
-		professionReplacements.put("Konzilsdruidin (Wasserelementaristin)", "Konzilsdruide|Wasserelementarist");
-		professionReplacements.put("Mehrerin der Macht", "Mehrer der Macht");
-		professionReplacements.put("Sumupriesterin", "Sumupriester");
-		professionReplacements.put("Apothekaria", "Apothekarius");
-		professionReplacements.put("Baumeisterin/Deichmeisterin", "Baumeister");
-		professionReplacements.put("Druckerin", "Drucker");
-		professionReplacements.put("Hüttenkundige/Bronzegießerin/Eisengießerin", "Hüttenkundiger");
-		professionReplacements.put("Mechanika", "Mechanikus");
-		professionReplacements.put("Schiffbauerin", "Schiffbauer");
-		professionReplacements.put("traditionelle Schiffbauerin (UdW)", "Traditioneller Schiffbauer");
-		professionReplacements.put("Tresorbauerin", "Tresorbauer");
-		professionReplacements.put("Uhrmacherin", "Uhrmacher");
-		professionReplacements.put("Grabräuberin", "Grabräuber");
-		professionReplacements.put("Auelfische Kämpferin", "Auelfischer Kämpfer");
-		professionReplacements.put("Firnelfische Kämpferin", "Firnelfischer Kämpfer");
-		professionReplacements.put("Steppenelfische Kämpferin", "Steppenelfischer Kämpfer");
-		professionReplacements.put("Waldelfische Kämpferin", "Waldelfischer Kämpfer");
-		professionReplacements.put("Bergungs-, Schwamm- oder Korallentaucherin", "Bergungstaucher");
-		professionReplacements.put("Harpunierin", "Harpunier");
-		professionReplacements.put("Perlenfischerin", "Perlenfischer");
-		professionReplacements.put("Seefischerin", "Seefischer");
-		professionReplacements.put("Unterwasserjägerin", "Unterwasserjäger");
-		professionReplacements.put("Akademiegardistin/Tempelgardistin/Ehrengardistin", "Akademiegardist");
-		professionReplacements.put("Aranische Sippenkriegerin", "Aranischer Sippenkrieger");
-		professionReplacements.put("Schließerin", "Schließer");
-		professionReplacements.put("städtische Bogenschützin (UdW)", "Stadtgardist|Städtischer Bogenschütze");
-		professionReplacements.put("Straßenwächterin", "Straßenwächter");
-		professionReplacements.put("Tempelgardistin der Stadt des Schweigens", "Akademiegardist|Tempelgardist der Stadt des Schweigens");
-		professionReplacements.put("Akrobatin/Tänzerin", "Akrobat");
-		professionReplacements.put("Dompteuse", "Dompteur");
-		professionReplacements.put("Musika", "Musikus");
-		professionReplacements.put("Possenreißerin", "Possenreißer");
-		professionReplacements.put("Schauspielerin", "Schauspieler");
-		professionReplacements.put("Schlangenbeschwörerin", "Schlangenbeschwörer");
-		professionReplacements.put("Vagantin", "Vagant");
-		professionReplacements.put("Anatomin", "Anatom");
-		professionReplacements.put("Historikerin", "Historiker");
-		professionReplacements.put("Mathematica", "Mathematicus");
-		professionReplacements.put("Medica", "Medicus");
-		professionReplacements.put("Philosophin/Metaphysikerin", "Philosoph");
-		professionReplacements.put("Rechtsgelehrte", "Rechtsgelehrter");
-		professionReplacements.put("Sprachenkundlerin", "Sprachenkunder");
-		professionReplacements.put("Völkerkundlerin/Sagenkundlerin", "Völkerkundler");
-		professionReplacements.put("Zahlenmystikerin", "Zahlenmystiker");
-		professionReplacements.put("Dienerin Sumus", "Diener Sumus");
-		professionReplacements.put("Herrin der Erde", "Herr der Erde");
-		professionReplacements.put("Angrosch, Hüterin der Esse", "Geweihter des Angrosch|Hüter der Esse");
-		professionReplacements.put("Angrosch, Hüterin der Tradition", "Geweihter des Angrosch|Hüter der Tradition");
-		professionReplacements.put("Angrosch, Hüterin der Wacht", "Geweihter des Angrosch|Hüter der Wacht");
-		professionReplacements.put("Boron (Golgaritin)", "Ordenskrieger der Golgariten|Geweihtes Mitglied");
-		professionReplacements.put("Firun, Waldläuferin", "Geweihter des Firun|Waldläufer");
-		professionReplacements.put("Firun, Hüterin der Jagd", "Geweihter des Firun|Hüter der Jagd");
-		professionReplacements.put("Priesterin von Rur und Gror", "Priester von Rur und Gror|Tempelpriester von Rur und Gror");
-		professionReplacements.put("Geheime Priesterin von Rur und Gror",
-				"Priester von Rur und Gror|Tempelpriester von Rur und Gror|Geheimer Priester auf Schwarz-Maraskan");
-		professionReplacements.put("Wanderpriesterin von Rur und Gror", "Priester von Rur und Gror|Wanderpriester von Rur und Gror");
-		professionReplacements.put("Geheime Wanderpriesterin von Rur und Gror",
-				"Priester von Rur und Gror|Wanderpriester von Rur und Gror|Geheimer Priester auf Schwarz-Maraskan");
-		professionReplacements.put("Hesinde, Freidenkerin", "Geweihter der Hesinde|Freidenker");
-		professionReplacements.put("Hesinde, Draconiterin", "Geweihter der Hesinde|Draconiter, sakraler Zweig");
-		professionReplacements.put("Nandus (Marktschreiberin)", "Geweihter des Nandus|Marktschreiber");
-		professionReplacements.put("Nandus (Volkslehrerin)", "Geweihter des Nandus|Volkslehrer");
-		professionReplacements.put("Nandus (Rechtshelferin)", "Geweihter des Nandus|Rechtshelfer");
-		professionReplacements.put("Phex, Beutelschneiderin", "Geweihter des Phex|Beutelschneider");
-		professionReplacements.put("Phex, Fassadenklettererin", "Geweihter des Phex|Fassadenkletterer");
-		professionReplacements.put("Phex, Betrügerin", "Geweihter des Phex|Betrüger");
-		professionReplacements.put("Phex, Intrigantin", "Geweihter des Phex|Intrigant");
-		professionReplacements.put("Phex, Händlerin", "Geweihter des Phex|Händler");
-		professionReplacements.put("Phex, Hehlerin", "Geweihter des Phex|Hehler");
-		professionReplacements.put("Praios (Bannstrahlerin)", "Bannstrahler|Geweihtes Mitglied");
-		professionReplacements.put("Predigerin vom Bund des wahren Glaubens", "Prediger vom Bund des Wahren Glaubens");
-		professionReplacements.put("Priesterin der H'Szint", "Priester der H'Szint");
-		professionReplacements.put("Priesterin der Zsahh", "Priester der Zsahh");
-		professionReplacements.put("Swafnir, Hirtin der Walwütigen", "Geweihter des Swafnir|Hirte der Walwütigen");
-		professionReplacements.put("Travia, Badilakanerin", "Geweihter der Travia|Geweihter Badilakaner");
-		professionReplacements.put("Tsa, Koboldfreundin", "Geweihter der Tsa|Koboldfreund");
-		professionReplacements.put("Tsa, Freiheitskämpferin", "Geweihter der Tsa|Freiheitskämpfer");
-		professionReplacements.put("Fasarer Gladiatorin", "Fasarer Gladiator");
-		professionReplacements.put("Schaukämpferin", "Schaukämpfer");
-		professionReplacements.put("Kopfgeldjägerin", "Kopfgeldjäger");
-		professionReplacements.put("Sklavenjägerin", "Sklavenjäger");
-		professionReplacements.put("Fahrende Händlerin", "Fahrender Händler");
-		professionReplacements.put("Geldwechslerin", "Geldwechsler");
-		professionReplacements.put("Großhändlerin", "Großhändler");
-		professionReplacements.put("Hausiererin", "Hausierer");
-		professionReplacements.put("Hehlerin", "Hehler");
-		professionReplacements.put("Krämerin", "Krämer");
-		professionReplacements.put("Tauschhändlerin", "Tauschhändler");
-		professionReplacements.put("Hirtin", "Hirte");
-		professionReplacements.put("Kleintierzüchterin", "Kleintierzüchter");
-		professionReplacements.put("Nivesische Karenhirtin", "Nivesischer Karenhirte");
-		professionReplacements.put("Rinderhirtin", "Rinderhirte");
-		professionReplacements.put("Schäferin", "Schäfer");
-		professionReplacements.put("Viehdiebin", "Viehdieb");
-		professionReplacements.put("Wasserbüffelhirtin", "Wasserbüffelhirte");
-		professionReplacements.put("Bildhauerin", "Bildhauer");
-		professionReplacements.put("Darstellerin", "Darsteller");
-		professionReplacements.put("Hofmusica", "Hofmusicus");
-		professionReplacements.put("Kalligrahpin", "Kalligraph");
-		professionReplacements.put("Malerin", "Maler");
-		professionReplacements.put("Tanzlehrerin", "Tanzlehrer");
-		professionReplacements.put("Fallenstellerin", "Fallensteller");
-		professionReplacements.put("Fallenstellerin (UdW)", "Robbenjäger|Fallensteller");
-		professionReplacements.put("Robbenjägerin (UdW)", "Robbenjäger");
-		professionReplacements.put("Stammesjägerin", "Stammesjäger");
-		professionReplacements.put("Wildhüterin", "Wildhüter");
-		professionReplacements.put("Kopfgeldjägerin", "Kopfgeldjäger");
-		professionReplacements.put("Kopfgeldjägerin", "Kopfgeldjäger");
-		professionReplacements.put("Kämpferin aus einer Ottajasko (UdW)", "Kämpfer einer Ottajasko");
-		professionReplacements.put("Kämpferin aus einer Sippe (UdW)", "Kämpfer einer Sippe");
-		professionReplacements.put("Kämpferin/Robbenjägerin aus einer Ottajasko (UdW)", "Kämpfer einer Ottajasko|Robbenjäger");
-		professionReplacements.put("Kämpferin/Seefahrerin aus einer Ottajasko (UdW)", "Kämpfer einer Ottajasko|Robbenjäger");
-		professionReplacements.put("Kämpferin/Robbenjägerin aus einer Sippe (UdW)", "Kämpfer einer Sippe|Seefahrer");
-		professionReplacements.put("Kämpferin/Seefahrerin aus einer Sippe (UdW)", "Kämpfer einer Sippe|Seefahrer");
-		professionReplacements.put("Karawanenführerin", "Karawanenführer");
-		professionReplacements.put("Salzgängerin", "Salzgänger");
-		professionReplacements.put("Standard-Kriegerin", "Standard-Krieger");
-		professionReplacements.put("Kurtisane", "Gesellschafter");
-		professionReplacements.put("Hure", "Lustknabe");
-		professionReplacements.put("Unterhändlerin", "Unterhändler");
-		professionReplacements.put("Bannstrahlerin (ungeweiht)", "Bannstrahler|Nicht geweihtes Mitglied");
-		professionReplacements.put("Gänseritterin", "Krieger aus Rommilys|Gänseritter");
-		professionReplacements.put("Golgaritin (ungeweiht)", "Ordenskrieger der Golgariten|Nicht geweihtes Mitglied");
-		professionReplacements.put("Kavaliera Rahjas", "Rahja-Kavalier");
-		professionReplacements.put("Säbeltänzerin", "Säbeltänzer");
-		professionReplacements.put("Goldsucherin oder Prospektorin", "Prospektor");
-		professionReplacements.put("Kräutersammlerin", "Kräutersammler");
-		professionReplacements.put("Sammlerin", "Sammler");
-		professionReplacements.put("Knappin", "Knappe");
-		professionReplacements.put("Knappin aus Andergast/Nostria (UdW)",
-				"Ritter alten Schlags|Knappe des traditionellen Ritters|Knappe aus den Streitenden Königreichen");
-		professionReplacements.put("Knappin des traditionellen Ritters", "Ritter alten Schlags|Knappe des traditionellen Ritters");
-		professionReplacements.put("Ritterin alten Schlags", "Ritter alten Schlags");
-		professionReplacements.put("Branach-Dûn", "Brenoch-Dûn");
-		professionReplacements.put("Medizinfrau (Dschungelstämme)", "Medizinmann|Dschungelstämme");
-		professionReplacements.put("Medizinfrau (Verlorene Stämme)", "Medizinmann|Verlorene Stämme");
-		professionReplacements.put("Medizinfrau (Utulus)", "Medizinmann|Waldinsel-Utulus");
-		professionReplacements.put("Medizinfrau (Miniwatu)", "Medizinmann|Miniwatu");
-		professionReplacements.put("Medizinfrau (Tocamuyac)", "Medizinmann|Tocamuyac");
-		professionReplacements.put("Medizinfrau (Darna)", "Medizinmann|Darna");
-		professionReplacements.put("Kaskju (Nivesen-Schamanin)", "Kasknuk");
-		professionReplacements.put("Skuldrun: Heilerin", "Skuldrun|Heiler");
-		professionReplacements.put("Skuldrun: Mammut-Seherin", "Skuldrun|Mammut-Seher");
-		professionReplacements.put("Skuldrun: Zauberschmiedin", "Skuldrun|Zauberschmied");
-		professionReplacements.put("Gravesh-Priesterin", "Gravesh-Priester");
-		professionReplacements.put("Geweihte Gravesh-Priesterin", "Gravesh-Priester|Geweihter Gravesh-Priester");
-		professionReplacements.put("Rikai-Priesterin", "Rikai-Priester");
-		professionReplacements.put("Tairach-Priesterin", "Tairach-Priester");
-		professionReplacements.put("Schamanin der Achaz", "Schamane der Achaz");
-		professionReplacements.put("Hofscharlatanin", "Hofscharlatan");
-		professionReplacements.put("Jahrmarktszauberin", "Jahrmarktszauberer");
-		professionReplacements.put("Magische Quacksalberin", "Magischer Quacksalber");
-		professionReplacements.put("Scharlatanische Seherin", "Scharlatanischer Seher");
-		professionReplacements.put("Theaterzauberin", "Theaterzauberer");
-		professionReplacements.put("Trickbetrügerin", "Trickbetrüger");
-		professionReplacements.put("Hofnarrin", "Hofnarr");
-		professionReplacements.put("Possenreißerin", "Possenreißer");
-		professionReplacements.put("Schöpferin", "Schöpfer");
-		professionReplacements.put("Vagabundin", "Vagabund");
-		professionReplacements.put("Visionärin", "Visionär");
-		professionReplacements.put("Fährfrau", "Fährmann");
-		professionReplacements.put("Flößerin", "Flößer");
-		professionReplacements.put("Flusspiratin", "Flusspirat");
-		professionReplacements.put("Flussschifferin", "Flussschiffer");
-		professionReplacements.put("Lotsin", "Lotse");
-		professionReplacements.put("Zöllnerin", "Zöllner");
-		professionReplacements.put("Amtsschreiberin", "Amtsschreiber");
-		professionReplacements.put("Kontoristin", "Kontorist");
-		professionReplacements.put("Kopistin", "Kopist");
-		professionReplacements.put("Schreiberin", "Schreiber");
-		professionReplacements.put("Pamphletistin", "Pamphletist");
-		professionReplacements.put("Erzzwergischer Schwertgesellin", "Erzzwergischer Schwertgeselle");
-		professionReplacements.put("Matrosin", "Matrose");
-		professionReplacements.put("Navigatorin", "Navigator");
-		professionReplacements.put("Piratin", "Pirat");
-		professionReplacements.put("Robbenjägerin", "Robbenjäger");
-		professionReplacements.put("Walfängerin/Haijägerin", "Walfänger");
-		professionReplacements.put("Artilleristin", "Artillerist");
-		professionReplacements.put("Aufgesessene Schützin", "Aufgesessener Schütze");
-		professionReplacements.put("Berittene Schützin", "Berittener Schütze");
-		professionReplacements.put("Sappeurin", "Sappeur");
-		professionReplacements.put("Schützin", "Schütze");
-		professionReplacements.put("Seeartilleristin", "Seeartillerist");
-		professionReplacements.put("Seesoldatin", "Seesoldat");
-		professionReplacements.put("Streitwagenlenkerin", "Streitwagenlenker");
-		professionReplacements.put("Leibwächterin", "Leibwächter");
-		professionReplacements.put("Premer Seesöldnerin (UdW)", "Premer Seesöldner");
-		professionReplacements.put("Schlachtreiterin", "Schlachtreiter");
-		professionReplacements.put("Sklaven-Aufseherin", "Sklaven-Aufseher");
-		professionReplacements.put("Geheimagentin", "Geheimagent");
-		professionReplacements.put("Informantin", "Informant");
-		professionReplacements.put("Nanduriatin", "Nanduriat");
-		professionReplacements.put("Novadische Wüstenkriegerin", "Novadischer Wüstenkrieger");
-		professionReplacements.put("Achmad'sunni", "Novadischer Wüstenkrieger|Achmad'sunni");
-		professionReplacements.put("Banditin", "Bandit");
-		professionReplacements.put("Freischärlerin", "Freischärler");
-		professionReplacements.put("Kutschenräuberin", "Kutschenräuber");
-		professionReplacements.put("Thalusische Wegelagerin", "Thalusischer Wegelagerer");
-		professionReplacements.put("Wegelagerin", "Wegelagerer");
-		professionReplacements.put("Hochstaplerin", "Hochstapler");
-		professionReplacements.put("Schieberin", "Schieber");
-		professionReplacements.put("Spielerin", "Spieler");
-		professionReplacements.put("Zuhälterin", "Zuhälter");
-		professionReplacements.put("Bauhelferin", "Bauhelfer");
-		professionReplacements.put("Holzfällerin", "Holzfäller");
-		professionReplacements.put("Köhlerin", "Köhler");
-		professionReplacements.put("Lastenträgerin", "Lastenträger");
-		professionReplacements.put("Palmschneiderin", "Palmschneider");
-		professionReplacements.put("Schauerfrau", "Schauerleute");
-		professionReplacements.put("Zahorische Hazaqi", "Zahorischer Hazaqi");
-		professionReplacements.put("Zahorische Hazaqi (magisch)", "Zahorischer Hazaqi|Zaubertänzer");
-		professionReplacements.put("Aranische Majuna", "Aranischer Majuna");
-		professionReplacements.put("Aranische Majuna (magisch)", "Aranischer Majuna|Zaubertänzer");
-		professionReplacements.put("Taugenichts/Dilletantin", "Dilletant");
-		professionReplacements.put("Taugenichts/Stutzerin", "Stutzer");
-		professionReplacements.put("Falknerin", "Falkner");
-		professionReplacements.put("Hundeführerin", "Hundeführer");
-		professionReplacements.put("Tierbändigerin", "Tierbändiger");
-		professionReplacements.put("Zureiterin", "Zureiter");
-		professionReplacements.put("Auenläuferin", "Auenläufer");
-		professionReplacements.put("Schneeläuferin", "Schneeläufer");
-		professionReplacements.put("Steppenreiterin", "Steppenreiter");
-		professionReplacements.put("Wipflelläuferin", "Wipfelläufer");
-		professionReplacements.put("Brutpflegerin", "Brutpfleger");
-		professionReplacements.put("Feldscherin", "Feldscher");
-		professionReplacements.put("Quacksalberin/Zahnreißerin", "Quacksalber");
-		professionReplacements.put("Wundärztin", "Wundarzt");
-		professionReplacements.put("Beschützerin", "Beschützer");
-	}
+	private static JSONObject replacements = ResourceManager.getResource("data/HeldenSoftwareXML");
+	private static JSONObject proConReplacements = replacements.getObj("Vorteile/Nachteile");
+	private static JSONObject ritualKnowledge = replacements.getObj("Ritualkenntnis");
+	private static JSONObject representationReplacements = replacements.getObj("Repräsentationen");
+	private static JSONObject raceReplacements = replacements.getObj("Rassen");
+	private static JSONObject cultureReplacements = replacements.getObj("Kulturen");
+	private static JSONObject professionReplacements = replacements.getObj("Professionen");
+	private static JSONObject talentReplacements = replacements.getObj("Talente");
+	private static JSONObject spellReplacements = replacements.getObj("Zauber");
+	private static JSONObject groupReplacements = replacements.getObj("Talentgruppen");
+	private static JSONObject skillReplacements = replacements.getObj("Sonderfertigkeiten");
+	private static JSONObject shortRepReplacements = replacements.getObj("Repräsentationen:Abkürzungen");
 
 	private int at, pa;
 
@@ -1031,10 +248,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		return Collections.singletonList("*.xml");
 	}
 
-	private String getLastPart(String str, final Map<String, String> replacements) {
+	private String getLastPart(String str, final JSONObject replacements) {
 		final int separator = str.lastIndexOf('.');
 		str = str.substring(separator + 1);
-		str = replacements.getOrDefault(str, str);
+		str = replacements.getStringOrDefault(str, str);
 		return str;
 	}
 
@@ -1154,7 +371,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			} else if ("Stammes-Achaz".equals(cultureName) && "beliebiger Stamm".equals(name)) {
 				variants.add("Stammes-Achaz");
 			} else {
-				for (final String variant : cultureReplacements.getOrDefault(name, name).split("\\|")) {
+				for (final String variant : cultureReplacements.getStringOrDefault(name, name).split("\\|")) {
 					variants.add(variant);
 				}
 			}
@@ -1449,7 +666,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 					final String spellName = get("obj");
 					String spell = spellName.substring(0, spellName.indexOf('[') - 1);
-					spell = spellReplacements.getOrDefault(spell, spell);
+					spell = spellReplacements.getStringOrDefault(spell, spell);
 					if ("Dämonenbann".equals(spell)) {
 						spell = spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')) + "bann";
 					} else if ("Adlerschwinge Wolfsgestalt".equals(spell)) {
@@ -1459,7 +676,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					historyEntry.put("Typ", "Zauber");
 					historyEntry.put("Zauber", spell);
 					historyEntry.put("Repräsentation",
-							representations.getOrDefault(spellName.substring(spellName.indexOf('[') + 1, spellName.indexOf(']')), "Mag"));
+							shortRepReplacements.getStringOrDefault(spellName.substring(spellName.indexOf('[') + 1, spellName.indexOf(']')), "Mag"));
 
 					historyEntry.put("Von", Integer.parseInt(get("Alt")));
 					historyEntry.put("Auf", Integer.parseInt(get("Neu")));
@@ -1506,7 +723,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 					final String activatedSpellName = get("obj");
 					String activatedSpell = activatedSpellName.substring(0, activatedSpellName.indexOf('[') - 1);
-					activatedSpell = spellReplacements.getOrDefault(activatedSpell, activatedSpell);
+					activatedSpell = spellReplacements.getStringOrDefault(activatedSpell, activatedSpell);
 					if ("Dämonenbann".equals(activatedSpell)) {
 						activatedSpell = activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']')) + "bann";
 					} else if ("Adlerschwinge Wolfsgestalt".equals(activatedSpell)) {
@@ -1517,7 +734,8 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					historyEntry.put("Typ", "Zauber");
 					historyEntry.put("Zauber", activatedSpell);
 					historyEntry.put("Repräsentation",
-							representations.getOrDefault(activatedSpellName.substring(activatedSpellName.indexOf('[') + 1, activatedSpellName.indexOf(']')),
+							shortRepReplacements.getStringOrDefault(
+									activatedSpellName.substring(activatedSpellName.indexOf('[') + 1, activatedSpellName.indexOf(']')),
 									"Mag"));
 
 					historyEntry.put("Auf", 0);
@@ -1594,7 +812,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						}
 					} else if (skillName.startsWith("Zauberspezialisierung")) {
 						String spellChoice = skillName.substring(22, skillName.indexOf('[') - 1);
-						spellChoice = spellReplacements.getOrDefault(spellChoice, spellChoice);
+						spellChoice = spellReplacements.getStringOrDefault(spellChoice, spellChoice);
 						if ("Dämonenbann".equals(spellChoice)) {
 							spellChoice = skillName.substring(skillName.lastIndexOf('[') + 1, skillName.lastIndexOf(']')) + "bann";
 						}
@@ -1613,12 +831,12 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						skillName = "Merkmalskenntnis";
 					} else if (skillName.startsWith("Repräsentation")) {
 						String rep = skillName.substring(16);
-						rep = repReplacements.getOrDefault(rep, rep);
+						rep = representationReplacements.getStringOrDefault(rep, rep);
 						historyEntry.put("Auswahl", rep);
 						skillName = "Repräsentation";
 					} else if (skillName.startsWith("Ritualkenntnis")) {
 						String choice = skillName.substring(16);
-						choice = ritualKnowledge.getOrDefault(choice, choice);
+						choice = ritualKnowledge.getStringOrDefault(choice, choice);
 						historyEntry.put("Auswahl", choice);
 						skillName = "Ritualkenntnis";
 					} else if (skillName.startsWith("Liturgiekenntnis")) {
@@ -1805,7 +1023,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					} else if ("Tänzer".equals(finalName) && "Gaukler".equals(name)) {
 						variants.add("Gaukler-Tänzer");
 					} else {
-						for (final String variant : professionReplacements.getOrDefault(name, name).split("\\|")) {
+						for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
 							final String var;
 							switch (variant) {
 							case "Gareth oder Arivor":
@@ -1856,7 +1074,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				if ("Stammeskrieger".equals(professionName) || "Geweihter".equals(professionName) || "Ordenskrieger".equals(professionName)
 						|| "Schamane".equals(professionName)) {
 					final String variant = variants.remove(0);
-					final String replacedVariant = professionReplacements.getOrDefault(variant, variant);
+					final String replacedVariant = professionReplacements.getStringOrDefault(variant, variant);
 					final String[] splitVariant = replacedVariant.split("\\|");
 					professionName = splitVariant[0];
 					bio.put("Profession", professionName);
@@ -2003,7 +1221,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					} else if ("Tänzer".equals(finalProName) && "Gaukler".equals(name)) {
 						proVariants.add("Gaukler-Tänzer");
 					} else {
-						for (final String variant : professionReplacements.getOrDefault(name, name).split("\\|")) {
+						for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
 							proVariants.add(variant);
 						}
 					}
@@ -2011,7 +1229,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 				if ("Stammeskrieger".equals(proName) || "Geweihter".equals(proName) || "Ordenskrieger".equals(proName) || "Schamane".equals(proName)) {
 					final String variant = proVariants.remove(0);
-					final String replacedVariant = professionReplacements.getOrDefault(variant, variant);
+					final String replacedVariant = professionReplacements.getStringOrDefault(variant, variant);
 					final String[] splitVariant = replacedVariant.split("\\|");
 					proName = splitVariant[0];
 
@@ -2154,7 +1372,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 		apply("vt", new Tuple<>("vorteil", () -> {
 			String name = get("name");
-			name = proConReplacements.getOrDefault(name, name);
+			name = proConReplacements.getStringOrDefault(name, name);
 			String choice = get("value");
 			String text = get("value");
 			String value = get("value");
@@ -2257,9 +1475,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				value = "1";
 			}
 			choice = replaceTalent(choice);
-			choice = spellReplacements.getOrDefault(choice, choice);
+			choice = spellReplacements.getStringOrDefault(choice, choice);
 			choice = replaceSkill(choice);
-			choice = groupReplacements.getOrDefault(choice, choice);
+			choice = groupReplacements.getStringOrDefault(choice, choice);
 			if (pros.containsKey(name)) {
 				final JSONObject pro = pros.getObj(name);
 				if (pro.containsKey("Freitext") || pro.containsKey("Auswahl")) {
@@ -2339,7 +1557,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			if ("Ork".equals(raceName) && "keine Variante".equals(name)) {
 				variants.add("Korogai");
 			} else {
-				for (final String variant : raceReplacements.getOrDefault(name, name).split("\\|")) {
+				for (final String variant : raceReplacements.getStringOrDefault(name, name).split("\\|")) {
 					variants.add(variant);
 				}
 			}
@@ -2436,7 +1654,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						new Tuple3<>("spezialisierung", () -> "Spez", () -> get("name")));
 				final String[] parts = values.get("Zauber").split("\\|");
 				choice = parts[0];
-				choice = spellReplacements.getOrDefault(choice, choice);
+				choice = spellReplacements.getStringOrDefault(choice, choice);
 				if ("Dämonenbann".equals(choice)) {
 					choice = parts[1] + "bann";
 				}
@@ -2454,11 +1672,11 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				name = "Merkmalskenntnis";
 			} else if (name.startsWith("Repräsentation")) {
 				choice = name.substring(16);
-				choice = repReplacements.getOrDefault(choice, choice);
+				choice = representationReplacements.getStringOrDefault(choice, choice);
 				name = "Repräsentation";
 			} else if (name.startsWith("Ritualkenntnis")) {
 				choice = name.substring(16);
-				choice = choice.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getOrDefault(choice, choice);
+				choice = choice.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getStringOrDefault(choice, choice);
 				name = "Ritualkenntnis";
 			} else if (name.startsWith("Liturgiekenntnis")) {
 				choice = name.substring(18, name.length() - 1);
@@ -2592,7 +1810,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						new Tuple3<>("spezialisierung", () -> "Spez", () -> get("name")));
 				final String[] parts = values.get("Zauber").split("\\|");
 				choice = parts[0];
-				choice = spellReplacements.getOrDefault(choice, choice);
+				choice = spellReplacements.getStringOrDefault(choice, choice);
 				if ("Dämonenbann".equals(choice)) {
 					choice = parts[1] + "bann";
 				}
@@ -2607,11 +1825,11 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				name = "Merkmalskenntnis";
 			} else if (name.startsWith("Repräsentation")) {
 				choice = name.substring(16);
-				choice = repReplacements.getOrDefault(choice, choice);
+				choice = representationReplacements.getStringOrDefault(choice, choice);
 				name = "Repräsentation";
 			} else if (name.startsWith("Ritualkenntnis")) {
 				choice = name.substring(16);
-				choice = choice.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getOrDefault(choice, choice);
+				choice = choice.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getStringOrDefault(choice, choice);
 				name = "Ritualkenntnis";
 			} else if (name.startsWith("Liturgiekenntnis")) {
 				choice = name.substring(18, name.length() - 1);
@@ -2660,7 +1878,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 		apply("zauberliste", new Tuple<>("zauber", () -> {
 			String name = get("name");
-			name = spellReplacements.getOrDefault(name, name);
+			name = spellReplacements.getStringOrDefault(name, name);
 			final String variant = get("variante");
 			if ("Dämonenbann".equals(name)) {
 				name = variant + "bann";
@@ -2668,7 +1886,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			final JSONObject spell = HeroUtil.findTalent(name)._1;
 			if (spell != null) {
 				final JSONObject actualSpell = spells.getObj(name);
-				final String rep = representations.getOrDefault(get("repraesentation"), "Mag");
+				final String rep = shortRepReplacements.getStringOrDefault(get("repraesentation"), "Mag");
 				final JSONObject actualRepresentation;
 				if (spell.containsKey("Auswahl") || spell.containsKey("Freitext")) {
 					final JSONArray choiceSpell = actualSpell.getArr(rep);
@@ -2803,20 +2021,20 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 		} else if (in.startsWith("Spätweihe")) {
 			in = "Spätweihe";
 		}
-		in = skillReplacements.getOrDefault(in, in);
+		in = skillReplacements.getStringOrDefault(in, in);
 		return in;
 	}
 
 	private String replaceTalent(String in) {
 		if (in == null) return null;
-		in = talentReplacements.getOrDefault(in, in);
+		in = talentReplacements.getStringOrDefault(in, in);
 		if (in.startsWith("Sprachen kennen") || in.startsWith("Lesen/Schreiben")) {
 			in = in.substring(16);
 		} else if (in.startsWith("Heilkunde")) {
 			in = "Heilkunde " + in.substring(11);
 		} else if (in.startsWith("Ritualkenntnis")) {
 			in = in.substring(16);
-			in = in.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getOrDefault(in, in);
+			in = in.startsWith("Zaubertänzer") ? "Zaubertänze" : ritualKnowledge.getStringOrDefault(in, in);
 		} else if (in.startsWith("Liturgiekenntnis")) {
 			in = in.substring(18, in.length() - 1);
 			if ("Boron".equals(in)) {
