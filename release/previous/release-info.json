@@ -1,6 +1,10 @@
 {
-	"releaseDate" : "2018-02-19_14-00",
-	"previousReleaseDate" : "2018-01-23_16-00",
-	"previousReleaseLink" : "https://raw.githubusercontent.com/DSATool/DSA41BasisPlugin/master/release/DSA41Basis_2018-01-23_16-00.zip",
-	"updateInfo" : "https://raw.githubusercontent.com/DSATool/DSA41BasisPlugin/master/release/update-info.json"
+	"releaseDate" : "2018-02-27_18-00",
+	"previousReleaseDate" : "2018-02-19_14-00",
+	"previousReleaseLink" : "https://raw.githubusercontent.com/DSATool/DSA41BasisPlugin/master/release/DSA41Basis_2018-02-19_14-00.zip",
+	"updateInfo" : "https://raw.githubusercontent.com/DSATool/DSA41BasisPlugin/master/release/update-info.json",
+	"signatureProviderName" : "SunEC",
+	"signatureKeyAlgorithm" : "EC",
+	"signatureAlgorithm" : "SHA512withECDSA",
+	"signatureKey" : "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQWXA3GbfhHNK6DZQMHF6nPGV6cCsxvPpf+LyBsvvi8kcEtdi/lB4KiYHAEsAmimV+IhUl91TAYjdUUc9YyA+Yg=="
 }
