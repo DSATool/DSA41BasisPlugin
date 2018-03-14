@@ -43,7 +43,7 @@ public class ProOrCon {
 	protected final JSONObject actual;
 	protected final IntegerProperty cost = new SimpleIntegerProperty();
 	protected final IntegerProperty numCheaper = new SimpleIntegerProperty();
-	protected final StringProperty description;
+	protected final StringProperty description = new SimpleStringProperty("");
 	protected final ChoiceOrTextEnum first;
 	protected final JSONObject hero;
 	protected final StringProperty name;
@@ -51,7 +51,7 @@ public class ProOrCon {
 	protected final JSONObject proOrCon;
 	protected final ChoiceOrTextEnum second;
 	protected final IntegerProperty value;
-	protected final StringProperty variant;
+	protected final StringProperty variant = new SimpleStringProperty("");
 	protected final BooleanProperty valid = new SimpleBooleanProperty(true);
 
 	protected final int min;
@@ -84,22 +84,21 @@ public class ProOrCon {
 
 		if (hasBGB) {
 			first = ChoiceOrTextEnum.CHOICE;
-			description = new SimpleStringProperty(
-					actual.getStringOrDefault("Profession", ResourceManager.getResource("data/Professionen").keySet().iterator().next()));
+			description.set(actual.getStringOrDefault("Profession", ResourceManager.getResource("data/Professionen").keySet().iterator().next()));
 		} else if (hasVeteranVariant) {
 			first = ChoiceOrTextEnum.TEXT;
 			final JSONArray variants = actual.getArrOrDefault("Profession:Modifikation", null);
-			description = new SimpleStringProperty(variants != null ? String.join(", ", variants.getStrings()) : "");
+			if (variants != null) {
+				description.set(String.join(", ", variants.getStrings()));
+			}
 		} else if (hasChoice) {
 			first = ChoiceOrTextEnum.CHOICE;
 			if (actual.containsKey("Auswahl")) {
-				description = new SimpleStringProperty(actual.getString("Auswahl"));
+				description.set(actual.getString("Auswahl"));
 			} else {
 				final Set<String> choices = getFirstChoiceItems(false);
-				if (choices.isEmpty()) {
-					description = new SimpleStringProperty("");
-				} else {
-					description = new SimpleStringProperty(choices.iterator().next());
+				if (!choices.isEmpty()) {
+					description.set(choices.iterator().next());
 					for (final String currentChoice : choices) {
 						updateValid();
 						if (valid.get()) {
@@ -116,13 +115,11 @@ public class ProOrCon {
 		} else if (text != null) {
 			first = ChoiceOrTextEnum.TEXT;
 			if (actual.containsKey("Freitext")) {
-				description = new SimpleStringProperty(actual.getString("Freitext"));
+				description.set(actual.getString("Freitext"));
 			} else {
 				final Set<String> choices = getSecondChoiceItems(false);
-				if (choices.isEmpty()) {
-					description = new SimpleStringProperty("");
-				} else {
-					description = new SimpleStringProperty(choices.iterator().next());
+				if (!choices.isEmpty()) {
+					description.set(choices.iterator().next());
 					for (final String currentChoice : choices) {
 						updateValid();
 						if (valid.get()) {
@@ -138,27 +135,25 @@ public class ProOrCon {
 			}
 		} else {
 			first = ChoiceOrTextEnum.NONE;
-			description = new SimpleStringProperty("");
 		}
 		description.addListener((o, oldV, newV) -> updateValid());
 
 		if (hasBGBVariant) {
 			second = ChoiceOrTextEnum.TEXT;
 			final JSONArray variants = actual.getArrOrDefault("Profession:Modifikation", null);
-			variant = new SimpleStringProperty(variants != null ? String.join(", ", variants.getStrings()) : "");
+			if (variants != null) {
+				variant.set(String.join(", ", variants.getStrings()));
+			}
 		} else if (hasBGB) {
 			second = ChoiceOrTextEnum.TEXT;
-			variant = new SimpleStringProperty("");
 		} else if (hasChoice && text != null) {
 			second = ChoiceOrTextEnum.TEXT;
 			if (actual.containsKey("Freitext")) {
-				variant = new SimpleStringProperty(actual.getString("Freitext"));
+				variant.set(actual.getString("Freitext"));
 			} else {
 				final Set<String> choices = getSecondChoiceItems(false);
-				if (choices.isEmpty()) {
-					variant = new SimpleStringProperty("");
-				} else {
-					variant = new SimpleStringProperty(choices.iterator().next());
+				if (!choices.isEmpty()) {
+					variant.set(choices.iterator().next());
 					for (final String currentChoice : choices) {
 						updateValid();
 						if (valid.get()) {
@@ -174,7 +169,6 @@ public class ProOrCon {
 			}
 		} else {
 			second = ChoiceOrTextEnum.NONE;
-			variant = new SimpleStringProperty("");
 		}
 		variant.addListener((o, oldV, newV) -> updateValid());
 

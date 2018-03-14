@@ -37,7 +37,9 @@ public class Spell extends Talent {
 		if (spellCache.containsKey(actualRepresentation))
 			return spellCache.get(actualRepresentation);
 		final Spell newSpell = new Spell(name, spell, actualRepresentation, actualSpell, actualGroup, representation);
-		spellCache.put(actualRepresentation, newSpell);
+		if (actualRepresentation != null) {
+			spellCache.put(actualRepresentation, newSpell);
+		}
 		return newSpell;
 	}
 

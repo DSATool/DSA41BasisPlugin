@@ -50,7 +50,9 @@ public class Talent {
 		} else {
 			newTalent = new Talent(name, talentGroup, talent, actual, actualGroup);
 		}
-		talentCache.put(actual, newTalent);
+		if (actual != null) {
+			talentCache.put(actual, newTalent);
+		}
 		return newTalent;
 	}
 
@@ -102,6 +104,9 @@ public class Talent {
 	}
 
 	public JSONObject getActual() {
+		if (actual == null) {
+			insertTalent(true);
+		}
 		return actual;
 	}
 
@@ -109,12 +114,12 @@ public class Talent {
 		return attributes.get();
 	}
 
-	public int getEnhancementComplexity(final JSONObject hero, final int targetTaW) {
-		return HeroUtil.getTalentComplexity(hero, name.get());
-	}
-
 	public final String getDisplayName() {
 		return displayName.get();
+	}
+
+	public int getEnhancementComplexity(final JSONObject hero, final int targetTaW) {
+		return HeroUtil.getTalentComplexity(hero, name.get());
 	}
 
 	public int getMaximum(final JSONObject hero) {

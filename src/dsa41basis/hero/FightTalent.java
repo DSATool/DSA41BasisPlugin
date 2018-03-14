@@ -37,13 +37,12 @@ public class FightTalent extends Talent {
 		attackOnly = new SimpleBooleanProperty(talent.getBoolOrDefault("NurAT", false) || talent.getBoolOrDefault("FK", false));
 
 		if (attackOnly.get()) {
-			actual.put("AT", value.get());
 			pa = new SimpleIntegerProperty(Integer.MIN_VALUE);
 		} else {
 			pa = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("PA", 0));
 		}
 
-		at = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("AT", 0));
+		at = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("AT", attackOnly.get() ? value.get() : 0));
 
 		final int beAdd = talent.getIntOrDefault("BEAdditiv", 0);
 		final int beMul = talent.getIntOrDefault("BEMultiplikativ", 0);
