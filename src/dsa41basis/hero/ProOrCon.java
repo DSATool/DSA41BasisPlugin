@@ -50,7 +50,7 @@ public class ProOrCon {
 	protected final StringProperty displayName;
 	protected final JSONObject proOrCon;
 	protected final ChoiceOrTextEnum second;
-	protected final IntegerProperty value;
+	protected final IntegerProperty value = new SimpleIntegerProperty(Integer.MIN_VALUE);
 	protected final StringProperty variant = new SimpleStringProperty("");
 	protected final BooleanProperty valid = new SimpleBooleanProperty(true);
 
@@ -85,6 +85,7 @@ public class ProOrCon {
 		if (hasBGB) {
 			first = ChoiceOrTextEnum.CHOICE;
 			description.set(actual.getStringOrDefault("Profession", ResourceManager.getResource("data/Professionen").keySet().iterator().next()));
+			actual.put("Profession", description.get());
 		} else if (hasVeteranVariant) {
 			first = ChoiceOrTextEnum.TEXT;
 			final JSONArray variants = actual.getArrOrDefault("Profession:Modifikation", null);
@@ -110,6 +111,7 @@ public class ProOrCon {
 					if (!valid.get()) {
 						description.set(choices.iterator().next());
 					}
+					actual.put("Auswahl", description.get());
 				}
 			}
 		} else if (text != null) {
@@ -131,6 +133,7 @@ public class ProOrCon {
 					if (!valid.get()) {
 						description.set(choices.iterator().next());
 					}
+					actual.put("Freitext", description.get());
 				}
 			}
 		} else {
@@ -153,18 +156,19 @@ public class ProOrCon {
 			} else {
 				final Set<String> choices = getSecondChoiceItems(false);
 				if (!choices.isEmpty()) {
-					variant.set(choices.iterator().next());
+					setVariant(choices.iterator().next());
 					for (final String currentChoice : choices) {
 						updateValid();
 						if (valid.get()) {
 							break;
 						}
-						variant.set(currentChoice);
+						setVariant(currentChoice);
 					}
 					updateValid();
 					if (!valid.get()) {
 						variant.set(choices.iterator().next());
 					}
+					actual.put("Freitext", variant.get());
 				}
 			}
 		} else {
@@ -178,10 +182,8 @@ public class ProOrCon {
 		step = bounds._3;
 
 		if (stepwise) {
-			value = new SimpleIntegerProperty(actual.getIntOrDefault("Stufe", min));
+			value.set(actual.getIntOrDefault("Stufe", min));
 			actual.put("Stufe", value.get());
-		} else {
-			value = new SimpleIntegerProperty(Integer.MIN_VALUE);
 		}
 
 		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
