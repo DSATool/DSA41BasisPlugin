@@ -45,7 +45,7 @@ public class Talent {
 			newTalent = new FightTalent(name, talentGroup, talent, actual, actualGroup);
 		} else if (talentGroup == talents.getObj("Körperliche Talente")) {
 			newTalent = new PhysicalTalent(name, talentGroup, talent, actual, actualGroup);
-		} else if (talentGroup == talents.getObj("Sprachen und Schriften")) {
+		} else if (talentGroup == talents.getObj("Sprachen") || talentGroup == talents.getObj("Schriften")) {
 			newTalent = new LanguageTalent(name, talentGroup, talent, actual, actualGroup);
 		} else {
 			newTalent = new Talent(name, talentGroup, talent, actual, actualGroup);
