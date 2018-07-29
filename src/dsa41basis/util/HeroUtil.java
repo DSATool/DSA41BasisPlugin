@@ -40,7 +40,6 @@ public class HeroUtil {
 	public static final Set<String> hairColors = new HashSet<>();
 	public static final Set<String> eyeColors = new HashSet<>();
 	public static final Set<String> skinColors = new HashSet<>();
-
 	static {
 		final JSONObject races = ResourceManager.getResource("data/Rassen");
 
@@ -506,6 +505,14 @@ public class HeroUtil {
 			break;
 		case "Zauber":
 			choices.addAll(ResourceManager.getResource("data/Zauber").keySet());
+			break;
+		case "Übernatürliche Begabung":
+			final JSONObject spells = ResourceManager.getResource("data/Zauber");
+			for (final String spellName : spells.keySet()) {
+				if (spells.getObj(spellName).getObj("Repräsentationen").containsKey("ÜNB")) {
+					choices.add(spellName);
+				}
+			}
 			break;
 		case "Körperliche Eigenschaft":
 			final JSONObject attributes = ResourceManager.getResource("data/Eigenschaften");
@@ -1286,7 +1293,9 @@ public class HeroUtil {
 	public static boolean isMagical(final JSONObject hero) {
 		if (hero == null) return false;
 		final JSONObject pros = hero.getObj("Vorteile");
-		if (pros.containsKey("Vollzauberer") || pros.containsKey("Halbzauberer") || pros.containsKey("Viertelzauberer")) return true;
+		if (pros.containsKey("Vollzauberer") || pros.containsKey("Halbzauberer") || pros.containsKey("Viertelzauberer")
+				|| pros.containsKey("Viertelzauberer (unentdeckt)"))
+			return true;
 		return false;
 	}
 
@@ -1500,4 +1509,6 @@ public class HeroUtil {
 			}
 		}
 	}
+
+	private HeroUtil() {}
 }
