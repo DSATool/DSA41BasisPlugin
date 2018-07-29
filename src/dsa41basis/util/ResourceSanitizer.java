@@ -171,4 +171,6 @@ public class ResourceSanitizer {
 		result.addAll(object, false);
 		return result;
 	}
+
+	private ResourceSanitizer() {}
 }

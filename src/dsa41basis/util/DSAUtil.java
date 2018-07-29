@@ -35,6 +35,7 @@ import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
 public class DSAUtil {
+
 	public enum Units {
 		NONE, TIME, RANGE
 	}
@@ -580,4 +581,6 @@ public class DSAUtil {
 	public static Tuple3<Integer, Integer, Integer> talentRoll() {
 		return new Tuple3<>(diceRoll(20), diceRoll(20), diceRoll(20));
 	}
+
+	private DSAUtil() {}
 }

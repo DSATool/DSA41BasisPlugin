@@ -20,4 +20,6 @@ import java.util.List;
 
 public class Loaders {
 	public static List<FileLoader> heroLoaders = Arrays.asList(new DSAToolJSONHeroLoader(), new HeldenSoftwareXMLHeroLoader());
+
+	private Loaders() {}
 }
