@@ -763,47 +763,45 @@ public class HeroUtil {
 
 		final JSONArray actualRepresentations = skills.getArr("Repräsentation");
 
-		boolean hasRepresentation = false;
-
-		if ("ÜNB".equals(representation)) {
-			complexity = 6;
-			hasRepresentation = true;
-		}
-
 		boolean hasGuildMagic = false;
 		boolean hasCharlatan = false;
-		final String representationName = ResourceManager.getResource("data/Repraesentationen").getObj(representation).getStringOrDefault("Name", "");
-		for (int i = 0; i < actualRepresentations.size(); ++i) {
-			final String actualRepresentation = actualRepresentations.getObj(i).getString("Auswahl");
-			if (representationName.equals(actualRepresentation)) {
-				hasRepresentation = true;
-				break;
-			} else if ("Gildenmagisch".equals(actualRepresentation)) {
-				hasGuildMagic = true;
-			} else if ("Scharlatanisch".equals(actualRepresentation)) {
-				hasCharlatan = true;
-			}
-		}
-		if (!hasRepresentation) {
-			if (hasGuildMagic && ("Srl".equals(representation) || "Bor".equals(representation))) {
-				++complexity;
-				hasRepresentation = true;
-			} else if (hasCharlatan) {
-				if ("Mag".equals(representation)) {
-					++complexity;
+		if ("ÜNB".equals(representation)) {
+			complexity = 6;
+		} else {
+			boolean hasRepresentation = false;
+			final String representationName = ResourceManager.getResource("data/Repraesentationen").getObj(representation).getStringOrDefault("Name", "");
+			for (int i = 0; i < actualRepresentations.size(); ++i) {
+				final String actualRepresentation = actualRepresentations.getObj(i).getString("Auswahl");
+				if (representationName.equals(actualRepresentation)) {
 					hasRepresentation = true;
-				} else if ("Sch".equals(representation)) {
-					complexity += 2;
-					hasRepresentation = true;
+					break;
+				} else if ("Gildenmagisch".equals(actualRepresentation)) {
+					hasGuildMagic = true;
+				} else if ("Scharlatanisch".equals(actualRepresentation)) {
+					hasCharlatan = true;
 				}
 			}
-		}
 
-		if (!hasRepresentation) {
-			if ("Sch".equals(representation) || actualRepresentations.size() == 1 && "Schelm".equals(actualRepresentations.getObj(0).getString("Auswahl"))) {
-				complexity += 3;
-			} else {
-				complexity += 2;
+			if (!hasRepresentation) {
+				if (hasGuildMagic && ("Srl".equals(representation) || "Bor".equals(representation))) {
+					++complexity;
+					hasRepresentation = true;
+				} else if (hasCharlatan) {
+					if ("Mag".equals(representation)) {
+						++complexity;
+						hasRepresentation = true;
+					} else if ("Sch".equals(representation)) {
+						complexity += 2;
+						hasRepresentation = true;
+					}
+				}
+
+				if ("Sch".equals(representation)
+						|| actualRepresentations.size() == 1 && "Schelm".equals(actualRepresentations.getObj(0).getString("Auswahl"))) {
+					complexity += 3;
+				} else {
+					complexity += 2;
+				}
 			}
 		}
 
