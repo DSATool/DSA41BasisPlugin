@@ -91,6 +91,7 @@ public class LanguageTalent extends Talent {
 			actual.removeKey("Muttersprache");
 			actual.removeKey("Zweitsprache");
 			actual.removeKey("Lehrsprache");
+			break;
 		default:
 			return;
 		}
