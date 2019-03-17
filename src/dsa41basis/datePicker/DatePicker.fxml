@@ -5,8 +5,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.text.Font?>
-<?import dsatool.util.ReactiveComboBox?>
-<?import dsatool.util.ReactiveSpinner?>
+<?import dsatool.ui.ReactiveComboBox?>
+<?import dsatool.ui.ReactiveSpinner?>
 
 <HBox fx:id="box" spacing="2" xmlns:fx="http://javafx.com/fxml" >
    <ReactiveSpinner fx:id="day" imin="1" imax="30" initialValue="1" prefWidth="65" />
