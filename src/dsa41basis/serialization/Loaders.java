@@ -15,11 +15,11 @@
  */
 package dsa41basis.serialization;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Loaders {
-	public static List<FileLoader> heroLoaders = Arrays.asList(new DSAToolJSONHeroLoader(), new HeldenSoftwareXMLHeroLoader());
+	public static List<FileLoader> heroLoaders = new ArrayList<>(List.of(new DSAToolJSONHeroLoader(), new HeldenSoftwareXMLHeroLoader()));
 
 	private Loaders() {}
 }

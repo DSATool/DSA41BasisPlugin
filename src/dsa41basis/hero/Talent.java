@@ -15,8 +15,8 @@
  */
 package dsa41basis.hero;
 
-import java.util.Arrays;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -75,7 +75,7 @@ public class Talent {
 		this.actualGroup = actualGroup;
 		final String primaryAttribute = talent.getStringOrDefault("Leiteigenschaft", "IN");
 		challenge = talent.getArrOrDefault("Probe", talentGroup == null ? null
-				: talentGroup.getArrOrDefault("Probe", new JSONArray(Arrays.asList(primaryAttribute, primaryAttribute, primaryAttribute), null)));
+				: talentGroup.getArrOrDefault("Probe", new JSONArray(List.of(primaryAttribute, primaryAttribute, primaryAttribute), null)));
 		attributes = new SimpleStringProperty(DSAUtil.getChallengeString(challenge));
 		primaryTalent = new SimpleBooleanProperty(actual == null ? false : actual.getBoolOrDefault("Leittalent", false));
 		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));

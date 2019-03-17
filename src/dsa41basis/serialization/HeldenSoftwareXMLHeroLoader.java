@@ -305,7 +305,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					basicValue.put("Modifikator", mod);
 					basicValue.put("Kauf", value);
 				}
-			} else if (Arrays.asList("at", "pa").contains(name)) {
+			} else if (Set.of("at", "pa").contains(name)) {
 				if ("at".equals(name)) {
 					at = value;
 				} else {
@@ -1377,9 +1377,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			String text = get("value");
 			String value = get("value");
 
-			if (Arrays.asList("Breitgefächerte Bildung", "Veteran").contains(name))
+			if (Set.of("Breitgefächerte Bildung", "Veteran").contains(name))
 				return;
-			else if (Arrays.asList("Astrale Regeneration", "Schnelle Heilung", "Wesen der Nacht", "Fluch der Finsternis", "Madas Fluch", "Schlafstörungen")
+			else if (Set.of("Astrale Regeneration", "Schnelle Heilung", "Wesen der Nacht", "Fluch der Finsternis", "Madas Fluch", "Schlafstörungen")
 					.contains(name)) {
 				name += " " + "III".substring(0, Integer.parseInt(get("value")));
 			} else if (name.startsWith("Resistenz") || name.startsWith("Immunität")) {
@@ -1492,7 +1492,9 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					}
 					if (pro.getBoolOrDefault("Abgestuft", false)) {
 						if ("Besonderer Besitz".equals(name)) {
-							currentPro.put("Stufe", Integer.parseInt(value.substring(6)));
+							if (value.startsWith("Stufe ")) {
+								currentPro.put("Stufe", Integer.parseInt(value.substring(6)));
+							}
 						} else {
 							currentPro.put("Stufe", Integer.parseInt(value));
 						}
@@ -1528,7 +1530,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					if (con.getBoolOrDefault("Abgestuft", false)) {
 						currentCon.put("Stufe", Integer.parseInt(value));
 					}
-					if (Arrays.asList("Behäbig", "Kleinwüchsig", "Lahm", "Zwergenwuchs").contains(name)) {
+					if (Set.of("Behäbig", "Kleinwüchsig", "Lahm", "Zwergenwuchs").contains(name)) {
 						HeroUtil.applyEffect(hero, name, con, currentCon);
 					}
 				}
@@ -1783,7 +1785,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				return;
 			}
 
-			final boolean applyEffect = Arrays.asList("Kampfgespür", "Kampfreflexe").contains(name);
+			final boolean applyEffect = Set.of("Kampfgespür", "Kampfreflexe").contains(name);
 
 			enterSkill(name, 0, choice, text, applyEffect, false);
 		}), new Tuple<>("verbilligtesonderfertigkeit", () -> {

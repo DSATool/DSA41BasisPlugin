@@ -15,10 +15,10 @@
  */
 package dsa41basis.util;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -195,7 +195,7 @@ public class DSAUtil {
 				maxLevel = 15;
 			}
 			if (pros.containsKey("Akademische Ausbildung (Gelehrter)") || pros.containsKey("Akademische Ausbildung (Magier)")) {
-				if (Arrays.asList("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) {
+				if (Set.of("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) {
 					--charGenModifier;
 
 					final JSONArray proGroup = pros.getArrOrDefault("Begabung für Talentgruppe", null);
@@ -222,7 +222,7 @@ public class DSAUtil {
 				}
 			}
 			if (pros.containsKey("Akademische Ausbildung (Krieger)")) {
-				if (Arrays.asList("Nahkampftalente", "Fernkampftalente").contains(talentGroup)) {
+				if (Set.of("Nahkampftalente", "Fernkampftalente").contains(talentGroup)) {
 					charGenModifier -= 2;
 
 					final JSONArray proGroup = pros.getArrOrDefault("Begabung für Talentgruppe", null);
@@ -255,7 +255,7 @@ public class DSAUtil {
 		}
 		modifier += charGenModifier;
 		final double multiplier = hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
-				&& (talent instanceof Spell || Arrays.asList("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) ? 0.5
+				&& (talent instanceof Spell || Set.of("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) ? 0.5
 						: hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
 								&& (talent instanceof Spell || "Sprachen und Schriften".equals(talentGroup)) ? 0.75 : 1.0;
 		int result = 0;

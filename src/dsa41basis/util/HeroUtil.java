@@ -16,7 +16,6 @@
 package dsa41basis.util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -495,7 +494,7 @@ public class HeroUtil {
 		case "Talentgruppe":
 			choices.add("Kampftalente");
 			choices.addAll(ResourceManager.getResource("data/Talentgruppen").keySet());
-			choices.removeAll(Arrays.asList("Gaben", "Ritualkenntnis", "Liturgiekenntnis"));
+			choices.removeAll(List.of("Gaben", "Ritualkenntnis", "Liturgiekenntnis"));
 			break;
 		case "Talent":
 			final JSONObject talents = ResourceManager.getResource("data/Talente");
@@ -911,15 +910,27 @@ public class HeroUtil {
 			}
 		}
 
+		boolean hasDifferentRepBonus = false;
+
 		final JSONObject actualSpell = hero.getObj("Zauber").getObjOrDefault(spellName, null);
 		if (actualSpell != null) {
 			final JSONObject actualRepresentation = actualSpell.getObj(representation);
 			if (actualRepresentation != null && actualRepresentation.getBoolOrDefault("Hauszauber", false)) {
 				--complexity;
 			}
+			for (final String currentRep : actualSpell.keySet()) {
+				if (currentRep.equals(representation)) {
+					continue;
+				}
+				if (!"Temporär".equals(currentRep) && actualSpell.getObj(currentRep).getIntOrDefault("ZfW", 0) >= targetZfW) {
+					--complexity;
+					hasDifferentRepBonus = true;
+					break;
+				}
+			}
 		}
 
-		if (!isAntiElement && (spell.containsKey("Verwandte Sprüche") || baseSpell.containsKey("Verwandte Sprüche"))) {
+		if ((spell.containsKey("Verwandte Sprüche") || baseSpell.containsKey("Verwandte Sprüche")) && !hasDifferentRepBonus && !isAntiElement) {
 			final JSONArray similarSpells = spell.getArrOrDefault("Verwandte Sprüche", baseSpell.getArr("Verwandte Sprüche"));
 			similarSpells: for (int i = 0; i < similarSpells.size(); ++i) {
 				final JSONObject similar = hero.getObj("Zauber").getObjOrDefault(similarSpells.getString(i), null);
