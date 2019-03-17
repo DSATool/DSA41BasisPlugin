@@ -109,7 +109,8 @@ public abstract class OffensiveWeapon extends InventoryItem {
 	public void recompute() {
 		super.recompute();
 
-		ebe.set(combatTalents != null && combatTalents.getObj(type.get()) != null ? combatTalents.getObj(type.get()).getIntOrDefault("BEAdditiv", 0) : 0);
+		ebe.set(combatTalents != null &&
+				combatTalents.getObjOrDefault(type.get(), null) != null ? combatTalents.getObj(type.get()).getIntOrDefault("BEAdditiv", 0) : 0);
 		tp.set(HeroUtil.getTPString(hero, item, baseItem));
 
 		final JSONArray weaponTypes = item.getArrOrDefault("Waffentypen", baseItem.getArr("Waffentypen"));
