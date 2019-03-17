@@ -187,7 +187,7 @@ public class RangedWeapon extends OffensiveWeapon {
 			ammunition.set(ammunitionType);
 		} else {
 			final JSONObject quantity = item.getObjOrDefault("Anzahl", baseItem.getObj("Anzahl"));
-			ammunition.set(quantity.getIntOrDefault("Aktuell", 1).toString());
+			ammunition.set(quantity.getIntOrDefault("Aktuell", quantity.getIntOrDefault("Gesamt", 1)).toString());
 		}
 		bulletweight.set(item.getDoubleOrDefault("Geschoss:Gewicht", baseItem.getDoubleOrDefault("Geschoss:Gewicht", Double.NEGATIVE_INFINITY)) * 40);
 	}
