@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2017 DSATool team
  *
@@ -14,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import java.util.Arrays;
+package dsa41basis;
+
+import java.util.List;
 
 import dsa41basis.datePicker.DatePickerController;
 import dsa41basis.util.ResourceSanitizer;
@@ -59,9 +60,9 @@ public class DSA41Basis extends Plugin {
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.historySanitizer);
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.heroSanitizer);
 
-		Settings.addSetting(new StringChoiceSetting("Jahreswechsel", "Jahreswechsel", Arrays.asList("Jahreswechsel", "Jahreszeiten", "Astronomisch"),
+		Settings.addSetting(new StringChoiceSetting("Jahreswechsel", "Jahreswechsel", List.of("Jahreswechsel", "Jahreszeiten", "Astronomisch"),
 				"Allgemein", "Jahreswechsel"));
-		Settings.addSetting(new StringChoiceSetting("Rüstungsart", "Zonenrüstung", Arrays.asList("Zonenrüstung", "Gesamtrüstung", "Zonengesamtrüstung"),
+		Settings.addSetting(new StringChoiceSetting("Rüstungsart", "Zonenrüstung", List.of("Zonenrüstung", "Gesamtrüstung", "Zonengesamtrüstung"),
 				"Kampf", "Rüstungsart"));
 
 		Credits.credits.add(0,
