@@ -86,7 +86,7 @@ public class Spell extends Talent {
 
 	private void insertSpell() {
 		if (actualSpell == null) {
-			actualSpell = new JSONObject(actualGroup);
+			actualSpell = actualGroup.getObjOrDefault(name.get(), new JSONObject(actualGroup));
 		}
 		actualGroup.put(name.get(), actualSpell);
 	}
@@ -137,10 +137,10 @@ public class Spell extends Talent {
 			}
 			if (actualSpell.size() == 0) {
 				actualGroup.removeKey(name.get());
+				actualSpell = null;
 				actualGroup.notifyListeners(null);
 			}
 			actualSpell.notifyListeners(null);
-			actualSpell = null;
 			actual = null;
 		}
 	}
