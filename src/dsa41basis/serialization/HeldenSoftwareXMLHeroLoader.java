@@ -573,363 +573,366 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				final LocalDate entryDate = LocalDate.from(Instant.ofEpochMilli(Long.parseLong(get("time"))).atZone(ZoneId.systemDefault()));
 
 				switch (type) {
-				case "Talent steigern":
-				case "Nahkampftalent steigern":
-					String talentName = replaceTalent(get("obj"));
+					case "Talent steigern":
+					case "Nahkampftalent steigern":
+						String talentName = replaceTalent(get("obj"));
 
-					historyEntry = new JSONObject(history);
+						historyEntry = new JSONObject(history);
 
-					historyEntry.put("Typ", "Talent");
+						historyEntry.put("Typ", "Talent");
 
-					if (talentName.startsWith("Kraftschub")) {
-						historyEntry.put("Auswahl", talentName.substring(12, talentName.length() - 1));
-						talentName = "Kräfteschub";
-					} else if (talentName.startsWith("Talentschub")) {
-						historyEntry.put("Auswahl", talentName.substring(13, talentName.length() - 1));
-						talentName = "Talentschub";
-					}
-
-					historyEntry.put("Talent", talentName);
-
-					final String oldV = get("Alt");
-					final int oldIndex = oldV.indexOf(';');
-					historyEntry.put("Von", Integer.parseInt(oldIndex < 0 ? oldV : oldV.substring(0, oldIndex)));
-					final String newV = get("Neu");
-					final int newIndex = newV.indexOf(';');
-					historyEntry.put("Auf", Integer.parseInt(newIndex < 0 ? newV : newV.substring(0, newIndex)));
-
-					String talentMethod = get("Info");
-					if (talentMethod == null) {
-						historyEntry = null;
-						break;
-					}
-					if (talentMethod.startsWith("SE")) {
-						historyEntry.put("SEs", 1);
-						talentMethod = talentMethod.substring(4);
-					}
-					if ("Freie Steigerung".equals(talentMethod)) {
-						historyEntry.put("Methode", "Gegenseitiges Lehren");
-						historyEntry.put("AP", 0);
-					} else {
-						historyEntry.put("Methode", talentMethod);
-						final String talentAp = get("Abenteuerpunkte");
-						historyEntry.put("AP", talentAp != null ? -Integer.parseInt(talentAp) : 0);
-					}
-
-					final JSONObject lastPossibleTalent = history.size() == 0 ? null : history.getObj(history.size() - 1);
-					if (lastPossibleTalent != null && "Talent".equals(lastPossibleTalent.getString("Typ"))
-							&& entryDate.equals(LocalDate.parse(lastPossibleTalent.getString("Datum")))
-							&& lastPossibleTalent.getString("Talent").equals(talentName)
-							&& (!lastPossibleTalent.containsKey("Auswahl") || lastPossibleTalent.getString("Auswahl").equals(historyEntry.getString("Auswahl")))
-							&& (!lastPossibleTalent.containsKey("Freitext")
-									|| lastPossibleTalent.getString("Freitext").equals(historyEntry.getString("Freitext")))
-							&& lastPossibleTalent.getString("Methode").equals(historyEntry.getString("Methode"))
-							&& lastPossibleTalent.getInt("Auf") == historyEntry.getInt("Von")) {
-						lastPossibleTalent.put("Auf", historyEntry.getInt("Auf"));
-						if (historyEntry.containsKey("SEs")) {
-							lastPossibleTalent.put("SEs", lastPossibleTalent.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+						if (talentName.startsWith("Kraftschub")) {
+							historyEntry.put("Auswahl", talentName.substring(12, talentName.length() - 1));
+							talentName = "Kräfteschub";
+						} else if (talentName.startsWith("Talentschub")) {
+							historyEntry.put("Auswahl", talentName.substring(13, talentName.length() - 1));
+							talentName = "Talentschub";
 						}
-						lastPossibleTalent.put("AP", lastPossibleTalent.getInt("AP") + historyEntry.getInt("AP"));
-						historyEntry = null;
-					}
 
-					break;
-				case "Talent aktivieren":
-					String activatedTalentName = replaceTalent(get("obj"));
+						historyEntry.put("Talent", talentName);
 
-					historyEntry = new JSONObject(history);
+						final String oldV = get("Alt");
+						final int oldIndex = oldV.indexOf(';');
+						historyEntry.put("Von", Integer.parseInt(oldIndex < 0 ? oldV : oldV.substring(0, oldIndex)));
+						final String newV = get("Neu");
+						final int newIndex = newV.indexOf(';');
+						historyEntry.put("Auf", Integer.parseInt(newIndex < 0 ? newV : newV.substring(0, newIndex)));
 
-					historyEntry.put("Typ", "Talent");
-					if (activatedTalentName.startsWith("Kraftschub")) {
-						historyEntry.put("Auswahl", activatedTalentName.substring(12, activatedTalentName.length() - 1));
-						activatedTalentName = "Kräfteschub";
-					} else if (activatedTalentName.startsWith("Talentschub")) {
-						historyEntry.put("Auswahl", activatedTalentName.substring(13, activatedTalentName.length() - 1));
-						activatedTalentName = "Talentschub";
-					}
-
-					historyEntry.put("Talent", activatedTalentName);
-
-					historyEntry.put("Auf", 0);
-
-					if ("SE".equals(get("Info"))) {
-						historyEntry.put("SEs", 1);
-					}
-
-					historyEntry.put("Methode", "Gegenseitiges Lehren");
-					final String activatedTalentAp = get("Abenteuerpunkte");
-					historyEntry.put("AP", activatedTalentAp != null ? -Integer.parseInt(activatedTalentAp) : 0);
-
-					break;
-				case "Zauber steigern":
-					historyEntry = new JSONObject(history);
-
-					final String spellName = get("obj");
-					String spell = spellName.substring(0, spellName.indexOf('[') - 1);
-					spell = spellReplacements.getStringOrDefault(spell, spell);
-					if ("Dämonenbann".equals(spell)) {
-						spell = spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')) + "bann";
-					} else if ("Adlerschwinge Wolfsgestalt".equals(spell)) {
-						historyEntry.put("Freitext", spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')));
-					}
-
-					historyEntry.put("Typ", "Zauber");
-					historyEntry.put("Zauber", spell);
-					historyEntry.put("Repräsentation",
-							shortRepReplacements.getStringOrDefault(spellName.substring(spellName.indexOf('[') + 1, spellName.indexOf(']')), "Mag"));
-
-					historyEntry.put("Von", Integer.parseInt(get("Alt")));
-					historyEntry.put("Auf", Integer.parseInt(get("Neu")));
-
-					String spellMethod = get("Info");
-					if (spellMethod == null) {
-						historyEntry = null;
-						break;
-					}
-					if (spellMethod.startsWith("SE")) {
-						historyEntry.put("SEs", 1);
-						spellMethod = spellMethod.substring(4);
-					}
-					if ("Freie Steigerung".equals(spellMethod)) {
-						historyEntry.put("Methode", "Gegenseitiges Lehren");
-						historyEntry.put("AP", 0);
-					} else {
-						historyEntry.put("Methode", spellMethod);
-						final String spellAp = get("Abenteuerpunkte");
-						historyEntry.put("AP", spellAp != null ? -Integer.parseInt(spellAp) : 0);
-					}
-
-					final JSONObject lastPossibleSpell = history.size() == 0 ? null : history.getObj(history.size() - 1);
-					if (lastPossibleSpell != null && "Zauber".equals(lastPossibleSpell.getString("Typ"))
-							&& entryDate.equals(LocalDate.parse(lastPossibleSpell.getString("Datum")))
-							&& lastPossibleSpell.getString("Zauber").equals(spell)
-							&& lastPossibleSpell.getString("Repräsentation").equals(historyEntry.getString("Repräsentation"))
-							&& (!lastPossibleSpell.containsKey("Auswahl") || lastPossibleSpell.getString("Auswahl").equals(historyEntry.getString("Auswahl")))
-							&& (!lastPossibleSpell.containsKey("Freitext")
-									|| lastPossibleSpell.getString("Freitext").equals(historyEntry.getString("Freitext")))
-							&& lastPossibleSpell.getString("Methode").equals(historyEntry.getString("Methode"))
-							&& lastPossibleSpell.getInt("Auf") == historyEntry.getInt("Von")) {
-						lastPossibleSpell.put("Auf", historyEntry.getInt("Auf"));
-						if (historyEntry.containsKey("SEs")) {
-							lastPossibleSpell.put("SEs", lastPossibleSpell.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
-						}
-						lastPossibleSpell.put("AP", lastPossibleSpell.getInt("AP") + historyEntry.getInt("AP"));
-						historyEntry = null;
-					}
-
-					break;
-				case "Zauber aktivieren":
-					historyEntry = new JSONObject(history);
-
-					final String activatedSpellName = get("obj");
-					String activatedSpell = activatedSpellName.substring(0, activatedSpellName.indexOf('[') - 1);
-					activatedSpell = spellReplacements.getStringOrDefault(activatedSpell, activatedSpell);
-					if ("Dämonenbann".equals(activatedSpell)) {
-						activatedSpell = activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']')) + "bann";
-					} else if ("Adlerschwinge Wolfsgestalt".equals(activatedSpell)) {
-						historyEntry.put("Freitext",
-								activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']')));
-					}
-
-					historyEntry.put("Typ", "Zauber");
-					historyEntry.put("Zauber", activatedSpell);
-					historyEntry.put("Repräsentation",
-							shortRepReplacements.getStringOrDefault(
-									activatedSpellName.substring(activatedSpellName.indexOf('[') + 1, activatedSpellName.indexOf(']')),
-									"Mag"));
-
-					historyEntry.put("Auf", 0);
-
-					if ("SE".equals(get("Info"))) {
-						historyEntry.put("SEs", 1);
-					}
-
-					historyEntry.put("Methode", "Gegenseitiges Lehren");
-					final String activatedSpellAp = get("Abenteuerpunkte");
-					historyEntry.put("AP", activatedSpellAp != null ? -Integer.parseInt(activatedSpellAp) : 0);
-
-					break;
-				case "Eigenschaft steigern":
-					final JSONObject attributes = ResourceManager.getResource("data/Eigenschaften");
-					String attributeName = get("obj");
-
-					if ("Sozialstatus".equals(attributeName)) {
-						break;
-					}
-
-					historyEntry = new JSONObject(history);
-
-					String entryType = "Basiswert";
-					for (final String attribute : attributes.keySet()) {
-						if (attributes.getObj(attribute).getString("Name").equals(attributeName)) {
-							attributeName = attribute;
-							entryType = "Eigenschaft";
+						String talentMethod = get("Info");
+						if (talentMethod == null) {
+							historyEntry = null;
 							break;
 						}
-					}
-
-					historyEntry.put("Typ", entryType);
-					historyEntry.put(entryType, attributeName);
-
-					historyEntry.put("Von", Integer.parseInt(get("Alt")));
-					historyEntry.put("Auf", Integer.parseInt(get("Neu")));
-
-					if ("SE".equals(get("Info"))) {
-						historyEntry.put("SEs", 1);
-					}
-					final String attributeAp = get("Abenteuerpunkte");
-					historyEntry.put("AP", attributeAp != null ? -Integer.parseInt(attributeAp) : 0);
-
-					final JSONObject lastPossibleAttribute = history.size() == 0 ? null : history.getObj(history.size() - 1);
-					if (lastPossibleAttribute != null && entryType.equals(lastPossibleAttribute.getString("Typ"))
-							&& entryDate.equals(LocalDate.parse(lastPossibleAttribute.getString("Datum")))
-							&& lastPossibleAttribute.getString(entryType).equals(attributeName)
-							&& lastPossibleAttribute.getInt("Auf") == historyEntry.getInt("Von")) {
-						lastPossibleAttribute.put("Auf", historyEntry.getInt("Auf"));
-						if (historyEntry.containsKey("SEs")) {
-							lastPossibleAttribute.put("SEs", lastPossibleAttribute.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+						if (talentMethod.startsWith("SE")) {
+							historyEntry.put("SEs", 1);
+							talentMethod = talentMethod.substring(4);
 						}
-						lastPossibleAttribute.put("AP", lastPossibleAttribute.getInt("AP") + historyEntry.getInt("AP"));
-						historyEntry = null;
-					}
-
-					break;
-				case "Sonderfertigkeit hinzugefügt":
-					historyEntry = new JSONObject(history);
-					historyEntry.put("Typ", "Sonderfertigkeit");
-					String skillName = replaceSkill(get("obj"));
-
-					if (skillName.startsWith("Talentspezialisierung")) {
-						final String talent = replaceTalent(skillName.substring(22, skillName.indexOf('(') - 1));
-						historyEntry.put("Auswahl", talent);
-						final String specialization = skillName.substring(skillName.indexOf('(') + 1, skillName.lastIndexOf(')'));
-						historyEntry.put("Freitext", specialization);
-						final JSONObject talents = ResourceManager.getResource("data/Talente");
-						if (talents.getObj("Nahkampftalente").containsKey(talent) || talents.getObj("Fernkampftalente").containsKey(talent)) {
-							skillName = "Waffenspezialisierung";
+						if ("Freie Steigerung".equals(talentMethod)) {
+							historyEntry.put("Methode", "Gegenseitiges Lehren");
+							historyEntry.put("AP", 0);
 						} else {
-							skillName = "Talentspezialisierung";
+							historyEntry.put("Methode", talentMethod);
+							final String talentAp = get("Abenteuerpunkte");
+							historyEntry.put("AP", talentAp != null ? -Integer.parseInt(talentAp) : 0);
 						}
-					} else if (skillName.startsWith("Zauberspezialisierung")) {
-						String spellChoice = skillName.substring(22, skillName.indexOf('[') - 1);
-						spellChoice = spellReplacements.getStringOrDefault(spellChoice, spellChoice);
-						if ("Dämonenbann".equals(spellChoice)) {
-							spellChoice = skillName.substring(skillName.lastIndexOf('[') + 1, skillName.lastIndexOf(']')) + "bann";
-						}
-						historyEntry.put("Auswahl", spellChoice);
-						final String specialization = skillName.substring(skillName.indexOf('(') + 1, skillName.lastIndexOf(')'));
-						historyEntry.put("Freitext", specialization);
-						skillName = "Zauberspezialisierung";
-					} else if (skillName.startsWith("Merkmalskenntnis")) {
-						String trait = skillName.substring(18);
-						if ("Elementar".equals(trait)) {
-							trait = "Elementar (gesamt)";
-						} else if ("Dämonisch".equals(trait)) {
-							trait = "Dämonisch (gesamt)";
-						}
-						historyEntry.put("Auswahl", trait);
-						skillName = "Merkmalskenntnis";
-					} else if (skillName.startsWith("Repräsentation")) {
-						String rep = skillName.substring(16);
-						rep = representationReplacements.getStringOrDefault(rep, rep);
-						historyEntry.put("Auswahl", rep);
-						skillName = "Repräsentation";
-					} else if (skillName.startsWith("Ritualkenntnis")) {
-						String choice = skillName.substring(16);
-						choice = ritualKnowledge.getStringOrDefault(choice, choice);
-						historyEntry.put("Auswahl", choice);
-						skillName = "Ritualkenntnis";
-					} else if (skillName.startsWith("Liturgiekenntnis")) {
-						String goddess = skillName.substring(18, skillName.length() - 1);
-						if ("Boron".equals(goddess)) {
-							goddess = selectBoronCult();
-						}
-						historyEntry.put("Auswahl", goddess);
-						skillName = "Liturgiekenntnis";
-					} else if (skillName.startsWith("Kulturkunde")) {
-						final String culture = skillName.substring(13, skillName.length() - 1);
-						historyEntry.put("Auswahl", culture);
-						skillName = "Kulturkunde";
-					} else if (skillName.startsWith("Ortskenntnis")) {
-						final String location = skillName.substring(14, skillName.length() - 1);
-						historyEntry.put("Freitext", location);
-						skillName = "Ortskenntnis";
-					} else if (skillName.startsWith("Berufsgeheimnis")) {
-						final String text = skillName.substring(skillName.lastIndexOf(';') + 2, skillName.length() - 1);
-						historyEntry.put("Freitext", text);
-						skillName = "Berufsgeheimnis";
-					} else if (skillName.startsWith("Scharfschütze")) {
-						final String talent = skillName.substring(15, skillName.length() - 1);
-						historyEntry.put("Auswahl", talent);
-						skillName = "Scharfschütze";
-					} else if (skillName.startsWith("Meisterschütze")) {
-						final String talent = skillName.substring(16, skillName.length() - 1);
-						historyEntry.put("Auswahl", talent);
-						skillName = "Meisterschütze";
-					} else if (skillName.startsWith("Rüstungsgewöhnung I") && !skillName.startsWith("Rüstungsgewöhnung II")) {
-						final String armor = skillName.substring(21, skillName.length() - 1);
-						historyEntry.put("Freitext", armor);
-						skillName = "Rüstungsgewöhnung I";
-					} else if (skillName.startsWith("Waffenmeister") && !"Waffenmeister (Schild)".equals(skillName)) {
-						final int talentIndex = skillName.indexOf(';') + 1;
-						final String talent = skillName.substring(talentIndex + 1, skillName.indexOf(';', talentIndex));
-						historyEntry.put("Auswahl", talent);
-						final String weapon = skillName.substring(15, talentIndex - 1);
-						historyEntry.put("Freitext", weapon);
-						skillName = "Waffenmeister";
-					} else if (skillName.startsWith("Wahrer Name")) {
-						final int detailsIndex = skillName.indexOf('(');
-						final String quality = skillName.substring(detailsIndex + 2, skillName.indexOf(' ', detailsIndex));
-						historyEntry.put("Stufe", Integer.valueOf(quality));
-						final String being = skillName.substring(skillName.lastIndexOf(' ') + 1, skillName.indexOf(')', detailsIndex));
-						historyEntry.put("Freitext", being);
-						skillName = "Wahre Namen";
-					} else if (skillName.startsWith("Akoluth")) {
-						String goddess = skillName.substring(9, skillName.length() - 1);
-						if ("Boron".equals(goddess)) {
-							goddess = selectBoronCult();
-						}
-						historyEntry.put("Auswahl", goddess);
-						skillName = "Akoluth";
-					}
 
-					final JSONObject skill = HeroUtil.findSkill(skillName);
-					if (skill != null) {
-						if (skill.containsKey("Auswahl") && !historyEntry.containsKey("Auswahl")) {
-							final int choiceIndex = skillName.indexOf('(');
-							historyEntry.put("Auswahl", skillName.substring(choiceIndex + 1, skillName.length() - 1));
-							skillName = skillName.substring(0, choiceIndex - 1);
-						} else if (skill.containsKey("Freitext") && !historyEntry.containsKey("Freitext")) {
-							final int textIndex = skillName.indexOf('(');
-							historyEntry.put("Freitext", skillName.substring(textIndex + 1, skillName.length() - 1));
-							skillName = skillName.substring(0, textIndex - 1);
+						final JSONObject lastPossibleTalent = history.size() == 0 ? null : history.getObj(history.size() - 1);
+						if (lastPossibleTalent != null && "Talent".equals(lastPossibleTalent.getString("Typ"))
+								&& entryDate.equals(LocalDate.parse(lastPossibleTalent.getString("Datum")))
+								&& lastPossibleTalent.getString("Talent").equals(talentName)
+								&& (!lastPossibleTalent.containsKey("Auswahl")
+										|| lastPossibleTalent.getString("Auswahl").equals(historyEntry.getString("Auswahl")))
+								&& (!lastPossibleTalent.containsKey("Freitext")
+										|| lastPossibleTalent.getString("Freitext").equals(historyEntry.getString("Freitext")))
+								&& lastPossibleTalent.getString("Methode").equals(historyEntry.getString("Methode"))
+								&& lastPossibleTalent.getInt("Auf") == historyEntry.getInt("Von")) {
+							lastPossibleTalent.put("Auf", historyEntry.getInt("Auf"));
+							if (historyEntry.containsKey("SEs")) {
+								lastPossibleTalent.put("SEs", lastPossibleTalent.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+							}
+							lastPossibleTalent.put("AP", lastPossibleTalent.getInt("AP") + historyEntry.getInt("AP"));
+							historyEntry = null;
 						}
-					}
 
-					historyEntry.put("Sonderfertigkeit", skillName);
-					final String skillAp = get("Abenteuerpunkte");
-					historyEntry.put("AP", skillAp != null ? -Integer.parseInt(skillAp) : 0);
-					break;
-				case "Abenteuerpunkte":
-					if (get("obj") == null || "gesamt".equals(get("obj"))) {
+						break;
+					case "Talent aktivieren":
+						String activatedTalentName = replaceTalent(get("obj"));
+
 						historyEntry = new JSONObject(history);
-						historyEntry.put("Typ", "Abenteuerpunkte");
+
+						historyEntry.put("Typ", "Talent");
+						if (activatedTalentName.startsWith("Kraftschub")) {
+							historyEntry.put("Auswahl", activatedTalentName.substring(12, activatedTalentName.length() - 1));
+							activatedTalentName = "Kräfteschub";
+						} else if (activatedTalentName.startsWith("Talentschub")) {
+							historyEntry.put("Auswahl", activatedTalentName.substring(13, activatedTalentName.length() - 1));
+							activatedTalentName = "Talentschub";
+						}
+
+						historyEntry.put("Talent", activatedTalentName);
+
+						historyEntry.put("Auf", 0);
+
+						if ("SE".equals(get("Info"))) {
+							historyEntry.put("SEs", 1);
+						}
+
+						historyEntry.put("Methode", "Gegenseitiges Lehren");
+						final String activatedTalentAp = get("Abenteuerpunkte");
+						historyEntry.put("AP", activatedTalentAp != null ? -Integer.parseInt(activatedTalentAp) : 0);
+
+						break;
+					case "Zauber steigern":
+						historyEntry = new JSONObject(history);
+
+						final String spellName = get("obj");
+						String spell = spellName.substring(0, spellName.indexOf('[') - 1);
+						spell = spellReplacements.getStringOrDefault(spell, spell);
+						if ("Dämonenbann".equals(spell)) {
+							spell = spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')) + "bann";
+						} else if ("Adlerschwinge Wolfsgestalt".equals(spell)) {
+							historyEntry.put("Freitext", spellName.substring(spellName.lastIndexOf('[') + 1, spellName.lastIndexOf(']')));
+						}
+
+						historyEntry.put("Typ", "Zauber");
+						historyEntry.put("Zauber", spell);
+						historyEntry.put("Repräsentation",
+								shortRepReplacements.getStringOrDefault(spellName.substring(spellName.indexOf('[') + 1, spellName.indexOf(']')), "Mag"));
+
 						historyEntry.put("Von", Integer.parseInt(get("Alt")));
-						final int newAP = Integer.parseInt(get("Neu"));
-						historyEntry.put("Auf", newAP);
-						ap[0] = newAP;
-					}
-					break;
-				case "Ereignis eingeben":
-					final String event = get("obj");
-					if ("Abenteuerpunkte (Hinzugewinn)".equals(event) && ap[0] != 0) {
+						historyEntry.put("Auf", Integer.parseInt(get("Neu")));
+
+						String spellMethod = get("Info");
+						if (spellMethod == null) {
+							historyEntry = null;
+							break;
+						}
+						if (spellMethod.startsWith("SE")) {
+							historyEntry.put("SEs", 1);
+							spellMethod = spellMethod.substring(4);
+						}
+						if ("Freie Steigerung".equals(spellMethod)) {
+							historyEntry.put("Methode", "Gegenseitiges Lehren");
+							historyEntry.put("AP", 0);
+						} else {
+							historyEntry.put("Methode", spellMethod);
+							final String spellAp = get("Abenteuerpunkte");
+							historyEntry.put("AP", spellAp != null ? -Integer.parseInt(spellAp) : 0);
+						}
+
+						final JSONObject lastPossibleSpell = history.size() == 0 ? null : history.getObj(history.size() - 1);
+						if (lastPossibleSpell != null && "Zauber".equals(lastPossibleSpell.getString("Typ"))
+								&& entryDate.equals(LocalDate.parse(lastPossibleSpell.getString("Datum")))
+								&& lastPossibleSpell.getString("Zauber").equals(spell)
+								&& lastPossibleSpell.getString("Repräsentation").equals(historyEntry.getString("Repräsentation"))
+								&& (!lastPossibleSpell.containsKey("Auswahl")
+										|| lastPossibleSpell.getString("Auswahl").equals(historyEntry.getString("Auswahl")))
+								&& (!lastPossibleSpell.containsKey("Freitext")
+										|| lastPossibleSpell.getString("Freitext").equals(historyEntry.getString("Freitext")))
+								&& lastPossibleSpell.getString("Methode").equals(historyEntry.getString("Methode"))
+								&& lastPossibleSpell.getInt("Auf") == historyEntry.getInt("Von")) {
+							lastPossibleSpell.put("Auf", historyEntry.getInt("Auf"));
+							if (historyEntry.containsKey("SEs")) {
+								lastPossibleSpell.put("SEs", lastPossibleSpell.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+							}
+							lastPossibleSpell.put("AP", lastPossibleSpell.getInt("AP") + historyEntry.getInt("AP"));
+							historyEntry = null;
+						}
+
+						break;
+					case "Zauber aktivieren":
 						historyEntry = new JSONObject(history);
-						historyEntry.put("Typ", "Abenteuerpunkte");
-						historyEntry.put("Von", ap[0]);
-						ap[0] += Integer.parseInt(get("Abenteuerpunkte"));
-						historyEntry.put("Auf", ap[0]);
-					}
-					break;
+
+						final String activatedSpellName = get("obj");
+						String activatedSpell = activatedSpellName.substring(0, activatedSpellName.indexOf('[') - 1);
+						activatedSpell = spellReplacements.getStringOrDefault(activatedSpell, activatedSpell);
+						if ("Dämonenbann".equals(activatedSpell)) {
+							activatedSpell = activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']'))
+									+ "bann";
+						} else if ("Adlerschwinge Wolfsgestalt".equals(activatedSpell)) {
+							historyEntry.put("Freitext",
+									activatedSpellName.substring(activatedSpellName.lastIndexOf('[') + 1, activatedSpellName.lastIndexOf(']')));
+						}
+
+						historyEntry.put("Typ", "Zauber");
+						historyEntry.put("Zauber", activatedSpell);
+						historyEntry.put("Repräsentation",
+								shortRepReplacements.getStringOrDefault(
+										activatedSpellName.substring(activatedSpellName.indexOf('[') + 1, activatedSpellName.indexOf(']')),
+										"Mag"));
+
+						historyEntry.put("Auf", 0);
+
+						if ("SE".equals(get("Info"))) {
+							historyEntry.put("SEs", 1);
+						}
+
+						historyEntry.put("Methode", "Gegenseitiges Lehren");
+						final String activatedSpellAp = get("Abenteuerpunkte");
+						historyEntry.put("AP", activatedSpellAp != null ? -Integer.parseInt(activatedSpellAp) : 0);
+
+						break;
+					case "Eigenschaft steigern":
+						final JSONObject attributes = ResourceManager.getResource("data/Eigenschaften");
+						String attributeName = get("obj");
+
+						if (Set.of("Sozialstatus", "Attacke", "Parade", "Fernkampf-Basis").contains(attributeName)) {
+							break;
+						}
+
+						historyEntry = new JSONObject(history);
+
+						String entryType = "Basiswert";
+						for (final String attribute : attributes.keySet()) {
+							if (attributes.getObj(attribute).getString("Name").equals(attributeName)) {
+								attributeName = attribute;
+								entryType = "Eigenschaft";
+								break;
+							}
+						}
+
+						historyEntry.put("Typ", entryType);
+						historyEntry.put(entryType, attributeName);
+
+						historyEntry.put("Von", Integer.parseInt(get("Alt")));
+						historyEntry.put("Auf", Integer.parseInt(get("Neu")));
+
+						if ("SE".equals(get("Info"))) {
+							historyEntry.put("SEs", 1);
+						}
+						final String attributeAp = get("Abenteuerpunkte");
+						historyEntry.put("AP", attributeAp != null ? -Integer.parseInt(attributeAp) : 0);
+
+						final JSONObject lastPossibleAttribute = history.size() == 0 ? null : history.getObj(history.size() - 1);
+						if (lastPossibleAttribute != null && entryType.equals(lastPossibleAttribute.getString("Typ"))
+								&& entryDate.equals(LocalDate.parse(lastPossibleAttribute.getString("Datum")))
+								&& lastPossibleAttribute.getString(entryType).equals(attributeName)
+								&& lastPossibleAttribute.getInt("Auf") == historyEntry.getInt("Von")) {
+							lastPossibleAttribute.put("Auf", historyEntry.getInt("Auf"));
+							if (historyEntry.containsKey("SEs")) {
+								lastPossibleAttribute.put("SEs", lastPossibleAttribute.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));
+							}
+							lastPossibleAttribute.put("AP", lastPossibleAttribute.getInt("AP") + historyEntry.getInt("AP"));
+							historyEntry = null;
+						}
+
+						break;
+					case "Sonderfertigkeit hinzugefügt":
+						historyEntry = new JSONObject(history);
+						historyEntry.put("Typ", "Sonderfertigkeit");
+						String skillName = replaceSkill(get("obj"));
+
+						if (skillName.startsWith("Talentspezialisierung")) {
+							final String talent = replaceTalent(skillName.substring(22, skillName.indexOf('(') - 1));
+							historyEntry.put("Auswahl", talent);
+							final String specialization = skillName.substring(skillName.indexOf('(') + 1, skillName.lastIndexOf(')'));
+							historyEntry.put("Freitext", specialization);
+							final JSONObject talents = ResourceManager.getResource("data/Talente");
+							if (talents.getObj("Nahkampftalente").containsKey(talent) || talents.getObj("Fernkampftalente").containsKey(talent)) {
+								skillName = "Waffenspezialisierung";
+							} else {
+								skillName = "Talentspezialisierung";
+							}
+						} else if (skillName.startsWith("Zauberspezialisierung")) {
+							String spellChoice = skillName.substring(22, skillName.indexOf('[') - 1);
+							spellChoice = spellReplacements.getStringOrDefault(spellChoice, spellChoice);
+							if ("Dämonenbann".equals(spellChoice)) {
+								spellChoice = skillName.substring(skillName.lastIndexOf('[') + 1, skillName.lastIndexOf(']')) + "bann";
+							}
+							historyEntry.put("Auswahl", spellChoice);
+							final String specialization = skillName.substring(skillName.indexOf('(') + 1, skillName.lastIndexOf(')'));
+							historyEntry.put("Freitext", specialization);
+							skillName = "Zauberspezialisierung";
+						} else if (skillName.startsWith("Merkmalskenntnis")) {
+							String trait = skillName.substring(18);
+							if ("Elementar".equals(trait)) {
+								trait = "Elementar (gesamt)";
+							} else if ("Dämonisch".equals(trait)) {
+								trait = "Dämonisch (gesamt)";
+							}
+							historyEntry.put("Auswahl", trait);
+							skillName = "Merkmalskenntnis";
+						} else if (skillName.startsWith("Repräsentation")) {
+							String rep = skillName.substring(16);
+							rep = representationReplacements.getStringOrDefault(rep, rep);
+							historyEntry.put("Auswahl", rep);
+							skillName = "Repräsentation";
+						} else if (skillName.startsWith("Ritualkenntnis")) {
+							String choice = skillName.substring(16);
+							choice = ritualKnowledge.getStringOrDefault(choice, choice);
+							historyEntry.put("Auswahl", choice);
+							skillName = "Ritualkenntnis";
+						} else if (skillName.startsWith("Liturgiekenntnis")) {
+							String goddess = skillName.substring(18, skillName.length() - 1);
+							if ("Boron".equals(goddess)) {
+								goddess = selectBoronCult();
+							}
+							historyEntry.put("Auswahl", goddess);
+							skillName = "Liturgiekenntnis";
+						} else if (skillName.startsWith("Kulturkunde")) {
+							final String culture = skillName.substring(13, skillName.length() - 1);
+							historyEntry.put("Auswahl", culture);
+							skillName = "Kulturkunde";
+						} else if (skillName.startsWith("Ortskenntnis")) {
+							final String location = skillName.substring(14, skillName.length() - 1);
+							historyEntry.put("Freitext", location);
+							skillName = "Ortskenntnis";
+						} else if (skillName.startsWith("Berufsgeheimnis")) {
+							final String text = skillName.substring(skillName.lastIndexOf(';') + 2, skillName.length() - 1);
+							historyEntry.put("Freitext", text);
+							skillName = "Berufsgeheimnis";
+						} else if (skillName.startsWith("Scharfschütze")) {
+							final String talent = skillName.substring(15, skillName.length() - 1);
+							historyEntry.put("Auswahl", talent);
+							skillName = "Scharfschütze";
+						} else if (skillName.startsWith("Meisterschütze")) {
+							final String talent = skillName.substring(16, skillName.length() - 1);
+							historyEntry.put("Auswahl", talent);
+							skillName = "Meisterschütze";
+						} else if (skillName.startsWith("Rüstungsgewöhnung I") && !skillName.startsWith("Rüstungsgewöhnung II")) {
+							final String armor = skillName.substring(21, skillName.length() - 1);
+							historyEntry.put("Freitext", armor);
+							skillName = "Rüstungsgewöhnung I";
+						} else if (skillName.startsWith("Waffenmeister") && !"Waffenmeister (Schild)".equals(skillName)) {
+							final int talentIndex = skillName.indexOf(';') + 1;
+							final String talent = skillName.substring(talentIndex + 1, skillName.indexOf(';', talentIndex));
+							historyEntry.put("Auswahl", talent);
+							final String weapon = skillName.substring(15, talentIndex - 1);
+							historyEntry.put("Freitext", weapon);
+							skillName = "Waffenmeister";
+						} else if (skillName.startsWith("Wahrer Name")) {
+							final int detailsIndex = skillName.indexOf('(');
+							final String quality = skillName.substring(detailsIndex + 2, skillName.indexOf(' ', detailsIndex));
+							historyEntry.put("Stufe", Integer.valueOf(quality));
+							final String being = skillName.substring(skillName.lastIndexOf(' ') + 1, skillName.indexOf(')', detailsIndex));
+							historyEntry.put("Freitext", being);
+							skillName = "Wahre Namen";
+						} else if (skillName.startsWith("Akoluth")) {
+							String goddess = skillName.substring(9, skillName.length() - 1);
+							if ("Boron".equals(goddess)) {
+								goddess = selectBoronCult();
+							}
+							historyEntry.put("Auswahl", goddess);
+							skillName = "Akoluth";
+						}
+
+						final JSONObject skill = HeroUtil.findSkill(skillName);
+						if (skill != null) {
+							if (skill.containsKey("Auswahl") && !historyEntry.containsKey("Auswahl")) {
+								final int choiceIndex = skillName.indexOf('(');
+								historyEntry.put("Auswahl", skillName.substring(choiceIndex + 1, skillName.length() - 1));
+								skillName = skillName.substring(0, choiceIndex - 1);
+							} else if (skill.containsKey("Freitext") && !historyEntry.containsKey("Freitext")) {
+								final int textIndex = skillName.indexOf('(');
+								historyEntry.put("Freitext", skillName.substring(textIndex + 1, skillName.length() - 1));
+								skillName = skillName.substring(0, textIndex - 1);
+							}
+						}
+
+						historyEntry.put("Sonderfertigkeit", skillName);
+						final String skillAp = get("Abenteuerpunkte");
+						historyEntry.put("AP", skillAp != null ? -Integer.parseInt(skillAp) : 0);
+						break;
+					case "Abenteuerpunkte":
+						if (get("obj") == null || "gesamt".equals(get("obj"))) {
+							historyEntry = new JSONObject(history);
+							historyEntry.put("Typ", "Abenteuerpunkte");
+							historyEntry.put("Von", Integer.parseInt(get("Alt")));
+							final int newAP = Integer.parseInt(get("Neu"));
+							historyEntry.put("Auf", newAP);
+							ap[0] = newAP;
+						}
+						break;
+					case "Ereignis eingeben":
+						final String event = get("obj");
+						if ("Abenteuerpunkte (Hinzugewinn)".equals(event) && ap[0] != 0) {
+							historyEntry = new JSONObject(history);
+							historyEntry.put("Typ", "Abenteuerpunkte");
+							historyEntry.put("Von", ap[0]);
+							ap[0] += Integer.parseInt(get("Abenteuerpunkte"));
+							historyEntry.put("Auf", ap[0]);
+						}
+						break;
 				}
 
 				if (historyEntry != null) {
@@ -997,316 +1000,160 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 		apply("ausbildungen", new Tuple<>("ausbildung", () -> {
 			switch (get("art")) {
-			case "Hauptprofession":
-				final String replaced = getLastPart(get("name"), professionReplacements);
-				final String[] split = replaced.split("\\|");
-				String professionName = split[0];
-				bio.put("Profession", professionName);
-
-				String tl = get("zweitsprache");
-
-				JSONObject profession = ResourceManager.getResource("data/Professionen").getObj(professionName);
-
-				final List<String> variants = new ArrayList<>();
-				for (int i = 1; i < split.length; ++i) {
-					variants.add(split[i]);
-				}
-
-				final String finalName = professionName;
-				apply("ausbildung", new Tuple<>("variante", () -> {
-					final String name = get("name");
-					if ("Fähnrich zur See".equals(finalName) && "Fähnrich zur See".equals(name)) {
-						variants.add(ask("Variante auswählen", "Variante für Profession Fähnrich zur See auswählen", "Grangor", "Grangor", "Methumis",
-								"Methumis", "Perricum", "Perricum"));
-					} else if ("Geode".equals(finalName) && "Brobim".equals(name)) {
-						variants.add("Brobim-Geode");
-					} else if ("Tänzer".equals(finalName) && "Gaukler".equals(name)) {
-						variants.add("Gaukler-Tänzer");
-					} else {
-						for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
-							final String var;
-							switch (variant) {
-							case "Gareth oder Arivor":
-								var = ask("Variante auswählen", "Variante für Profession Fähnrich der Kavallerie auswählen", "Gareth", "Gareth", "Arivor",
-										"Arivor");
-								break;
-							case "Bergungs-, Schwamm- oder Korallentaucher":
-								var = ask("Variante auswählen", "Variante für Profession Fischer auswählen", "Bergungstaucher", "Bergungstaucher",
-										"Schwammtaucher", "Schwammtaucher", "Korallentaucher", "Korallentaucher");
-								break;
-							case "Goldsucher oder Prospektor":
-								var = ask("Variante auswählen", "Variante für Profession Prospektor auswählen", "Prospektor", "Prospektor", "Goldsucher",
-										"Goldsucher");
-								break;
-							case "Walfänger/Haijäger":
-								var = ask("Variante auswählen", "Variante für Profession Seefahrer auswählen", "Walfänger", "Wahlfänger", "Haijäger",
-										"Haijäger");
-								break;
-							case "Baumeister/Deichmeister":
-								var = ask("Variante auswählen", "Variante für Profession Edelhandwerker auswählen", "Baumeister", "Baumeister", "Deichmeister",
-										"Deichmeister");
-								break;
-							case "Hüttenkundiger/Bronzegießer/Eisengießer":
-								var = ask("Variante auswählen", "Variante für Profession Edelhandwerker auswählen", "Hüttenkundiger", "Hüttenkundiger",
-										"Bronzegießer", "Bronzegießer", "Eisengießer", "Eisengießer");
-								break;
-							case "Philosoph/Metaphysiker":
-								var = ask("Variante auswählen", "Variante für Profession Gelehrter auswählen", "Philosoph", "Philosoph", "Metaphysiker",
-										"Metaphysiker");
-								break;
-							case "Völkerkundler/Sagenkundler":
-								var = ask("Variante auswählen", "Variante für Profession Gelehrter auswählen", "Völkerkundler", "Völkerkundler", "Sagenkundler",
-										"Sagenkundler");
-								break;
-							case "Quacksalber/Zahnreißer":
-								var = ask("Variante auswählen", "Variante für Profession Wundarzt auswählen", "Quacksalber", "Quacksalber", "Zahnreißer",
-										"Zahnreißer");
-								break;
-							default:
-								var = variant;
-								break;
-							}
-							variants.add(var);
-						}
-					}
-				}));
-
-				if ("Stammeskrieger".equals(professionName) || "Geweihter".equals(professionName) || "Ordenskrieger".equals(professionName)
-						|| "Schamane".equals(professionName)) {
-					final String variant = variants.remove(0);
-					final String replacedVariant = professionReplacements.getStringOrDefault(variant, variant);
-					final String[] splitVariant = replacedVariant.split("\\|");
-					professionName = splitVariant[0];
+				case "Hauptprofession":
+					final String replaced = getLastPart(get("name"), professionReplacements);
+					final String[] split = replaced.split("\\|");
+					String professionName = split[0];
 					bio.put("Profession", professionName);
 
-					profession = ResourceManager.getResource("data/Professionen").getObj(professionName);
+					String tl = get("zweitsprache");
+
+					JSONObject profession = ResourceManager.getResource("data/Professionen").getObj(professionName);
+
+					final List<String> variants = new ArrayList<>();
 					for (int i = 1; i < split.length; ++i) {
 						variants.add(split[i]);
 					}
-				}
 
-				final JSONArray mods = new JSONArray(bio);
-
-				while (!variants.isEmpty() && profession != null && profession.containsKey("Varianten")) {
-					boolean found = false;
-					for (int i = 0; i < variants.size(); ++i) {
-						if (profession.containsKey("Varianten")) {
-							final String name = variants.get(i);
-							if (profession.getObj("Varianten").containsKey(name)) {
-								found = true;
-								profession = profession.getObj("Varianten").getObj(name);
-								if (mods.size() == 0 && !professionName.equals(name) || mods.size() > 0 && !mods.getString(mods.size() - 1).equals(name)) {
-									mods.add(name);
-								}
-								variants.remove(i);
-								i--;
-							}
+					final String finalName = professionName;
+					apply("ausbildung", new Tuple<>("variante", () -> {
+						final String name = get("name");
+						if ("Fähnrich zur See".equals(finalName) && "Fähnrich zur See".equals(name)) {
+							variants.add(ask("Variante auswählen", "Variante für Profession Fähnrich zur See auswählen", "Grangor", "Grangor", "Methumis",
+									"Methumis", "Perricum", "Perricum"));
+						} else if ("Geode".equals(finalName) && "Brobim".equals(name)) {
+							variants.add("Brobim-Geode");
+						} else if ("Tänzer".equals(finalName) && "Gaukler".equals(name)) {
+							variants.add("Gaukler-Tänzer");
 						} else {
+							for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
+								final String var = switch (variant) {
+									case "Gareth oder Arivor" -> ask("Variante auswählen", "Variante für Profession Fähnrich der Kavallerie auswählen",
+											"Gareth", "Gareth", "Arivor", "Arivor");
+									case "Bergungs-, Schwamm- oder Korallentaucher" -> ask("Variante auswählen", "Variante für Profession Fischer auswählen",
+											"Bergungstaucher", "Bergungstaucher", "Schwammtaucher", "Schwammtaucher", "Korallentaucher", "Korallentaucher");
+									case "Goldsucher oder Prospektor" -> ask("Variante auswählen", "Variante für Profession Prospektor auswählen", "Prospektor",
+											"Prospektor", "Goldsucher", "Goldsucher");
+									case "Walfänger/Haijäger" -> ask("Variante auswählen", "Variante für Profession Seefahrer auswählen", "Walfänger",
+											"Wahlfänger", "Haijäger", "Haijäger");
+									case "Baumeister/Deichmeister" -> ask("Variante auswählen", "Variante für Profession Edelhandwerker auswählen",
+											"Baumeister", "Baumeister", "Deichmeister", "Deichmeister");
+									case "Hüttenkundiger/Bronzegießer/Eisengießer" -> ask("Variante auswählen",
+											"Variante für Profession Edelhandwerker auswählen", "Hüttenkundiger", "Hüttenkundiger", "Bronzegießer",
+											"Bronzegießer", "Eisengießer", "Eisengießer");
+									case "Philosoph/Metaphysiker" -> ask("Variante auswählen", "Variante für Profession Gelehrter auswählen", "Philosoph",
+											"Philosoph", "Metaphysiker", "Metaphysiker");
+									case "Völkerkundler/Sagenkundler" -> ask("Variante auswählen", "Variante für Profession Gelehrter auswählen",
+											"Völkerkundler", "Völkerkundler", "Sagenkundler", "Sagenkundler");
+									case "Quacksalber/Zahnreißer" -> ask("Variante auswählen", "Variante für Profession Wundarzt auswählen", "Quacksalber",
+											"Quacksalber", "Zahnreißer", "Zahnreißer");
+									default -> variant;
+								};
+								variants.add(var);
+							}
+						}
+					}));
+
+					if ("Stammeskrieger".equals(professionName) || "Geweihter".equals(professionName) || "Ordenskrieger".equals(professionName)
+							|| "Schamane".equals(professionName)) {
+						final String variant = variants.remove(0);
+						final String replacedVariant = professionReplacements.getStringOrDefault(variant, variant);
+						final String[] splitVariant = replacedVariant.split("\\|");
+						professionName = splitVariant[0];
+						bio.put("Profession", professionName);
+
+						profession = ResourceManager.getResource("data/Professionen").getObj(professionName);
+						for (int i = 1; i < split.length; ++i) {
+							variants.add(split[i]);
+						}
+					}
+
+					final JSONArray mods = new JSONArray(bio);
+
+					while (!variants.isEmpty() && profession != null && profession.containsKey("Varianten")) {
+						boolean found = false;
+						for (int i = 0; i < variants.size(); ++i) {
+							if (profession.containsKey("Varianten")) {
+								final String name = variants.get(i);
+								if (profession.getObj("Varianten").containsKey(name)) {
+									found = true;
+									profession = profession.getObj("Varianten").getObj(name);
+									if (mods.size() == 0 && !professionName.equals(name) || mods.size() > 0 && !mods.getString(mods.size() - 1).equals(name)) {
+										mods.add(name);
+									}
+									variants.remove(i);
+									i--;
+								}
+							} else {
+								break;
+							}
+						}
+						if (!found) {
+							if (!variants.isEmpty() && profession.containsKey("Varianten")) {
+								final String name = variants.remove(0);
+								for (final String variantName : profession.getObj("Varianten").keySet()) {
+									final JSONObject variant = profession.getObj("Varianten").getObj(variantName);
+									if (variant.containsKey("Varianten") && variant.getObj("Varianten").containsKey(name)) {
+										if (found) {
+											found = false;
+											mods.removeAt(mods.size() - 1);
+											mods.removeAt(mods.size() - 1);
+											break;
+										} else {
+											found = true;
+											mods.add(variantName);
+											mods.add(name);
+										}
+									}
+								}
+								if (found) {
+									profession = profession.getObj("Varianten").getObj(mods.getString(mods.size() - 2)).getObj("Varianten")
+											.getObj(mods.getString(mods.size() - 1));
+								}
+							}
 							break;
 						}
 					}
-					if (!found) {
-						if (!variants.isEmpty() && profession.containsKey("Varianten")) {
-							final String name = variants.remove(0);
-							for (final String variantName : profession.getObj("Varianten").keySet()) {
-								final JSONObject variant = profession.getObj("Varianten").getObj(variantName);
-								if (variant.containsKey("Varianten") && variant.getObj("Varianten").containsKey(name)) {
-									if (found) {
-										found = false;
-										mods.removeAt(mods.size() - 1);
-										mods.removeAt(mods.size() - 1);
-										break;
-									} else {
-										found = true;
-										mods.add(variantName);
-										mods.add(name);
-									}
-								}
-							}
-							if (found) {
-								profession = profession.getObj("Varianten").getObj(mods.getString(mods.size() - 2)).getObj("Varianten")
-										.getObj(mods.getString(mods.size() - 1));
+
+					if (mods.size() > 0) {
+						bio.put("Profession:Modifikation", mods);
+					}
+
+					if (tl != null) {
+						tl = replaceTalent(tl);
+						hero.getObj("Talente").getObj("Sprachen und Schriften").getObj(tl).put("Lehrsprache", true);
+					} else if (profession != null) {
+						JSONArray tlChoices = null;
+						JSONObject prof = profession;
+						while (prof != null && tlChoices == null) {
+							tlChoices = prof.getObj("Sprachen").getArrOrDefault("Lehrsprache", null);
+							prof = (JSONObject) prof.getParent();
+							if (prof != null) {
+								prof = (JSONObject) prof.getParent();
 							}
 						}
-						break;
+						if (tlChoices != null) {
+							for (int i = 0; i < tlChoices.size(); ++i) {
+								final JSONArray slChoice = tlChoices.getArr(i);
+								if (slChoice.size() == 1) {
+									hero.getObj("Talente").getObj("Sprachen und Schriften").getObj(slChoice.getString(0)).put("Lehrsprache", true);
+								}
+							}
+						}
 					}
-				}
 
-				if (mods.size() > 0) {
-					bio.put("Profession:Modifikation", mods);
-				}
-
-				if (tl != null) {
-					tl = replaceTalent(tl);
-					hero.getObj("Talente").getObj("Sprachen und Schriften").getObj(tl).put("Lehrsprache", true);
-				} else if (profession != null) {
-					JSONArray tlChoices = null;
+					JSONObject cheaperSkills = null;
 					JSONObject prof = profession;
-					while (prof != null && tlChoices == null) {
-						tlChoices = prof.getObj("Sprachen").getArrOrDefault("Lehrsprache", null);
+					while (prof != null && cheaperSkills == null) {
+						cheaperSkills = prof.getObjOrDefault("Verbilligte Sonderfertigkeiten", null);
 						prof = (JSONObject) prof.getParent();
 						if (prof != null) {
 							prof = (JSONObject) prof.getParent();
 						}
 					}
-					if (tlChoices != null) {
-						for (int i = 0; i < tlChoices.size(); ++i) {
-							final JSONArray slChoice = tlChoices.getArr(i);
-							if (slChoice.size() == 1) {
-								hero.getObj("Talente").getObj("Sprachen und Schriften").getObj(slChoice.getString(0)).put("Lehrsprache", true);
-							}
-						}
-					}
-				}
-
-				JSONObject cheaperSkills = null;
-				JSONObject prof = profession;
-				while (prof != null && cheaperSkills == null) {
-					cheaperSkills = prof.getObjOrDefault("Verbilligte Sonderfertigkeiten", null);
-					prof = (JSONObject) prof.getParent();
-					if (prof != null) {
-						prof = (JSONObject) prof.getParent();
-					}
-				}
-				if (cheaperSkills != null) {
-					final JSONObject actualCheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
-					for (final String skillName : cheaperSkills.keySet()) {
-						if ("Wahl".equals(skillName)) {
-							continue;
-						}
-						final JSONObject skill = HeroUtil.findSkill(skillName);
-						if (skill == null) {
-							continue;
-						}
-						if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
-							final JSONArray cheaperSkill = cheaperSkills.getArr(skillName);
-							for (int i = 0; i < cheaperSkill.size(); ++i) {
-								final JSONArray actualSkill = actualCheaperSkills.getArr(skillName);
-								actualSkill.add(cheaperSkill.getObj(i).clone(actualSkill));
-							}
-						} else {
-							actualCheaperSkills.put(skillName, cheaperSkills.getObj(skillName).clone(actualCheaperSkills));
-						}
-					}
-				}
-
-				break;
-			case "BGB":
-			case "Veteran":
-				final JSONObject pro = new JSONObject(pros);
-				final boolean isBGB = "BGB".equals(get("art"));
-				pros.put(isBGB ? "Breitgefächerte Bildung" : "Veteran", pro);
-
-				final String replacedProName = getLastPart(get("name"), professionReplacements);
-				final String[] splitProName = replacedProName.split("\\|");
-				String proName = splitProName[0];
-				if (isBGB) {
-					pro.put("Profession", proName);
-				}
-
-				JSONObject proProf = ResourceManager.getResource("data/Professionen").getObj(proName);
-
-				final List<String> proVariants = new ArrayList<>();
-				for (int i = 1; i < splitProName.length; ++i) {
-					proVariants.add(splitProName[i]);
-				}
-
-				final String finalProName = proName;
-				apply("ausbildung", new Tuple<>("variante", () -> {
-					final String name = get("name");
-					if ("Fähnrich zur See".equals(finalProName) && "Fähnrich zur See".equals(name)) {
-						proVariants.add("Grangor");
-					} else if ("Geode".equals(finalProName) && "Brobim".equals(name)) {
-						proVariants.add("Brobim-Geode");
-					} else if ("Tänzer".equals(finalProName) && "Gaukler".equals(name)) {
-						proVariants.add("Gaukler-Tänzer");
-					} else {
-						for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
-							proVariants.add(variant);
-						}
-					}
-				}));
-
-				if ("Stammeskrieger".equals(proName) || "Geweihter".equals(proName) || "Ordenskrieger".equals(proName) || "Schamane".equals(proName)) {
-					final String variant = proVariants.remove(0);
-					final String replacedVariant = professionReplacements.getStringOrDefault(variant, variant);
-					final String[] splitVariant = replacedVariant.split("\\|");
-					proName = splitVariant[0];
-
-					if (isBGB) {
-						pro.put("Profession", proName);
-					}
-
-					proProf = ResourceManager.getResource("data/Professionen").getObj(proName);
-					for (int i = 1; i < splitProName.length; ++i) {
-						proVariants.add(splitProName[i]);
-					}
-				}
-
-				final JSONArray proMods = new JSONArray(bio);
-
-				while (!proVariants.isEmpty() && proProf != null && proProf.containsKey("Varianten")) {
-					boolean found = false;
-					for (int i = 0; i < proVariants.size(); ++i) {
-						if (proProf.containsKey("Varianten")) {
-							final String name = proVariants.get(i);
-							if (proProf.getObj("Varianten").containsKey(name)) {
-								found = true;
-								proProf = proProf.getObj("Varianten").getObj(name);
-								if (proMods.size() == 0 && !proName.equals(name) || proMods.size() > 0 && !proMods.getString(proMods.size() - 1).equals(name)) {
-									proMods.add(name);
-								}
-								proVariants.remove(i);
-								i--;
-							}
-						} else {
-							break;
-						}
-					}
-					if (!found) {
-						if (!proVariants.isEmpty() && proProf.containsKey("Varianten")) {
-							final String name = proVariants.remove(0);
-							for (final String variantName : proProf.getObj("Varianten").keySet()) {
-								final JSONObject variant = proProf.getObj("Varianten").getObj(variantName);
-								if (variant.containsKey("Varianten") && variant.getObj("Varianten").containsKey(name)) {
-									if (found) {
-										found = false;
-										proMods.removeAt(proMods.size() - 1);
-										proMods.removeAt(proMods.size() - 1);
-										break;
-									} else {
-										found = true;
-										proMods.add(variantName);
-										proMods.add(name);
-									}
-								}
-							}
-							if (found) {
-								proProf = proProf.getObj("Varianten").getObj(proMods.getString(proMods.size() - 2)).getObj("Varianten")
-										.getObj(proMods.getString(proMods.size() - 1));
-							}
-						}
-						break;
-					}
-				}
-
-				if (proMods.size() > 0) {
-					pro.put("Profession:Modifikation", proMods);
-				}
-
-				if (isBGB) {
-					JSONObject cheaperSkillsPro = null;
-					JSONObject profCheaperSkills = proProf;
-					while (profCheaperSkills != null && cheaperSkillsPro == null) {
-						cheaperSkillsPro = profCheaperSkills.getObjOrDefault("Verbilligte Sonderfertigkeiten", null);
-						profCheaperSkills = (JSONObject) profCheaperSkills.getParent();
-						if (profCheaperSkills != null) {
-							profCheaperSkills = (JSONObject) profCheaperSkills.getParent();
-						}
-					}
-					if (cheaperSkillsPro != null) {
+					if (cheaperSkills != null) {
 						final JSONObject actualCheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
-						for (final String skillName : cheaperSkillsPro.keySet()) {
+						for (final String skillName : cheaperSkills.keySet()) {
 							if ("Wahl".equals(skillName)) {
 								continue;
 							}
@@ -1315,50 +1162,187 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 								continue;
 							}
 							if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
-								final JSONArray cheaperSkill = cheaperSkillsPro.getArr(skillName);
+								final JSONArray cheaperSkill = cheaperSkills.getArr(skillName);
 								for (int i = 0; i < cheaperSkill.size(); ++i) {
 									final JSONArray actualSkill = actualCheaperSkills.getArr(skillName);
 									actualSkill.add(cheaperSkill.getObj(i).clone(actualSkill));
 								}
 							} else {
-								actualCheaperSkills.put(skillName, cheaperSkillsPro.getObj(skillName).clone(actualCheaperSkills));
+								actualCheaperSkills.put(skillName, cheaperSkills.getObj(skillName).clone(actualCheaperSkills));
 							}
 						}
 					}
-				}
 
-				JSONObject skillsPro = null;
-				JSONObject profSkills = proProf;
-				while (profSkills != null && skillsPro == null) {
-					skillsPro = profSkills.getObjOrDefault("Sonderfertigkeiten", null);
-					profSkills = (JSONObject) profSkills.getParent();
-					if (profSkills != null) {
-						profSkills = (JSONObject) profSkills.getParent();
+					break;
+				case "BGB":
+				case "Veteran":
+					final JSONObject pro = new JSONObject(pros);
+					final boolean isBGB = "BGB".equals(get("art"));
+					pros.put(isBGB ? "Breitgefächerte Bildung" : "Veteran", pro);
+
+					final String replacedProName = getLastPart(get("name"), professionReplacements);
+					final String[] splitProName = replacedProName.split("\\|");
+					String proName = splitProName[0];
+					if (isBGB) {
+						pro.put("Profession", proName);
 					}
-				}
-				if (skillsPro != null) {
-					final JSONObject actualCheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
-					for (final String skillName : skillsPro.keySet()) {
-						if ("Wahl".equals(skillName)) {
-							continue;
-						}
-						final JSONObject skill = HeroUtil.findSkill(skillName);
-						if (skill == null) {
-							continue;
-						}
-						if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
-							final JSONArray cheaperSkill = skillsPro.getArr(skillName);
-							for (int i = 0; i < cheaperSkill.size(); ++i) {
-								final JSONArray actualSkill = actualCheaperSkills.getArr(skillName);
-								actualSkill.add(cheaperSkill.getObj(i).clone(actualSkill));
-							}
+
+					JSONObject proProf = ResourceManager.getResource("data/Professionen").getObj(proName);
+
+					final List<String> proVariants = new ArrayList<>();
+					for (int i = 1; i < splitProName.length; ++i) {
+						proVariants.add(splitProName[i]);
+					}
+
+					final String finalProName = proName;
+					apply("ausbildung", new Tuple<>("variante", () -> {
+						final String name = get("name");
+						if ("Fähnrich zur See".equals(finalProName) && "Fähnrich zur See".equals(name)) {
+							proVariants.add("Grangor");
+						} else if ("Geode".equals(finalProName) && "Brobim".equals(name)) {
+							proVariants.add("Brobim-Geode");
+						} else if ("Tänzer".equals(finalProName) && "Gaukler".equals(name)) {
+							proVariants.add("Gaukler-Tänzer");
 						} else {
-							actualCheaperSkills.put(skillName, skillsPro.getObj(skillName).clone(actualCheaperSkills));
+							for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
+								proVariants.add(variant);
+							}
+						}
+					}));
+
+					if ("Stammeskrieger".equals(proName) || "Geweihter".equals(proName) || "Ordenskrieger".equals(proName) || "Schamane".equals(proName)) {
+						final String variant = proVariants.remove(0);
+						final String replacedVariant = professionReplacements.getStringOrDefault(variant, variant);
+						final String[] splitVariant = replacedVariant.split("\\|");
+						proName = splitVariant[0];
+
+						if (isBGB) {
+							pro.put("Profession", proName);
+						}
+
+						proProf = ResourceManager.getResource("data/Professionen").getObj(proName);
+						for (int i = 1; i < splitProName.length; ++i) {
+							proVariants.add(splitProName[i]);
 						}
 					}
-				}
 
-				break;
+					final JSONArray proMods = new JSONArray(bio);
+
+					while (!proVariants.isEmpty() && proProf != null && proProf.containsKey("Varianten")) {
+						boolean found = false;
+						for (int i = 0; i < proVariants.size(); ++i) {
+							if (proProf.containsKey("Varianten")) {
+								final String name = proVariants.get(i);
+								if (proProf.getObj("Varianten").containsKey(name)) {
+									found = true;
+									proProf = proProf.getObj("Varianten").getObj(name);
+									if (proMods.size() == 0 && !proName.equals(name)
+											|| proMods.size() > 0 && !proMods.getString(proMods.size() - 1).equals(name)) {
+										proMods.add(name);
+									}
+									proVariants.remove(i);
+									i--;
+								}
+							} else {
+								break;
+							}
+						}
+						if (!found) {
+							if (!proVariants.isEmpty() && proProf.containsKey("Varianten")) {
+								final String name = proVariants.remove(0);
+								for (final String variantName : proProf.getObj("Varianten").keySet()) {
+									final JSONObject variant = proProf.getObj("Varianten").getObj(variantName);
+									if (variant.containsKey("Varianten") && variant.getObj("Varianten").containsKey(name)) {
+										if (found) {
+											found = false;
+											proMods.removeAt(proMods.size() - 1);
+											proMods.removeAt(proMods.size() - 1);
+											break;
+										} else {
+											found = true;
+											proMods.add(variantName);
+											proMods.add(name);
+										}
+									}
+								}
+								if (found) {
+									proProf = proProf.getObj("Varianten").getObj(proMods.getString(proMods.size() - 2)).getObj("Varianten")
+											.getObj(proMods.getString(proMods.size() - 1));
+								}
+							}
+							break;
+						}
+					}
+
+					if (proMods.size() > 0) {
+						pro.put("Profession:Modifikation", proMods);
+					}
+
+					if (isBGB) {
+						JSONObject cheaperSkillsPro = null;
+						JSONObject profCheaperSkills = proProf;
+						while (profCheaperSkills != null && cheaperSkillsPro == null) {
+							cheaperSkillsPro = profCheaperSkills.getObjOrDefault("Verbilligte Sonderfertigkeiten", null);
+							profCheaperSkills = (JSONObject) profCheaperSkills.getParent();
+							if (profCheaperSkills != null) {
+								profCheaperSkills = (JSONObject) profCheaperSkills.getParent();
+							}
+						}
+						if (cheaperSkillsPro != null) {
+							final JSONObject actualCheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
+							for (final String skillName : cheaperSkillsPro.keySet()) {
+								if ("Wahl".equals(skillName)) {
+									continue;
+								}
+								final JSONObject skill = HeroUtil.findSkill(skillName);
+								if (skill == null) {
+									continue;
+								}
+								if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
+									final JSONArray cheaperSkill = cheaperSkillsPro.getArr(skillName);
+									for (int i = 0; i < cheaperSkill.size(); ++i) {
+										final JSONArray actualSkill = actualCheaperSkills.getArr(skillName);
+										actualSkill.add(cheaperSkill.getObj(i).clone(actualSkill));
+									}
+								} else {
+									actualCheaperSkills.put(skillName, cheaperSkillsPro.getObj(skillName).clone(actualCheaperSkills));
+								}
+							}
+						}
+					}
+
+					JSONObject skillsPro = null;
+					JSONObject profSkills = proProf;
+					while (profSkills != null && skillsPro == null) {
+						skillsPro = profSkills.getObjOrDefault("Sonderfertigkeiten", null);
+						profSkills = (JSONObject) profSkills.getParent();
+						if (profSkills != null) {
+							profSkills = (JSONObject) profSkills.getParent();
+						}
+					}
+					if (skillsPro != null) {
+						final JSONObject actualCheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
+						for (final String skillName : skillsPro.keySet()) {
+							if ("Wahl".equals(skillName)) {
+								continue;
+							}
+							final JSONObject skill = HeroUtil.findSkill(skillName);
+							if (skill == null) {
+								continue;
+							}
+							if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
+								final JSONArray cheaperSkill = skillsPro.getArr(skillName);
+								for (int i = 0; i < cheaperSkill.size(); ++i) {
+									final JSONArray actualSkill = actualCheaperSkills.getArr(skillName);
+									actualSkill.add(cheaperSkill.getObj(i).clone(actualSkill));
+								}
+							} else {
+								actualCheaperSkills.put(skillName, skillsPro.getObj(skillName).clone(actualCheaperSkills));
+							}
+						}
+					}
+
+					break;
 			}
 		}));
 	}
@@ -1390,24 +1374,12 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					} else {
 						prefix = "Resistenz gegen ";
 					}
-					switch (text) {
-					case "tierische Gifte":
-					case "mineralische Gifte":
-					case "pflanzliche Gifte":
-					case "alchimistische Gifte":
-					case "Atemgifte":
-					case "Einnahmegifte":
-					case "Kontaktgifte":
-					case "Blut-/Waffengifte":
-						name = prefix + text;
-						break;
-					case "alle Gifte":
-						name = "Allgemeine " + prefix + "Gifte";
-						break;
-					default:
-						name = prefix + "Gift";
-						break;
-					}
+					name = switch (text) {
+						case "tierische Gifte", "mineralische Gifte", "pflanzliche Gifte", "alchimistische Gifte", "Atemgifte", "Einnahmegifte", "Kontaktgifte", "Blut-/Waffengifte" -> prefix
+								+ text;
+						case "alle Gifte" -> "Allgemeine " + prefix + "Gifte";
+						default -> prefix + "Gift";
+					};
 				} else {
 					if (name.startsWith("Immunität")) {
 						if ("alle Krankheiten".equals(text)) {
@@ -1420,20 +1392,13 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					}
 				}
 			} else if ("Herausragender Sinn".equals(name)) {
-				switch (get("value")) {
-				case "Sicht":
-					name = "Herausragende Sicht";
-					break;
-				case "Geruchssinn":
-					name = "Herausragender Geruchssinn";
-					break;
-				case "Gehör":
-					name = "Herausragendes Gehör";
-					break;
-				case "Tastsinn":
-					name = "Herausragender Tastsinn";
-					break;
-				}
+				name = switch (get("value")) {
+					case "Sicht" -> "Herausragende Sicht";
+					case "Geruchssinn" -> "Herausragender Geruchssinn";
+					case "Gehör" -> "Herausragendes Gehör";
+					case "Tastsinn" -> "Herausragender Tastsinn";
+					default -> null;
+				};
 			} else if ("Wolfskind".equals(name)) {
 				if (!"intuitiv".equals(get("value"))) {
 					name += ", freiwillige Verwandlung";
@@ -1457,20 +1422,13 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					name = "Angst vor";
 				}
 			} else if ("Eingeschränkter Sinn".equals(name)) {
-				switch (get("value")) {
-				case "Sicht":
-					name = "Kurzsichtig";
-					break;
-				case "Geruchssinn":
-					name = "Eingeschränkter Geruchssinn";
-					break;
-				case "Gehör":
-					name = "Schwerhörig";
-					break;
-				case "Tastsinn":
-					name = "Eingeschränkter Tastsinn";
-					break;
-				}
+				name = switch (get("value")) {
+					case "Sicht" -> "Kurzsichtig";
+					case "Geruchssinn" -> "Eingeschränkter Geruchssinn";
+					case "Gehör" -> "Schwerhörig";
+					case "Tastsinn" -> "Eingeschränkter Tastsinn";
+					default -> null;
+				};
 			} else if ("Moralkodex".equals(name)) {
 				value = "1";
 			}
@@ -1478,6 +1436,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			choice = spellReplacements.getStringOrDefault(choice, choice);
 			choice = replaceSkill(choice);
 			choice = groupReplacements.getStringOrDefault(choice, choice);
+			choice = switch (choice) {
+				case "Elementar", "Dämonisch" -> choice + " (gesamt)";
+				default -> choice;
+			};
 			if (pros.containsKey(name)) {
 				final JSONObject pro = pros.getObj(name);
 				if (pro.containsKey("Freitext") || pro.containsKey("Auswahl")) {
