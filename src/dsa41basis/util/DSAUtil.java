@@ -15,7 +15,9 @@
  */
 package dsa41basis.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -573,6 +575,54 @@ public class DSAUtil {
 		if (displayLevel && proOrCon != null && proOrCon.getBoolOrDefault("Abgestuft", false)) {
 			result.append('\u00A0');
 			result.append(actual.getIntOrDefault("Stufe", 0));
+		}
+
+		return result.toString();
+	}
+
+	public static String printProsOrCons(final JSONArray actual, final String proOrConName, final JSONObject proOrCon, final boolean displayLevel) {
+		final StringBuilder result = new StringBuilder(proOrConName.replace(' ', '\u00A0'));
+		result.append("\u00A0(");
+
+		final boolean multiple = actual.size() > 1;
+
+		final List<String> variants = new ArrayList<>(actual.size());
+		DSAUtil.foreach(o -> true, current -> {
+			final StringBuilder currentString = new StringBuilder();
+			if (proOrCon.containsKey("Auswahl")) {
+				currentString.append(current.getString("Auswahl"));
+				if (proOrCon.containsKey("Freitext")) {
+					currentString.append(":\u00A0");
+				}
+			}
+			if (proOrCon.containsKey("Freitext")) {
+				currentString.append(current.getString("Freitext"));
+			}
+
+			if (multiple && displayLevel && proOrCon != null && proOrCon.getBoolOrDefault("Abgestuft", false)) {
+				currentString.append(":\u00A0");
+				currentString.append(current.getIntOrDefault("Stufe", 0));
+			}
+			variants.add(currentString.toString());
+		}, actual);
+
+		variants.sort(null);
+
+		boolean first = true;
+		for (final String variant : variants) {
+			if (first) {
+				first = false;
+			} else {
+				result.append(", ");
+			}
+			result.append(variant);
+		}
+
+		result.append(')');
+
+		if (!multiple && displayLevel && proOrCon != null && proOrCon.getBoolOrDefault("Abgestuft", false)) {
+			result.append('\u00A0');
+			result.append(actual.getObj(0).getIntOrDefault("Stufe", 0));
 		}
 
 		return result.toString();
