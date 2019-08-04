@@ -39,17 +39,13 @@ public class Talent {
 			final JSONObject actualGroup) {
 		if (talentCache.containsKey(actual))
 			return talentCache.get(actual);
-		final JSONObject talents = (JSONObject) talentGroup.getParent();
-		Talent newTalent;
-		if (talentGroup == talents.getObj("Nahkampftalente") || talentGroup == talents.getObj("Fernkampftalente")) {
-			newTalent = new FightTalent(name, talentGroup, talent, actual, actualGroup);
-		} else if (talentGroup == talents.getObj("Körperliche Talente")) {
-			newTalent = new PhysicalTalent(name, talentGroup, talent, actual, actualGroup);
-		} else if (talentGroup == talents.getObj("Sprachen") || talentGroup == talents.getObj("Schriften")) {
-			newTalent = new LanguageTalent(name, talentGroup, talent, actual, actualGroup);
-		} else {
-			newTalent = new Talent(name, talentGroup, talent, actual, actualGroup);
-		}
+		final String key = ((JSONObject) talentGroup.getParent()).keyOf(talentGroup);
+		final Talent newTalent = switch (key) {
+			case "Nahkampftalente", "Fernkampftalente" -> new FightTalent(name, talentGroup, talent, actual, actualGroup);
+			case "Körperliche Talente" -> new PhysicalTalent(name, talentGroup, talent, actual, actualGroup);
+			case "Sprachen", "Schriften" -> new LanguageTalent(name, talentGroup, talent, actual, actualGroup);
+			default -> new Talent(name, talentGroup, talent, actual, actualGroup);
+		};
 		if (actual != null) {
 			talentCache.put(actual, newTalent);
 		}

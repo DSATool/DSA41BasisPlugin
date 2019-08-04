@@ -75,7 +75,7 @@ public class ProOrCon {
 		final boolean hasBGB = "Breitgefächerte Bildung".equals(name);
 		boolean hasBGBVariant = false;
 		if (hasBGB) {
-			final JSONObject bgbprofession = ResourceManager.getResource("data/Professionen").getObj(actual.getString("Profession"));
+			final JSONObject bgbprofession = ResourceManager.getResource("data/Professionen").getObjOrDefault(actual.getString("Profession"), null);
 			if (bgbprofession != null && bgbprofession.containsKey("Varianten")) {
 				hasBGBVariant = true;
 			}
