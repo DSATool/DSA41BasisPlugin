@@ -132,14 +132,8 @@ public class DatePickerController implements JSONListener {
 		}
 
 		switch (dateSetting) {
-		case "Jahreszeiten":
-			days -= 181;
-			break;
-		case "Astronomisch":
-			days -= 171;
-			break;
-		default:
-			break;
+			case "Jahreszeiten" -> days -= 181;
+			case "Astronomisch" -> days -= 171;
 		}
 
 		if (days <= 0) {

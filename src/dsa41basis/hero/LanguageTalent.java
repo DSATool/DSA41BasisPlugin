@@ -72,28 +72,28 @@ public class LanguageTalent extends Talent {
 
 	public final void setMlsltl(final String mlsltl) {
 		switch (mlsltl) {
-		case "MS":
-			actual.removeKey("Zweitsprache");
-			actual.removeKey("Lehrsprache");
-			actual.put("Muttersprache", true);
-			break;
-		case "ZS":
-			actual.removeKey("Muttersprache");
-			actual.removeKey("Lehrsprache");
-			actual.put("Zweitsprache", true);
-			break;
-		case "LS":
-			actual.removeKey("Muttersprache");
-			actual.removeKey("Zweitsprache");
-			actual.put("Lehrsprache", true);
-			break;
-		case "":
-			actual.removeKey("Muttersprache");
-			actual.removeKey("Zweitsprache");
-			actual.removeKey("Lehrsprache");
-			break;
-		default:
-			return;
+			case "MS":
+				actual.removeKey("Zweitsprache");
+				actual.removeKey("Lehrsprache");
+				actual.put("Muttersprache", true);
+				break;
+			case "ZS":
+				actual.removeKey("Muttersprache");
+				actual.removeKey("Lehrsprache");
+				actual.put("Zweitsprache", true);
+				break;
+			case "LS":
+				actual.removeKey("Muttersprache");
+				actual.removeKey("Zweitsprache");
+				actual.put("Lehrsprache", true);
+				break;
+			case "":
+				actual.removeKey("Muttersprache");
+				actual.removeKey("Zweitsprache");
+				actual.removeKey("Lehrsprache");
+				break;
+			default:
+				return;
 		}
 		actual.notifyListeners(null);
 		this.mlsltl.set(mlsltl);
