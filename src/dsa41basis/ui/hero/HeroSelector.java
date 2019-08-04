@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import dsa41basis.serialization.FileLoader;
 import dsa41basis.serialization.Loaders;
@@ -29,6 +30,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -248,7 +252,18 @@ public class HeroSelector {
 
 	private void removeHero(final int index) {
 		if (index > -1) {
-			ResourceManager.deleteResource(heroes.get(index));
+			final JSONObject hero = heroes.get(index);
+
+			final Alert deleteConfirmation = new Alert(AlertType.CONFIRMATION);
+			deleteConfirmation.setTitle("Held löschen?");
+			deleteConfirmation.setHeaderText("Held " + hero.getObj("Biografie").getString("Vorname") + " löschen?");
+			deleteConfirmation.setContentText("Der Held kann danach nicht wiederhergestellt werden!");
+			deleteConfirmation.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+
+			final Optional<ButtonType> result = deleteConfirmation.showAndWait();
+			if (result.isPresent() && result.get().equals(ButtonType.YES)) {
+				ResourceManager.deleteResource(hero);
+			}
 		}
 	}
 
