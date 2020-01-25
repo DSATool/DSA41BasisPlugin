@@ -145,7 +145,7 @@ public class DSAUtil {
 	}
 
 	public static String getChallengeString(final JSONArray challenge) {
-		if (challenge == null || challenge.size() < 3) return "—";
+		if (challenge == null || challenge.size() < 3) return "â€”";
 		final StringBuilder attributesString = new StringBuilder(8);
 		attributesString.append(challenge.getString(0));
 		attributesString.append('/');
@@ -193,15 +193,15 @@ public class DSAUtil {
 		int maxLevel = 10;
 		if (charGen) {
 			final JSONObject pros = hero.getObj("Vorteile");
-			if (pros.containsKey("Breitgefächerte Bildung") || pros.containsKey("Veteran")) {
+			if (pros.containsKey("BreitgefÃ¤cherte Bildung") || pros.containsKey("Veteran")) {
 				maxLevel = 15;
 			}
 			if (pros.containsKey("Akademische Ausbildung (Gelehrter)") || pros.containsKey("Akademische Ausbildung (Magier)")) {
 				if (Set.of("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) {
 					--charGenModifier;
 
-					final JSONArray proGroup = pros.getArrOrDefault("Begabung für Talentgruppe", null);
-					final JSONArray proSingle = pros.getArrOrDefault("Begabung für Talent", null);
+					final JSONArray proGroup = pros.getArrOrDefault("Begabung fÃ¼r Talentgruppe", null);
+					final JSONArray proSingle = pros.getArrOrDefault("Begabung fÃ¼r Talent", null);
 					if (proGroup != null) {
 						for (int i = 0; i < proGroup.size(); ++i) {
 							final JSONObject pro = proGroup.getObj(i);
@@ -227,8 +227,8 @@ public class DSAUtil {
 				if (Set.of("Nahkampftalente", "Fernkampftalente").contains(talentGroup)) {
 					charGenModifier -= 2;
 
-					final JSONArray proGroup = pros.getArrOrDefault("Begabung für Talentgruppe", null);
-					final JSONArray proSingle = pros.getArrOrDefault("Begabung für Talent", null);
+					final JSONArray proGroup = pros.getArrOrDefault("Begabung fÃ¼r Talentgruppe", null);
+					final JSONArray proSingle = pros.getArrOrDefault("Begabung fÃ¼r Talent", null);
 					if (proGroup != null) {
 						for (int i = 0; i < proGroup.size(); ++i) {
 							final JSONObject pro = proGroup.getObj(i);
@@ -256,9 +256,9 @@ public class DSAUtil {
 			}
 		}
 		modifier += charGenModifier;
-		final double multiplier = hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
+		final double multiplier = hero.getObj("Vorteile").containsKey("Eidetisches GedÃ¤chtnis")
 				&& (talent instanceof Spell || Set.of("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) ? 0.5
-						: hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
+						: hero.getObj("Vorteile").containsKey("Eidetisches GedÃ¤chtnis")
 								&& (talent instanceof Spell || "Sprachen und Schriften".equals(talentGroup)) ? 0.75 : 1.0;
 		int result = 0;
 		for (int i = startLevel + 1; i <= targetLevel; ++i) {
@@ -279,11 +279,11 @@ public class DSAUtil {
 	}
 
 	private static String getModificationString(final JSONObject modification, final Map<String, Tuple<String, String>> units, final boolean signed) {
-		if (modification == null) return "—";
+		if (modification == null) return "â€”";
 		if (modification.containsKey("Text")) return modification.getString("Text");
 
 		if (modification.getBoolOrDefault("Selbst", false)) return "Selbst";
-		if (modification.getBoolOrDefault("Berührung", false)) return "Ber.";
+		if (modification.getBoolOrDefault("BerÃ¼hrung", false)) return "Ber.";
 		if (modification.getBoolOrDefault("Sicht", false)) return "Sicht";
 		if (modification.getBoolOrDefault("Fern", false)) return "Fern";
 		if (modification.getBoolOrDefault("Horizont", false)) return "Horiz.";
@@ -368,7 +368,7 @@ public class DSAUtil {
 					result.append(divisor);
 				}
 				if (modification.getBoolOrDefault("Quadrat", false)) {
-					result.append('²');
+					result.append('Â²');
 				}
 			}
 
@@ -425,7 +425,7 @@ public class DSAUtil {
 		}
 
 		if (result.length() == 0) {
-			result.append('—');
+			result.append('â€”');
 		}
 
 		return result.toString();
@@ -462,10 +462,10 @@ public class DSAUtil {
 		final JSONArray[] consonantic = new JSONArray[2];
 		for (int i = 0; i < generator.size(); ++i) {
 			final JSONObject part = generator.getObj(i);
-			if (part.containsKey("männlich") && male ^ part.getBool("männlich")) {
+			if (part.containsKey("mÃ¤nnlich") && male ^ part.getBool("mÃ¤nnlich")) {
 				continue;
 			}
-			if (part.containsKey("bürgerlich") && (middleClass || noble) ^ part.getBool("bürgerlich")) {
+			if (part.containsKey("bÃ¼rgerlich") && (middleClass || noble) ^ part.getBool("bÃ¼rgerlich")) {
 				continue;
 			}
 			if (part.containsKey("adlig") && noble ^ part.getBool("adlig")) {
@@ -536,7 +536,7 @@ public class DSAUtil {
 			result.append(')');
 		}
 
-		if ("Breitgefächerte Bildung".equals(proOrConName)) {
+		if ("BreitgefÃ¤cherte Bildung".equals(proOrConName)) {
 			result.append("\u00A0(");
 			result.append(actual.getString("Profession").replace(' ', '\u00A0'));
 			final JSONArray variants = actual.getArrOrDefault("Profession:Modifikation", null);
