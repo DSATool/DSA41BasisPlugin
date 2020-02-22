@@ -1431,6 +1431,13 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				};
 			} else if ("Moralkodex".equals(name)) {
 				value = "1";
+			} else if ("Sucht".equals(name)) {
+				final int valueStart = value.indexOf('(');
+				text = value.substring(0, valueStart - 1);
+				if ("Alkohol".equals(text)) {
+					name = "Sucht (hohe Verfügbarkeit)";
+				}
+				value = value.substring(valueStart + 1, value.length() - 1);
 			}
 			choice = replaceTalent(choice);
 			choice = spellReplacements.getStringOrDefault(choice, choice);
