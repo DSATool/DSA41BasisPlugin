@@ -81,6 +81,42 @@ public class HeroUtil {
 		money.notifyListeners(null);
 	}
 
+	private static void addProfessionModifierString(final StringBuilder professionString, JSONObject profession, final JSONArray professionModifiers,
+			final boolean female) {
+		final String[] modifiers = professionModifiers.getStrings().toArray(new String[] {});
+		if (female) {
+			boolean first = true;
+			int i = 0;
+			for (; i < modifiers.length; ++i) {
+				if (first) {
+					first = false;
+				} else {
+					professionString.append(", ");
+				}
+
+				final String modifierName = modifiers[i];
+				if (profession.getObj("Varianten").containsKey(modifierName)) {
+					profession = profession.getObj("Varianten").getObj(modifierName);
+					professionString.append(profession.getStringOrDefault("Weiblich", modifierName));
+				} else {
+					break;
+				}
+			}
+			for (; i < modifiers.length; ++i) {
+				final String modifierName = modifiers[i];
+				JSONObject parent = profession.getObj("Varianten");
+				while (parent != null && !parent.containsKey(modifierName)) {
+					parent = (JSONObject) profession.getParent().getParent();
+				}
+				if (parent != null) {
+					professionString.append(parent.getObj("Varianten").getObj(modifierName).getStringOrDefault("Weiblich", modifierName));
+				}
+			}
+		} else {
+			professionString.append(String.join(", ", modifiers));
+		}
+	}
+
 	public static void applyEffect(final JSONObject hero, final String effectorName, final JSONObject effector, final JSONObject actual) {
 		final JSONObject effect = effector.getObjOrDefault("Effekte", null);
 		if (hero == null || effect == null) return;
@@ -732,6 +768,34 @@ public class HeroUtil {
 						/ (ATonly ? 1 : 2);
 	}
 
+	public static String getProfessionString(final JSONObject hero, final JSONObject bio, final JSONObject professions, final boolean withVeteranBGB) {
+		final boolean female = "weiblich".equals(bio.getString("Geschlecht"));
+		final StringBuilder professionString = new StringBuilder();
+		final String professionName = bio.getStringOrDefault("Profession", "");
+		JSONObject profession = null;
+		if (female) {
+			profession = professions.getObj(professionName);
+			professionString.append(profession.getStringOrDefault("Weiblich", professionName));
+		} else {
+			professionString.append(professionName);
+		}
+		if (bio.containsKey("Profession:Modifikation")) {
+			final JSONArray professionModifiers = bio.getArr("Profession:Modifikation");
+			professionString.append(" (");
+			HeroUtil.addProfessionModifierString(professionString, profession, professionModifiers, female);
+			professionString.append(")");
+		}
+
+		if (withVeteranBGB) {
+			final String veteranBGBString = HeroUtil.getVeteranBGBString(hero, bio, professions);
+			if (!veteranBGBString.isEmpty()) {
+				professionString.append(' ').append(veteranBGBString);
+			}
+		}
+
+		return professionString.toString();
+	}
+
 	public static JSONObject getSpecialisation(final JSONArray specialisations, final String talent, final String specialisation) {
 		if (specialisations == null || specialisation == null) return null;
 		for (int i = 0; i < specialisations.size(); ++i) {
@@ -1180,6 +1244,49 @@ public class HeroUtil {
 		}
 		result.addAll(newCombinations);
 		return result;
+	}
+
+	public static String getVeteranBGBString(final JSONObject hero, final JSONObject bio, final JSONObject professions) {
+		final StringBuilder professionString = new StringBuilder();
+		final JSONObject pros = hero.getObj("Vorteile");
+		final boolean female = "weiblich".equals(bio.getString("Geschlecht"));
+		if (pros != null) {
+			if (pros.containsKey("Veteran")) {
+				final JSONObject veteran = pros.getObj("Veteran");
+				professionString.append("Veteran");
+				if (veteran.containsKey("Profession:Modifikation")) {
+					final JSONArray veteranMod = veteran.getArr("Profession:Modifikation");
+					if (veteranMod.size() > 0) {
+						professionString.append(' ');
+						addProfessionModifierString(professionString, professions.getObj(bio.getStringOrDefault("Profession", "")), veteranMod, female);
+					}
+				}
+			}
+			if (pros.containsKey("Breitgefächerte Bildung")) {
+				final JSONObject bgb = pros.getObj("Breitgefächerte Bildung");
+				if (professionString.length() > 0) {
+					professionString.append(' ');
+				}
+				professionString.append("BGB ");
+				final String bgbProfessionName = bgb.getString("Profession");
+				JSONObject bgbProfession = null;
+				if (female) {
+					bgbProfession = professions.getObj(bgbProfessionName);
+					professionString.append(bgbProfession.getStringOrDefault("Weiblich", bgbProfessionName));
+				} else {
+					professionString.append(bgbProfessionName);
+				}
+				if (bgb.containsKey("Profession:Modifikation")) {
+					final JSONArray bgbMod = bgb.getArr("Profession:Modifikation");
+					if (bgbMod.size() > 0) {
+						professionString.append(" (");
+						addProfessionModifierString(professionString, bgbProfession, bgbMod, female);
+						professionString.append(")");
+					}
+				}
+			}
+		}
+		return professionString.toString();
 	}
 
 	public static int getZoneRS(final JSONObject hero, final String zone) {
