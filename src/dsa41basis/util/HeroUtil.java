@@ -575,6 +575,12 @@ public class HeroUtil {
 					choices.addAll(getVariantStrings(variants));
 				}
 				break;
+			case "Profession:Variante:BGB":
+				if (hero != null && other != null) {
+					final JSONObject variants = ResourceManager.getResource("data/Professionen").getObj(other).getObj("Varianten");
+					choices.addAll(getVariantStrings(variants));
+				}
+				break;
 			case "Repräsentation":
 				final JSONObject representations = ResourceManager.getResource("data/Repraesentationen");
 				for (final String representation : representations.keySet()) {

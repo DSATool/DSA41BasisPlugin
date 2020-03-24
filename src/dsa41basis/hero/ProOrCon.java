@@ -406,7 +406,7 @@ public class ProOrCon {
 	}
 
 	public Set<String> getSecondChoiceItems(final boolean onlyUnused) {
-		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession:Variante" : proOrCon.getString("Freitext");
+		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession:Variante:BGB" : proOrCon.getString("Freitext");
 		final Set<String> choices = HeroUtil.getChoices(hero, choice, description != null ? description.get() : null);
 		if (choice == null) return choices;
 
