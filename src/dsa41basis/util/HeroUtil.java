@@ -830,7 +830,7 @@ public class HeroUtil {
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 		final JSONObject cons = hero.getObj("Nachteile");
 
-		final JSONArray actualRepresentations = skills.getArr("Repräsentation");
+		final JSONArray actualRepresentations = skills.getArrOrDefault("Repräsentation", new JSONArray(null));
 
 		boolean hasGuildMagic = false;
 		boolean hasCharlatan = false;
