@@ -584,8 +584,8 @@ public class ProOrCon {
 		if (hero == null || !proOrCon.containsKey("Voraussetzungen")) return;
 		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : "";
 		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : "";
-		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice.isEmpty() ? null : choice,
-				text.isEmpty() ? null : text, true));
+		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice == null || choice.isEmpty() ? null : choice,
+				text == null || text.isEmpty() ? null : text, true));
 	}
 
 	public final ReadOnlyBooleanProperty validProperty() {
