@@ -1443,7 +1443,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			choice = spellReplacements.getStringOrDefault(choice, choice);
 			choice = replaceSkill(choice);
 			choice = groupReplacements.getStringOrDefault(choice, choice);
-			choice = switch (choice) {
+			choice = choice == null ? null : switch (choice) {
 				case "Elementar", "Dämonisch" -> choice + " (gesamt)";
 				default -> choice;
 			};
