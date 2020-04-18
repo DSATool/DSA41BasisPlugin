@@ -435,11 +435,11 @@ public class HeroUtil {
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 
 		final boolean hasSpecialisation = weapon != null
-				&& HeroUtil.getSpecialisation(skills.getArr("Waffenspezialisierung"), type,
+				&& HeroUtil.getSpecialisation(skills.getArrOrDefault("Waffenspezialisierung", null), type,
 						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"))) != null;
 		final JSONObject weaponModifiers = weapon == null ? null : weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
 
-		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(skills.getArr("Waffenmeister"), type,
+		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(skills.getArrOrDefault("Waffenmeister", null), type,
 				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 		final int masteryAT = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Attackemodifikator", 0) : 0;
 
@@ -694,7 +694,7 @@ public class HeroUtil {
 			weapon = weapon.getObj("Fernkampfwaffe");
 		}
 		final JSONObject weaponMastery = hero == null || weapon == null ? null
-				: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArr("Waffenmeister"), type,
+				: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArrOrDefault("Waffenmeister", null), type,
 						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 
 		final JSONObject weaponDistances = weapon.getObjOrDefault("Reichweiten", baseWeapon.getObj("Reichweiten"));
@@ -724,7 +724,7 @@ public class HeroUtil {
 				}
 
 				final JSONObject weaponMastery = weapon == null ? null
-						: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArr("Waffenmeister"), type,
+						: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArrOrDefault("Waffenmeister", null), type,
 								weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 				if (weaponMastery != null && weaponMastery.getBoolOrDefault("Ladezeit", false)) {
 					loadTime *= 0.5;
@@ -751,11 +751,11 @@ public class HeroUtil {
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 
 		final boolean hasSpecialisation = weapon != null
-				&& HeroUtil.getSpecialisation(skills.getArr("Waffenspezialisierung"), type,
+				&& HeroUtil.getSpecialisation(skills.getArrOrDefault("Waffenspezialisierung", null), type,
 						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"))) != null;
 		final JSONObject weaponModifiers = weapon == null ? null : weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
 
-		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(skills.getArr("Waffenmeister"), type,
+		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(skills.getArrOrDefault("Waffenmeister", null), type,
 				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 		final int masteryPA = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Parademodifikator", 0) : 0;
 
