@@ -768,9 +768,8 @@ public class HeroUtil {
 						/ (ATonly ? 1 : 2);
 	}
 
-	public static String getProfessionString(final JSONObject hero, final JSONObject bio, final JSONObject professions, final boolean withVeteranBGB,
-			final boolean respectGender) {
-		final boolean female = respectGender && "weiblich".equals(bio.getString("Geschlecht"));
+	public static String getProfessionString(final JSONObject hero, final JSONObject bio, final JSONObject professions, final boolean withVeteranBGB) {
+		final boolean female = "weiblich".equals(bio.getString("Geschlecht"));
 		final StringBuilder professionString = new StringBuilder();
 		final String professionName = bio.getStringOrDefault("Profession", "");
 		JSONObject profession = null;

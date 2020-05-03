@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import dsa41basis.hero.Spell;
 import dsa41basis.hero.Talent;
 import dsatool.resources.ResourceManager;
+import dsatool.util.ErrorLogger;
 import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import dsatool.util.Util;
@@ -69,6 +70,8 @@ public class DSAUtil {
 		rangeUnits.put("Schritt", new Tuple<>("S", "S"));
 		rangeUnits.put("Meile", new Tuple<>("M", "M"));
 	}
+
+	private static Map<String, String> professionGenderMap = null;
 
 	public static int diceRoll(final int dice) {
 		return random.nextInt(dice) + 1;
@@ -519,6 +522,31 @@ public class DSAUtil {
 		return null;
 	}
 
+	private static void mapProfessionGenderNames() {
+		final Map<String, String> genderMap = new HashMap<>();
+		final JSONObject professions = ResourceManager.getResource("data/Professionen");
+		for (final String professionName : professions.keySet()) {
+			mapProfessionGenderNames(professions.getObj(professionName), professionName, genderMap);
+		}
+		professionGenderMap = genderMap;
+	}
+
+	private static void mapProfessionGenderNames(final JSONObject profession, final String professionName, final Map<String, String> genderMap) {
+		if (profession.containsKey("Weiblich")) {
+			final String femaleName = profession.getString("Weiblich");
+			final String oldMapping = genderMap.put(femaleName, professionName);
+			if (oldMapping != null && !professionName.equals(oldMapping)) {
+				ErrorLogger.log("Inkonsistente Professionsnamen für " + femaleName + ": " + oldMapping + ", " + professionName);
+			}
+		}
+		if (profession.containsKey("Varianten")) {
+			final JSONObject variants = profession.getObj("Varianten");
+			for (final String variantName : variants.keySet()) {
+				mapProfessionGenderNames(variants.getObj(variantName), variantName, genderMap);
+			}
+		}
+	}
+
 	public static String printProOrCon(final JSONObject actual, final String proOrConName, final JSONObject proOrCon, final boolean displayLevel) {
 		final StringBuilder result = new StringBuilder(proOrConName.replace(' ', '\u00A0'));
 
@@ -609,6 +637,13 @@ public class DSAUtil {
 		}
 
 		return result.toString();
+	}
+
+	public static String replaceProfessionGender(final String professionName) {
+		if (professionGenderMap == null) {
+			mapProfessionGenderNames();
+		}
+		return professionGenderMap.getOrDefault(professionName, professionName);
 	}
 
 	public static Tuple3<Integer, Integer, Integer> talentRoll() {
