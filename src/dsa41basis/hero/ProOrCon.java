@@ -156,13 +156,13 @@ public class ProOrCon {
 			} else {
 				final Set<String> choices = getSecondChoiceItems(false);
 				if (!choices.isEmpty()) {
-					setVariant(choices.iterator().next());
+					setVariant(choices.iterator().next(), true);
 					for (final String currentChoice : choices) {
 						updateValid();
 						if (valid.get()) {
 							break;
 						}
-						setVariant(currentChoice);
+						setVariant(currentChoice, true);
 					}
 					updateValid();
 					if (!valid.get()) {
@@ -484,8 +484,10 @@ public class ProOrCon {
 		actual.notifyListeners(null);
 	}
 
-	public void setDescription(final String description) {
-		HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
+	public void setDescription(final String description, final boolean applyEffect) {
+		if (applyEffect) {
+			HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
+		}
 		if (proOrCon.containsKey("Auswahl")) {
 			actual.put("Auswahl", description);
 		} else if (proOrCon.containsKey("Freitext")) {
@@ -501,7 +503,9 @@ public class ProOrCon {
 			}
 			actual.put("Profession:Modifikation", variants);
 		}
-		HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+		if (applyEffect) {
+			HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+		}
 		this.description.set(description);
 		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		actual.notifyListeners(null);
@@ -527,8 +531,10 @@ public class ProOrCon {
 		actual.notifyListeners(null);
 	}
 
-	public void setVariant(final String variant) {
-		HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
+	public void setVariant(final String variant, final boolean applyEffect) {
+		if (applyEffect) {
+			HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
+		}
 		if (proOrCon.containsKey("Auswahl") && proOrCon.containsKey("Freitext")) {
 			actual.put("Freitext", variant);
 		} else if ("Breitgefächerte Bildung".equals(name.get())) {
@@ -539,7 +545,9 @@ public class ProOrCon {
 			}
 			actual.put("Profession:Modifikation", variants);
 		}
-		HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+		if (applyEffect) {
+			HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+		}
 		this.variant.set(variant);
 		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		actual.notifyListeners(null);
