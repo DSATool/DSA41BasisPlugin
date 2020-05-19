@@ -243,8 +243,8 @@ public class DSAUtil {
 						}
 					}
 					if (charGenModifier == -2 && proSingle != null) {
-						for (int i = 0; i < proGroup.size(); ++i) {
-							final JSONObject pro = proGroup.getObj(i);
+						for (int i = 0; i < proSingle.size(); ++i) {
+							final JSONObject pro = proSingle.getObj(i);
 							if (talent.getName().equals(pro.getString("Auswahl"))) {
 								++charGenModifier;
 								break;
