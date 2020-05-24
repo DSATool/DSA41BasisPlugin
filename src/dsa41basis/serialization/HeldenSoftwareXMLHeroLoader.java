@@ -1454,10 +1454,12 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					final JSONObject currentPro = new JSONObject(actualPro);
 					actualPro.add(currentPro);
 					if (pro.containsKey("Auswahl")) {
-						currentPro.put("Auswahl", choice != null && !choice.equals(value) ? choice : pro.getString("Auswahl"));
+						currentPro.put("Auswahl",
+								choice != null && (!choice.equals(value) || !pro.getBoolOrDefault("Abgestuft", false)) ? choice : pro.getString("Auswahl"));
 					}
 					if (pro.containsKey("Freitext")) {
-						currentPro.put("Freitext", text != null && !text.equals(value) && !text.equals(choice) ? text : pro.getString("Freitext"));
+						currentPro.put("Freitext", text != null && (!text.equals(value) || pro.getBoolOrDefault("Abgestuft", false)) && !text.equals(choice)
+								? text : pro.getString("Freitext"));
 					}
 					if (pro.getBoolOrDefault("Abgestuft", false)) {
 						if ("Besonderer Besitz".equals(name)) {
