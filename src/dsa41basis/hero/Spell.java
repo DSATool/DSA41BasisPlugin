@@ -59,8 +59,10 @@ public class Spell extends Talent {
 		this.representation = new SimpleStringProperty(representation);
 		complexity = new SimpleStringProperty(DSAUtil.getEnhancementGroupString(spell.getIntOrDefault("Komplexität", 1)));
 
+		final boolean autoPrimaryTalent = spell.getObj("Repräsentationen").getObj(representation).getBoolOrDefault("Leittalent", false);
 		primarySpell = new SimpleBooleanProperty(actualRepresentation == null ? false : actualRepresentation.getBoolOrDefault("Hauszauber", false));
-		primaryTalent = new SimpleBooleanProperty(actualRepresentation == null ? false : actualRepresentation.getBoolOrDefault("Leittalent", false));
+		primaryTalent = new SimpleBooleanProperty(
+				actualRepresentation == null ? autoPrimaryTalent : actualRepresentation.getBoolOrDefault("Leittalent", autoPrimaryTalent));
 
 		ses = new SimpleIntegerProperty(actualRepresentation == null ? 0 : actualRepresentation.getIntOrDefault("SEs", 0));
 		value = new SimpleIntegerProperty(actualRepresentation == null || !actualRepresentation.getBoolOrDefault("aktiviert", true) ? Integer.MIN_VALUE

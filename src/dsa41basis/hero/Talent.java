@@ -73,7 +73,8 @@ public class Talent {
 		challenge = talent.getArrOrDefault("Probe", talentGroup == null ? null
 				: talentGroup.getArrOrDefault("Probe", new JSONArray(List.of(primaryAttribute, primaryAttribute, primaryAttribute), null)));
 		attributes = new SimpleStringProperty(DSAUtil.getChallengeString(challenge));
-		primaryTalent = new SimpleBooleanProperty(actual == null ? false : actual.getBoolOrDefault("Leittalent", false));
+		final boolean autoPrimaryTalent = talent.getBoolOrDefault("Leittalent", false);
+		primaryTalent = new SimpleBooleanProperty(actual == null ? autoPrimaryTalent : actual.getBoolOrDefault("Leittalent", autoPrimaryTalent));
 		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
 		value = new SimpleIntegerProperty(actual == null || !actual.getBoolOrDefault("aktiviert", true)
 				? talent.getBoolOrDefault("Basis", false) ? 0 : Integer.MIN_VALUE : actual.getIntOrDefault("TaW", 0));
