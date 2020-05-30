@@ -265,7 +265,7 @@ public class DSAUtil {
 								&& (talent instanceof Spell || "Sprachen und Schriften".equals(talentGroup)) ? 0.75 : 1.0;
 		int result = 0;
 		for (int i = startLevel + 1; i <= targetLevel; ++i) {
-			if (charGen && i == maxLevel) {
+			if (charGen && i == maxLevel + 1) {
 				modifier -= charGenModifier;
 			}
 			final int localModifier = i > 10 && "Selbststudium".equals(method) ? 1 : 0;
