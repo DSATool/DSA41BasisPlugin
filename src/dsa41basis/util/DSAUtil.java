@@ -15,6 +15,7 @@
  */
 package dsa41basis.util;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +45,8 @@ public class DSAUtil {
 	}
 
 	public static final Random random = new Random();
+
+	public static DecimalFormat threeDecimalPlaces = new DecimalFormat("#.###");
 
 	public static final String[] months = { "Praios", "Rondra", "Efferd", "Travia", "Boron", "Hesinde", "Firun", "Tsa", "Phex", "Peraine", "Ingerimm", "Rahja",
 			"Namenloser" };
@@ -441,6 +444,19 @@ public class DSAUtil {
 			default -> new HashMap<>();
 		};
 		return getModificationString(modification, unitMap, signed);
+	}
+
+	public static String getMoneyString(final double silver) {
+		if (silver == 0)
+			return "0D";
+		else if (silver >= 10)
+			return threeDecimalPlaces.format(silver / 10) + "D";
+		else if (silver < 0.1)
+			return new DecimalFormat("#").format(silver * 100) + "K";
+		else if (silver < 1)
+			return new DecimalFormat("#.##").format(silver * 10) + "H";
+		else
+			return threeDecimalPlaces.format(silver) + "S";
 	}
 
 	/**
