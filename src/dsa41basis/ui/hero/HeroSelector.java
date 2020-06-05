@@ -59,6 +59,10 @@ public class HeroSelector {
 	protected final List<HeroController> controllers = new ArrayList<>();
 
 	public HeroSelector(final boolean allowCreate) {
+		this(allowCreate, false);
+	}
+
+	public HeroSelector(final boolean allowCreate, final boolean fixFirst) {
 		final FXMLLoader fxmlLoader = new FXMLLoader();
 
 		fxmlLoader.setController(this);
@@ -99,7 +103,7 @@ public class HeroSelector {
 			cell.setContextMenu(cellMenu);
 
 			cellMenu.setOnShowing(event -> {
-				if (cell.isEmpty() || cell.getIndex() == 0) {
+				if (cell.isEmpty() || fixFirst && cell.getIndex() == 0) {
 					remove.setVisible(false);
 					save.setVisible(false);
 				} else {
@@ -258,7 +262,7 @@ public class HeroSelector {
 			deleteConfirmation.setTitle("Held löschen?");
 			deleteConfirmation.setHeaderText("Held " + hero.getObj("Biografie").getString("Vorname") + " löschen?");
 			deleteConfirmation.setContentText("Der Held kann danach nicht wiederhergestellt werden!");
-			deleteConfirmation.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL);
+			deleteConfirmation.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
 
 			final Optional<ButtonType> result = deleteConfirmation.showAndWait();
 			if (result.isPresent() && result.get().equals(ButtonType.YES)) {
