@@ -16,6 +16,7 @@
 package dsa41basis.hero;
 
 import dsa41basis.util.HeroUtil;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.When;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.IntegerProperty;
@@ -43,7 +44,7 @@ public class Energy extends DerivedValue {
 
 		current.bind(max.add(manualModifier));
 
-		final When cond = new When(max.isEqualTo(0));
+		final When cond = Bindings.when(max.isEqualTo(0));
 		currentPercentage.bind(cond.then(0).otherwise(current.divide(cond.then(1.0).otherwise(max))));
 
 		enhancementCost = derivation.getIntOrDefault("Zukauf", 8);
