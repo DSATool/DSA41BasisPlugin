@@ -108,7 +108,7 @@ public class Spell extends Talent {
 			}
 		} else {
 			if (actual == null) {
-				actual = new JSONObject(actual);
+				actual = new JSONObject(actualSpell);
 			}
 			actualSpell.put(representation.get(), actual);
 		}
