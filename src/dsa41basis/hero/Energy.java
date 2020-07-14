@@ -24,11 +24,18 @@ import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.scene.paint.Color;
 import jsonant.value.JSONObject;
 
 public class Energy extends DerivedValue {
 
-	protected final IntegerProperty bought;
+	public static Color COLOR_LEP = Color.RED;
+	public static Color COLOR_AUP = Color.DODGERBLUE;
+	public static Color COLOR_ASP = Color.VIOLET.saturate();
+	public static Color COLOR_KAP = Color.YELLOW.darker();
+	public static Color COLOR_MR = Color.WHITE;
+
+	protected final IntegerProperty bought = new SimpleIntegerProperty();
 	protected final DoubleProperty currentPercentage = new SimpleDoubleProperty();
 	protected final IntegerProperty max = new SimpleIntegerProperty();
 	protected final IntegerProperty permanent;
