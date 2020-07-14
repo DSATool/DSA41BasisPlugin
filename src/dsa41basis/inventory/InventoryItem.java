@@ -33,6 +33,7 @@ public class InventoryItem {
 		this.item = item;
 		this.baseItem = baseItem;
 		baseItem.addListener(o -> recompute());
+		recomputeBase();
 	}
 
 	public JSONObject getItem() {
@@ -68,6 +69,10 @@ public class InventoryItem {
 	}
 
 	public void recompute() {
+		recomputeBase();
+	}
+
+	private void recomputeBase() {
 		name.set(item.getStringOrDefault("Name", baseItem.getStringOrDefault("Name", "")));
 		notes.set(item.getStringOrDefault("Anmerkungen", baseItem.getStringOrDefault("Anmerkungen", "")));
 		weight.set(item.getDoubleOrDefault("Gewicht", baseItem.getDoubleOrDefault("Gewicht", 0.0)));
