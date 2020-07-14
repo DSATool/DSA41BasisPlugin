@@ -38,18 +38,13 @@ public class Energy extends DerivedValue {
 	protected final IntegerProperty bought = new SimpleIntegerProperty();
 	protected final DoubleProperty currentPercentage = new SimpleDoubleProperty();
 	protected final IntegerProperty max = new SimpleIntegerProperty();
-	protected final IntegerProperty permanent;
+	protected final IntegerProperty permanent = new SimpleIntegerProperty();
 	protected final IntegerProperty buyableMaximum = new SimpleIntegerProperty();
 
 	protected final int enhancementCost;
 
 	public Energy(final String name, final JSONObject derivation, final JSONObject hero) {
 		super(name, derivation, hero);
-
-		bought = new SimpleIntegerProperty(actual.getIntOrDefault("Kauf", 0));
-		permanent = new SimpleIntegerProperty(actual.getIntOrDefault("Permanent", 0));
-
-		current.bind(max.add(manualModifier));
 
 		final When cond = Bindings.when(max.isEqualTo(0));
 		currentPercentage.bind(cond.then(0).otherwise(current.divide(cond.then(1.0).otherwise(max))));

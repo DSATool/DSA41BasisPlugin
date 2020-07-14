@@ -28,7 +28,7 @@ public class DerivedValue {
 
 	protected JSONObject actual;
 	protected final IntegerProperty current = new SimpleIntegerProperty();
-	protected final IntegerProperty manualModifier;
+	protected final IntegerProperty manualModifier = new SimpleIntegerProperty();
 	private final StringProperty name;
 	protected IntegerProperty ses;
 
@@ -48,12 +48,9 @@ public class DerivedValue {
 		attributes.addListener(o -> recalculate(derivation, hero));
 		actual.addListener(o -> recalculate(derivation, hero));
 
-		final int value = HeroUtil.deriveValue(derivation, hero, actual, false);
-		manualModifier = new SimpleIntegerProperty(actual.getIntOrDefault("Modifikator:Manuell", 0));
+		recalculateBase(derivation, hero);
 
 		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
-
-		current.bind(manualModifier.add(value));
 	}
 
 	public final ReadOnlyIntegerProperty currentProperty() {
@@ -89,6 +86,10 @@ public class DerivedValue {
 	}
 
 	protected void recalculate(final JSONObject derivation, final JSONObject hero) {
+		recalculateBase(derivation, hero);
+	}
+
+	private void recalculateBase(final JSONObject derivation, final JSONObject hero) {
 		final int value = HeroUtil.deriveValue(derivation, hero, actual, false);
 		manualModifier.set(actual.getIntOrDefault("Modifikator:Manuell", 0));
 		current.bind(manualModifier.add(value));
