@@ -27,17 +27,6 @@ import jsonant.value.JSONObject;
 
 public class ResourceSanitizer {
 
-	public static final Function<JSONObject, JSONObject> historySanitizer = object -> {
-		JSONObject result = object;
-		if (object.containsKey("Steigerungshistorie")) {
-			result = new JSONObject(null);
-			result.put("Historie", object.getArr("Steigerungshistorie"));
-			result.addAll(object, false);
-			result.removeKey("Steigerungshistorie");
-		}
-		return result;
-	};
-
 	public static final Function<JSONObject, JSONObject> heroSanitizer = object -> {
 		JSONObject result = object;
 		if (object.containsKey("Spieler")) {
