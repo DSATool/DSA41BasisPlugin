@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox xmlns:fx="http://javafx.com/fxml/1" fx:id="box" >
+   <TableView fx:id="attacksTable" editable="true" fixedCellSize="28" >
+      <styleClass>
+         <String fx:value="remove-vertical-scrollbar" />
+         <String fx:value="remove-horizontal-scrollbar" />
+      </styleClass>
+      <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+      <placeholder>
+         <Label minHeight="0" />
+      </placeholder>
+      <columns>
+         <TableColumn fx:id="attackNameColumn" text="Angriff" minWidth="75" editable="true" styleClass="left-aligned" style="-fx-alignment: CENTER-LEFT;" />
+         <TableColumn fx:id="attackTPColumn" text="TP" prefWidth="70" resizable="false" style="-fx-alignment: CENTER;" />
+         <TableColumn fx:id="attackATColumn" text="AT" prefWidth="70" resizable="false" style="-fx-alignment: CENTER;" editable="true" />
+         <TableColumn fx:id="attackPAColumn" text="PA" prefWidth="70" resizable="false" style="-fx-alignment: CENTER;" editable="true" />
+         <TableColumn fx:id="attackDistanceColumn" text="DK" prefWidth="50" resizable="false" style="-fx-alignment: CENTER;" />
+         <TableColumn fx:id="attackNotesColumn" text="Anmerkungen" prefWidth="100" resizable="false" editable="true" style="-fx-alignment: CENTER-LEFT;"  />
+      </columns>
+   </TableView>
+   <HBox spacing="2" >
+      <TextField fx:id="newAttackField" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Button fx:id="attackAddButton" onAction="#addAttack" prefHeight="25" prefWidth="25" text="&#xE145;" >
+         <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+         <font>
+            <Font name="Material Icons" size="20.0" />
+         </font>
+         <tooltip>
+            <Tooltip text="Hinzufügen" />
+         </tooltip>
+      </Button>
+   </HBox>
+</VBox>
