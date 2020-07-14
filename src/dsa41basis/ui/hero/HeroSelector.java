@@ -26,7 +26,7 @@ import dsa41basis.serialization.FileLoader;
 import dsa41basis.serialization.Loaders;
 import dsatool.resources.ResourceManager;
 import dsatool.util.ErrorLogger;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.binding.BooleanBinding;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -102,15 +102,13 @@ public class HeroSelector {
 
 			cell.setContextMenu(cellMenu);
 
-			cellMenu.setOnShowing(event -> {
-				if (cell.isEmpty() || fixFirst && cell.getIndex() == 0) {
-					remove.setVisible(false);
-					save.setVisible(false);
-				} else {
-					remove.setVisible(true);
-					save.setVisible(true);
-				}
-			});
+			BooleanBinding isChar = cell.emptyProperty().not();
+			if (fixFirst) {
+				isChar = isChar.and(cell.indexProperty().isNotEqualTo(0));
+			}
+
+			remove.visibleProperty().bind(isChar);
+			save.visibleProperty().bind(isChar);
 
 			return cell;
 		});
@@ -119,7 +117,7 @@ public class HeroSelector {
 	private void addHero(final JSONObject hero) {
 		final JSONObject bio = hero.getObj("Biografie");
 		list.getItems().add(bio.getString("Vorname"));
-		hero.getObj("Biografie").addLocalListener(o -> {
+		bio.addLocalListener(o -> {
 			list.getItems().set(heroes.indexOf(hero), bio.getString("Vorname"));
 		});
 	}
@@ -189,9 +187,9 @@ public class HeroSelector {
 
 	public void load() {
 		final MultipleSelectionModel<String> listModel = list.getSelectionModel();
-		listModel.selectedIndexProperty().addListener((final ObservableValue<? extends Number> observable, final Number oldValue, final Number newValue) -> {
-			if (oldValue.intValue() != newValue.intValue() && newValue.intValue() > -1) {
-				setHero(listModel.getSelectedIndex());
+		listModel.selectedIndexProperty().addListener((o, oldV, newV) -> {
+			if (oldV.intValue() != newV.intValue() && newV.intValue() > -1) {
+				setHero(newV.intValue());
 			}
 		});
 
