@@ -67,7 +67,7 @@ public class ProOrCon {
 		this.name = new SimpleStringProperty(name);
 		displayName = new SimpleStringProperty(name);
 
-		final boolean hasChoice = proOrCon.containsKey("Auswahl");
+		final boolean hasChoice = proOrCon.containsKey("Auswahl") || "Auswahl".equals(proOrCon.getString("Spezialisierung"));
 		final String text = proOrCon.getString("Freitext");
 		stepwise = proOrCon.getBoolOrDefault("Abgestuft", false);
 		final JSONObject profession = hero != null ? ResourceManager.getResource("data/Professionen").getObj(hero.getObj("Biografie").getString("Profession"))
@@ -332,7 +332,8 @@ public class ProOrCon {
 
 	public Set<String> getFirstChoiceItems(final boolean onlyUnused) {
 		final String choice = "Breitgefächerte Bildung".equals(name.get()) ? "Profession"
-				: "Veteran".equals(name.get()) ? "Profession:Variante" : proOrCon.getStringOrDefault("Auswahl", proOrCon.getString("Freitext"));
+				: "Veteran".equals(name.get()) ? "Profession:Variante" : "Auswahl".equals(proOrCon.getString("Spezialisierung")) ? "Waffenloses Kampftalent"
+						: proOrCon.getStringOrDefault("Auswahl", proOrCon.getString("Freitext"));
 		final Set<String> choices = HeroUtil.getChoices(hero, choice, null);
 
 		if ("Talentspezialisierung".equals(name.get())) {
@@ -488,7 +489,7 @@ public class ProOrCon {
 		if (applyEffect) {
 			HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
 		}
-		if (proOrCon.containsKey("Auswahl")) {
+		if (proOrCon.containsKey("Auswahl") || "Auswahl".equals(proOrCon.getString("Spezialisierung"))) {
 			actual.put("Auswahl", description);
 		} else if (proOrCon.containsKey("Freitext")) {
 			actual.put("Freitext", description);
