@@ -316,12 +316,8 @@ public class HeroUtil {
 			value += deriveValue(derivedValues.getObj(derivedName), hero, basicValues.getObj(derivedName), false);
 		}
 
-		if (derivation == derivedValues.getObj("Astralenergie")) {
-			if (attributes.getParent() instanceof JSONObject) {
-				if (hero.containsKey("Sonderfertigkeiten") && hero.getObj("Sonderfertigkeiten").containsKey("Gefäß der Sterne")) {
-					value += getCurrentValue(attributes.getObj("CH"), false);
-				}
-			}
+		if (derivation == derivedValues.getObj("Astralenergie") && hero.getObj("Sonderfertigkeiten").containsKey("Gefäß der Sterne")) {
+			value += getCurrentValue(attributes.getObj("CH"), false);
 		} else if (derivation == derivedValues.getObj("Geschwindigkeit")) {
 			final int GE = attributes.getObj("GE").getIntOrDefault("Wert", 1);
 			final int geModifier = GE > 15 ? 1 : GE < 11 ? -1 : 0;
