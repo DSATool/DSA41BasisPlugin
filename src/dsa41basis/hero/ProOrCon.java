@@ -475,6 +475,25 @@ public class ProOrCon {
 		return numCheaper;
 	}
 
+	public void remove() {
+		JSONObject group;
+		if (proOrCon.containsKey("Auswahl") || proOrCon.containsKey("Freitext")) {
+			final JSONArray actualCon = (JSONArray) actual.getParent();
+			actualCon.remove(actual);
+			group = (JSONObject) actualCon.getParent();
+			if (actualCon.size() == 0) {
+				group.removeKey(name.get());
+				group.notifyListeners(null);
+			} else {
+				actualCon.notifyListeners(null);
+			}
+		} else {
+			group = (JSONObject) actual.getParent();
+			group.removeKey(name.get());
+			group.notifyListeners(null);
+		}
+	}
+
 	public ChoiceOrTextEnum secondChoiceOrText() {
 		return second;
 	}

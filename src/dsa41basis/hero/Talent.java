@@ -189,7 +189,11 @@ public class Talent {
 	public void removeTalent() {
 		if (actualGroup != null) {
 			if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
-				actualGroup.getArr(name.get()).remove(actual);
+				final JSONArray actualTalent = actualGroup.getArr(name.get());
+				actualTalent.remove(actual);
+				if (actualTalent.size() == 0) {
+					actualGroup.removeKey(name.get());
+				}
 			} else {
 				actualGroup.removeKey(name.get());
 			}
