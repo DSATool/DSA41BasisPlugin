@@ -329,8 +329,8 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 	private void parseBasis() {
 		final JSONObject bio = hero.getObj("Biografie");
 
-		apply("basis", new Tuple<>("geschlecht", () -> bio.put("Geschlecht", get("name"))), new Tuple<>("rasse", () -> parseRace()),
-				new Tuple<>("kultur", () -> parseCulture()), new Tuple<>("ausbildungen", () -> parseProfession()),
+		apply("basis", new Tuple<>("geschlecht", () -> bio.put("Geschlecht", get("name"))), new Tuple<>("rasse", this::parseRace),
+				new Tuple<>("kultur", this::parseCulture), new Tuple<>("ausbildungen", this::parseProfession),
 				new Tuple<>("abenteuerpunkte", () -> bio.put("Abenteuerpunkte", Integer.parseInt(get("value")))),
 				new Tuple<>("freieabenteuerpunkte", () -> bio.put("Abenteuerpunkte-Guthaben", Integer.parseInt(get("value")))));
 	}
@@ -544,10 +544,10 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			bio.put("Nachname", name.substring(endFirstName + 1));
 		}
 
-		apply("held", new Tuple<>("basis", () -> parseBasis()), new Tuple<>("eigenschaften", () -> parseAttributes()), new Tuple<>("vt", () -> parseProsCons()),
-				new Tuple<>("sf", () -> parseSkills()), new Tuple<>("ereignisse", () -> parseHistory()), new Tuple<>("talentliste", () -> parseTalents()),
-				new Tuple<>("zauberliste", () -> parseSpells()),
-				new Tuple<>("kampf", () -> parseFight()), new Tuple<>("gegenstände", () -> parseInventory()), new Tuple<>("geldboerse", () -> parseMoney()));
+		apply("held", new Tuple<>("basis", this::parseBasis), new Tuple<>("eigenschaften", this::parseAttributes), new Tuple<>("vt", this::parseProsCons),
+				new Tuple<>("sf", this::parseSkills), new Tuple<>("ereignisse", this::parseHistory), new Tuple<>("talentliste", this::parseTalents),
+				new Tuple<>("zauberliste", this::parseSpells), new Tuple<>("kampf", this::parseFight), new Tuple<>("gegenstände", this::parseInventory),
+				new Tuple<>("geldboerse", this::parseMoney));
 
 		cleanupCheaperSkills();
 
@@ -562,7 +562,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 	private void parseHistory() {
 		final JSONArray history = hero.getArr("Historie");
 
-		final int[] ap = new int[] { 0 };
+		final int[] ap = { 0 };
 
 		apply("ereignisse", new Tuple<>("ereignis", () -> {
 			try {
@@ -787,7 +787,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						if (lastPossibleAttribute != null && entryType.equals(lastPossibleAttribute.getString("Typ"))
 								&& entryDate.equals(LocalDate.parse(lastPossibleAttribute.getString("Datum")))
 								&& lastPossibleAttribute.getString(entryType).equals(attributeName)
-								&& lastPossibleAttribute.getInt("Auf") == historyEntry.getInt("Von")) {
+								&& lastPossibleAttribute.getInt("Auf").equals(historyEntry.getInt("Von"))) {
 							lastPossibleAttribute.put("Auf", historyEntry.getInt("Auf"));
 							if (historyEntry.containsKey("SEs")) {
 								lastPossibleAttribute.put("SEs", lastPossibleAttribute.getIntOrDefault("SEs", 0) + historyEntry.getInt("SEs"));

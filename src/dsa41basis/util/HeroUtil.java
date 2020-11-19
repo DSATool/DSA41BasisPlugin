@@ -34,6 +34,29 @@ import jsonant.value.JSONObject;
 import jsonant.value.JSONValue;
 
 public class HeroUtil {
+	public static final JSONObject infight = new JSONObject(null);
+
+	static {
+		infight.put("Name", "Waffenlos");
+		final JSONObject TP = new JSONObject(infight);
+		TP.put("W6", 1);
+		TP.put("Trefferpunkte", 0);
+		TP.put("Ausdauerschaden", true);
+		infight.put("Trefferpunkte", TP);
+		final JSONObject TPKK = new JSONObject(infight);
+		TPKK.put("Schwellenwert", 10);
+		TPKK.put("Schadensschritte", 3);
+		infight.put("Trefferpunkte/Körperkraft", TPKK);
+		final JSONObject weaponModifiers = new JSONObject(infight);
+		infight.put("Waffenmodifikatoren", weaponModifiers);
+		final JSONArray distanceClasses = new JSONArray(null);
+		distanceClasses.add("H");
+		infight.put("Distanzklassen", distanceClasses);
+		final JSONArray weaponTypes = new JSONArray(null);
+		weaponTypes.add("Raufen");
+		weaponTypes.add("Ringen");
+		infight.put("Waffentypen", weaponTypes);
+	}
 
 	public static final Set<String> scaleColors = new HashSet<>();
 	public static final Set<String> hairColors = new HashSet<>();
@@ -699,9 +722,8 @@ public class HeroUtil {
 		if (weapon != null && weapon.containsKey("Fernkampfwaffe")) {
 			weapon = weapon.getObj("Fernkampfwaffe");
 		}
-		final JSONObject weaponMastery = hero == null || weapon == null ? null
-				: HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArrOrDefault("Waffenmeister", null), type,
-						weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+		final JSONObject weaponMastery = hero == null ? null : HeroUtil.getSpecialisation(
+				hero.getObj("Sonderfertigkeiten").getArrOrDefault("Waffenmeister", null), type, weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 
 		final JSONObject weaponDistances = weapon.getObjOrDefault("Reichweiten", baseWeapon.getObj("Reichweiten"));
 
@@ -733,7 +755,7 @@ public class HeroUtil {
 
 	public static int getLoadTime(final JSONObject hero, JSONObject weapon, final String type) {
 		final JSONObject baseWeapon = weapon;
-		if (weapon != null && weapon.containsKey("Fernkampfwaffe")) {
+		if (weapon.containsKey("Fernkampfwaffe")) {
 			weapon = weapon.getObj("Fernkampfwaffe");
 		}
 
@@ -1236,11 +1258,11 @@ public class HeroUtil {
 			TPString.append(TPAdditive);
 		}
 
-		if (TPValues.getBoolOrDefault("Reduzierte Wundschwelle", false)) {
-			TPString.append('*');
-		}
 		if (TPValues.getBoolOrDefault("Ausdauerschaden", false)) {
 			TPString.append("(A)");
+		}
+		if (TPValues.getBoolOrDefault("Reduzierte Wundschwelle", false)) {
+			TPString.append('*');
 		}
 		return TPString.toString();
 	}
@@ -1328,7 +1350,7 @@ public class HeroUtil {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
 
 		final JSONArray armorList = hero.getObj("Besitz").getArr("Ausrüstung");
-		int RS = 0;
+		double RS = 0;
 		for (int i = 0; i < armorList.size(); ++i) {
 			final JSONObject item = armorList.getObj(i);
 			final JSONArray categories = item.getArr("Kategorien");
@@ -1337,9 +1359,11 @@ public class HeroUtil {
 				if (item.containsKey("Rüstung")) {
 					armor = item.getObj("Rüstung");
 				}
-				final JSONObject zoneRS = armor.getObjOrDefault("Rüstungsschutz", item.getObj("Rüstungsschutz"));
-				if ("Gesamtrüstung".equals(armorSetting) || zoneRS == null) {
+				final JSONObject zoneRS = armor.getObjOrDefault("Rüstungsschutz", item.getObjOrDefault("Rüstungsschutz", null));
+				if ("Gesamtrüstung".equals(armorSetting) || zoneRS == null && !(armor.containsKey("Rüstungsschutz") || item.containsKey("Rüstungsschutz"))) {
 					RS += armor.getIntOrDefault("Gesamtrüstungsschutz", item.getIntOrDefault("Gesamtrüstungsschutz", 0));
+				} else if (zoneRS == null) {
+					RS += armor.getDoubleOrDefault("Rüstungsschutz", item.getDoubleOrDefault("Rüstungsschutz", 0.0));
 				} else {
 					RS += zoneRS.getIntOrDefault(zone, 0);
 				}
@@ -1351,7 +1375,7 @@ public class HeroUtil {
 			RS += pros.getObj("Natürlicher Rüstungsschutz").getIntOrDefault("Stufe", 0);
 		}
 
-		return RS;
+		return (int) Math.round(RS);
 	}
 
 	public static Integer interpretSpellRoll(final JSONObject hero, final String talentName, final String representation, final String specialization,
@@ -1383,8 +1407,7 @@ public class HeroUtil {
 	}
 
 	private static Integer interpretTalentRoll(final JSONObject hero, final JSONObject talent, final JSONObject talentGroup, final String[] challenge,
-			final int taw,
-			final Tuple3<Integer, Integer, Integer> roll, final int modification) {
+			final int taw, final Tuple3<Integer, Integer, Integer> roll, final int modification) {
 		final int modifiedTaw = taw + modification;
 		int result = modifiedTaw;
 		final JSONObject attributes = hero.getObj("Eigenschaften");

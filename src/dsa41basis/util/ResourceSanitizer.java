@@ -108,7 +108,7 @@ public class ResourceSanitizer {
 	}
 
 	private static JSONObject sortProConSkills(final JSONObject hero, final JSONObject object) {
-		final Set<String> actual = new TreeSet<>((s1, s2) -> comparator.compare(s1, s2));
+		final Set<String> actual = new TreeSet<>(comparator::compare);
 		actual.addAll(object.keySet());
 		final JSONObject result = new JSONObject(hero);
 		for (final String key : actual) {
@@ -140,7 +140,7 @@ public class ResourceSanitizer {
 	}
 
 	private static JSONObject sortSpells(final JSONObject hero, final JSONObject object) {
-		final Set<String> actual = new TreeSet<>((s1, s2) -> comparator.compare(s1, s2));
+		final Set<String> actual = new TreeSet<>(comparator::compare);
 		actual.addAll(object.keySet());
 		final JSONObject result = new JSONObject(hero);
 		for (final String key : actual) {

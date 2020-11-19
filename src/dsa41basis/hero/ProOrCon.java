@@ -261,9 +261,8 @@ public class ProOrCon {
 			if (name.get().endsWith("spezialisierung") && description.get() != null && !"".equals(description.get())) {
 				final String talentName = description.get();
 				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(talentName);
-				final String group = talentAndGroup._2;
 				int complexity = Integer.MAX_VALUE;
-				if ("Zauber".equals(group)) {
+				if ("Zauber".equals(talentAndGroup._2)) {
 					final JSONArray representations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", null);
 					if (representations != null) {
 						for (final JSONObject representation : representations.getObjs()) {

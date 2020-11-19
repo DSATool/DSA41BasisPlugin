@@ -122,7 +122,7 @@ public class AttackTable {
 				@Override
 				protected void createGraphic() {
 					final TextField t = new TextField();
-					createGraphic(t, () -> t.getText(), s -> t.setText(s));
+					createGraphic(t, t::getText, t::setText);
 				}
 			};
 			return cell;
@@ -137,7 +137,7 @@ public class AttackTable {
 				@Override
 				protected void createGraphic() {
 					final TextField t = new TextField();
-					createGraphic(t, () -> t.getText(), s -> t.setText(s));
+					createGraphic(t, t::getText, t::setText);
 				}
 			};
 			return cell;

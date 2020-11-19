@@ -34,7 +34,7 @@ public class Attribute {
 	private final IntegerProperty value;
 	protected IntegerProperty ses;
 
-	public Attribute(String name, JSONObject actual) {
+	public Attribute(final String name, final JSONObject actual) {
 		this.actual = actual;
 		this.name = new SimpleStringProperty(name);
 
@@ -44,7 +44,7 @@ public class Attribute {
 
 		manualModifier = new SimpleIntegerProperty(actual.getIntOrDefault("Modifikator:Manuell", 0));
 
-		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
+		ses = new SimpleIntegerProperty(actual.getIntOrDefault("SEs", 0));
 
 		actual.addLocalListener(o -> refreshValue());
 
@@ -108,7 +108,7 @@ public class Attribute {
 		return ses;
 	}
 
-	public final void setManualModifier(int modifier) {
+	public final void setManualModifier(final int modifier) {
 		if (modifier == 0) {
 			actual.removeKey("Modifikator:Manuell");
 		} else {
@@ -118,7 +118,7 @@ public class Attribute {
 		manualModifier.set(modifier);
 	}
 
-	public final void setModifier(int modifier) {
+	public final void setModifier(final int modifier) {
 		if (modifier == 0) {
 			actual.removeKey("Modifikator");
 		} else {
@@ -128,7 +128,7 @@ public class Attribute {
 		this.modifier.set(modifier);
 	}
 
-	public void setSes(int ses) {
+	public void setSes(final int ses) {
 		if (actual == null) return;
 		if (ses == 0) {
 			actual.removeKey("SEs");
@@ -139,7 +139,7 @@ public class Attribute {
 		this.ses.set(ses);
 	}
 
-	public final void setStart(int start) {
+	public final void setStart(final int start) {
 		if (start == 0) {
 			actual.removeKey("Start");
 		} else {
@@ -148,7 +148,7 @@ public class Attribute {
 		actual.notifyListeners(null);
 	}
 
-	public final void setValue(int value) {
+	public final void setValue(final int value) {
 		actual.put("Wert", value);
 		actual.notifyListeners(null);
 		this.value.set(value);
