@@ -27,6 +27,34 @@ import jsonant.value.JSONObject;
 
 public class ResourceSanitizer {
 
+	public static final Function<JSONObject, JSONObject> animalSanitizer = object -> {
+		if (object.containsKey("Tiere")) {
+			final JSONArray animals = object.getArr("Tiere");
+			for (final JSONObject animal : animals.getObjs()) {
+				final JSONObject basicValues = animal.getObj("Basiswerte");
+				if (basicValues.containsKey("Rüstungsschutz")) {
+					final JSONObject pros = animal.getObj("Vorteile");
+					final JSONObject proRS = new JSONObject(pros);
+					proRS.put("Stufe", basicValues.getObj("Rüstungsschutz").getIntOrDefault("Wert", 0));
+					pros.put("Natürlicher Rüstungsschutz", proRS);
+					basicValues.removeKey("Rüstungsschutz");
+				}
+				final JSONObject ini = basicValues.getObj("Initiative");
+				if (ini.containsKey("Basis")) {
+					final JSONObject iniBase = basicValues.getObj("Initiative-Basis");
+					final int mod = ini.getIntOrDefault("Modifikator", 0);
+					iniBase.put("Wert", ini.getInt("Basis") - mod);
+					if (mod != 0) {
+						iniBase.put("Modifikator", mod);
+					}
+					ini.removeKey("Basis");
+					ini.removeKey("Modifikator");
+				}
+			}
+		}
+		return object;
+	};
+
 	public static final Function<JSONObject, JSONObject> heroSanitizer = object -> {
 		JSONObject result = object;
 		if (object.containsKey("Spieler")) {
@@ -108,7 +136,7 @@ public class ResourceSanitizer {
 	}
 
 	private static JSONObject sortProConSkills(final JSONObject hero, final JSONObject object) {
-		final Set<String> actual = new TreeSet<>(comparator::compare);
+		final Set<String> actual = new TreeSet<>(comparator);
 		actual.addAll(object.keySet());
 		final JSONObject result = new JSONObject(hero);
 		for (final String key : actual) {
@@ -140,7 +168,7 @@ public class ResourceSanitizer {
 	}
 
 	private static JSONObject sortSpells(final JSONObject hero, final JSONObject object) {
-		final Set<String> actual = new TreeSet<>(comparator::compare);
+		final Set<String> actual = new TreeSet<>(comparator);
 		actual.addAll(object.keySet());
 		final JSONObject result = new JSONObject(hero);
 		for (final String key : actual) {

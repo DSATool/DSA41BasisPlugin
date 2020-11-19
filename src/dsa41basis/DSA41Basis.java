@@ -57,6 +57,7 @@ public class DSA41Basis extends Plugin {
 		ResourceManager.setDiscriminatingAttribute("Bücher");
 		ResourceManager.setPriorities(Settings.getSettingArray("Allgemein", "Bücher").getStrings());
 
+		ResourceManager.addResourceSanitizer(ResourceSanitizer.animalSanitizer);
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.heroSanitizer);
 
 		Settings.addSetting(new StringChoiceSetting("Jahreswechsel", "Jahreswechsel", List.of("Jahreswechsel", "Jahreszeiten", "Astronomisch"),
