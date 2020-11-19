@@ -16,6 +16,7 @@
 package dsa41basis.fight;
 
 import dsa41basis.util.HeroUtil;
+import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
@@ -25,7 +26,7 @@ import javafx.beans.property.StringProperty;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
-public class Attack {
+public class Attack implements WithAttack, WithDefense {
 	private final StringProperty name = new SimpleStringProperty();
 	private final StringProperty tp = new SimpleStringProperty();
 	private final IntegerProperty tpMod = new SimpleIntegerProperty();
@@ -72,6 +73,7 @@ public class Attack {
 		return dk;
 	}
 
+	@Override
 	public int getAt() {
 		return at.get();
 	}
@@ -88,14 +90,17 @@ public class Attack {
 		return dk.get();
 	}
 
+	@Override
 	public String getName() {
 		return name.get();
 	}
 
+	@Override
 	public String getNotes() {
 		return notes.get();
 	}
 
+	@Override
 	public int getPa() {
 		return pa.get();
 	}
@@ -108,6 +113,7 @@ public class Attack {
 		return paStart.get();
 	}
 
+	@Override
 	public final String getTp() {
 		return tp.get();
 	}
@@ -116,6 +122,13 @@ public class Attack {
 		return tpMod.get();
 	}
 
+	@Override
+	public Tuple<Boolean, Boolean> getTPModifiers() {
+		final JSONObject tpValues = actual.getObj("Trefferpunkte");
+		return new Tuple<>(tpValues.getBoolOrDefault("Ausdauerschaden", false), tpValues.getBoolOrDefault("Reduzierte Wundschwelle", false));
+	}
+
+	@Override
 	public final Tuple3<Integer, Integer, Integer> getTpRaw() {
 		final JSONObject tpValues = actual.getObj("Trefferpunkte");
 		return new Tuple3<>(tpValues.getIntOrDefault("Würfel:Anzahl", 1), tpValues.getIntOrDefault("Wüfel:Typ", 6),

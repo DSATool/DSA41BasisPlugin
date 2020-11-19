@@ -26,9 +26,8 @@ import javafx.beans.property.StringProperty;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
-public class CloseCombatWeapon extends OffensiveWeapon {
+public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 
-	private final IntegerProperty at = new SimpleIntegerProperty();
 	private final IntegerProperty bf = new SimpleIntegerProperty();
 	private final IntegerProperty length = new SimpleIntegerProperty();
 	private final StringProperty dk = new SimpleStringProperty();
@@ -42,10 +41,6 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 			final JSONObject actualTalents) {
 		super(hero, weapon, baseWeapon, closeCombatTalents, actualTalents);
 		recompute();
-	}
-
-	public final ReadOnlyIntegerProperty atProperty() {
-		return at;
 	}
 
 	public final IntegerProperty bfProperty() {
@@ -80,10 +75,6 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 		return dk;
 	}
 
-	public final int getAt() {
-		return at.get();
-	}
-
 	public final int getBf() {
 		return bf.get();
 	}
@@ -100,6 +91,7 @@ public class CloseCombatWeapon extends OffensiveWeapon {
 		return length.get();
 	}
 
+	@Override
 	public final int getPa() {
 		return pa.get();
 	}

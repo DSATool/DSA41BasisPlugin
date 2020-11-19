@@ -31,7 +31,6 @@ public class RangedWeapon extends OffensiveWeapon {
 
 	private final StringProperty ammunition = new SimpleStringProperty();
 	private final StringProperty ammunitionType = new SimpleStringProperty();
-	private final IntegerProperty at = new SimpleIntegerProperty();
 	private final StringProperty distance = new SimpleStringProperty();
 	private final StringProperty distancetp = new SimpleStringProperty();
 	private final IntegerProperty load = new SimpleIntegerProperty();
@@ -49,10 +48,6 @@ public class RangedWeapon extends OffensiveWeapon {
 
 	public final StringProperty ammunitionTypeProperty() {
 		return ammunitionType;
-	}
-
-	public final ReadOnlyIntegerProperty atProperty() {
-		return at;
 	}
 
 	public final DoubleProperty bulletweightProperty() {
@@ -135,10 +130,6 @@ public class RangedWeapon extends OffensiveWeapon {
 			return item.getObjOrDefault("Munition", baseItem.getObj("Munition"));
 		else
 			return item.getObj("Munition");
-	}
-
-	public final int getAt() {
-		return at.get();
 	}
 
 	public final double getBulletweight() {

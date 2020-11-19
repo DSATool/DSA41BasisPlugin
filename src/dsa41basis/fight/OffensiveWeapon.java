@@ -20,6 +20,7 @@ import java.util.List;
 
 import dsa41basis.inventory.InventoryItem;
 import dsa41basis.util.HeroUtil;
+import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -34,14 +35,17 @@ import javafx.collections.ObservableList;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
-public abstract class OffensiveWeapon extends InventoryItem {
+public abstract class OffensiveWeapon extends InventoryItem implements WithAttack {
+
+	protected final JSONObject hero;
 
 	protected final IntegerProperty ebe = new SimpleIntegerProperty();
-	protected final JSONObject hero;
 	private final ObjectProperty<ObservableList<String>> talents;
+	protected final IntegerProperty at = new SimpleIntegerProperty();
 	protected final StringProperty tp = new SimpleStringProperty();
-	private final JSONObject combatTalents;
 	protected StringProperty type;
+
+	private final JSONObject combatTalents;
 
 	public OffensiveWeapon(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon, final JSONObject combatTalents,
 			final JSONObject actualTalents) {
@@ -74,8 +78,17 @@ public abstract class OffensiveWeapon extends InventoryItem {
 		type.addListener(o -> recomputeAtPa());
 	}
 
+	public final ReadOnlyIntegerProperty atProperty() {
+		return at;
+	}
+
 	public final ReadOnlyIntegerProperty ebeProperty() {
 		return ebe;
+	}
+
+	@Override
+	public final int getAt() {
+		return at.get();
 	}
 
 	public final int getEbe() {
@@ -86,10 +99,18 @@ public abstract class OffensiveWeapon extends InventoryItem {
 		return talents.get();
 	}
 
+	@Override
 	public final String getTp() {
 		return tp.get();
 	}
 
+	@Override
+	public Tuple<Boolean, Boolean> getTPModifiers() {
+		final JSONObject TPValues = item.getObjOrDefault("Trefferpunkte", baseItem.getObjOrDefault("Trefferpunkte", null));
+		return new Tuple<>(TPValues.getBoolOrDefault("Ausdauerschaden", false), TPValues.getBoolOrDefault("Reduzierte Wundschwelle", false));
+	}
+
+	@Override
 	public final Tuple3<Integer, Integer, Integer> getTpRaw() {
 		final JSONObject tpValues = item.getObj("Trefferpunkte");
 		return new Tuple3<>(tpValues.getIntOrDefault("Würfel:Anzahl", 1), tpValues.getIntOrDefault("Wüfel:Typ", 6),

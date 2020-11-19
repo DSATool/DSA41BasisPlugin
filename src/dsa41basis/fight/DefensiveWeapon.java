@@ -27,7 +27,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jsonant.value.JSONObject;
 
-public class DefensiveWeapon extends InventoryItem {
+public class DefensiveWeapon extends InventoryItem implements WithDefense {
 	private final IntegerProperty at = new SimpleIntegerProperty();
 	private final IntegerProperty bf = new SimpleIntegerProperty();
 	private final IntegerProperty ini = new SimpleIntegerProperty();
@@ -72,6 +72,7 @@ public class DefensiveWeapon extends InventoryItem {
 		return ini.get();
 	}
 
+	@Override
 	public final int getPa() {
 		return pa.get();
 	}
