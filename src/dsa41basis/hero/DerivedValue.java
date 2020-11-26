@@ -57,6 +57,10 @@ public class DerivedValue {
 		return current;
 	}
 
+	public JSONObject getActual() {
+		return actual;
+	}
+
 	public final int getCurrent() {
 		return current.get();
 	}
