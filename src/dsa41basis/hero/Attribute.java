@@ -22,6 +22,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jsonant.event.JSONListener;
 import jsonant.value.JSONObject;
 
 public class Attribute {
@@ -33,6 +34,8 @@ public class Attribute {
 	private final StringProperty name;
 	private final IntegerProperty value;
 	protected IntegerProperty ses;
+
+	private final JSONListener refreshListener = o -> refreshValue();
 
 	public Attribute(final String name, final JSONObject actual) {
 		this.actual = actual;
@@ -46,7 +49,7 @@ public class Attribute {
 
 		ses = new SimpleIntegerProperty(actual.getIntOrDefault("SEs", 0));
 
-		actual.addLocalListener(o -> refreshValue());
+		actual.addLocalListener(refreshListener);
 
 		current = new SimpleIntegerProperty();
 		refreshValue();

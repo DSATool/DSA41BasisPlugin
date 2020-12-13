@@ -43,8 +43,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import jsonant.event.JSONListener;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
+import jsonant.value.JSONValue;
 
 public class HeroSelector {
 	@FXML
@@ -57,6 +59,16 @@ public class HeroSelector {
 	protected List<JSONObject> heroes;
 
 	protected final List<HeroController> controllers = new ArrayList<>();
+
+	private final JSONListener nameListener = o -> {
+		JSONValue current = o;
+		JSONValue next = o.getParent();
+		while (next != null) {
+			current = next;
+			next = next.getParent();
+		}
+		list.getItems().set(heroes.indexOf(current), ((JSONObject) current).getObj("Biografie").getString("Vorname"));
+	};
 
 	public HeroSelector(final boolean allowCreate) {
 		this(allowCreate, false);
@@ -117,9 +129,7 @@ public class HeroSelector {
 	private void addHero(final JSONObject hero) {
 		final JSONObject bio = hero.getObj("Biografie");
 		list.getItems().add(bio.getString("Vorname"));
-		bio.addLocalListener(o -> {
-			list.getItems().set(heroes.indexOf(hero), bio.getString("Vorname"));
-		});
+		bio.addLocalListener(nameListener);
 	}
 
 	@FXML

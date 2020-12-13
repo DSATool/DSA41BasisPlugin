@@ -22,6 +22,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jsonant.event.JSONListener;
 import jsonant.value.JSONObject;
 
 public class DerivedValue {
@@ -31,6 +32,8 @@ public class DerivedValue {
 	protected final IntegerProperty manualModifier = new SimpleIntegerProperty();
 	private final StringProperty name;
 	protected IntegerProperty ses;
+
+	private final JSONListener recalculateListener;
 
 	public DerivedValue(final String name, final JSONObject derivation, final JSONObject hero) {
 		this.name = new SimpleStringProperty(name);
@@ -45,8 +48,10 @@ public class DerivedValue {
 			basicValues.put(name, actual);
 		}
 
-		attributes.addListener(o -> recalculate(derivation, hero));
-		actual.addListener(o -> recalculate(derivation, hero));
+		recalculateListener = o -> recalculate(derivation, hero);
+
+		attributes.addListener(recalculateListener);
+		actual.addListener(recalculateListener);
 
 		recalculateBase(derivation, hero);
 

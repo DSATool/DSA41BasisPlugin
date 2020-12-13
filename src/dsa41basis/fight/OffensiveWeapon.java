@@ -32,6 +32,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import jsonant.event.JSONListener;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
@@ -47,6 +48,9 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 
 	private final JSONObject combatTalents;
 
+	private final JSONListener recomputeListener = o -> recomputeAtPa();
+	private final JSONListener recomputeTPListener = o -> recomputeTP();
+
 	public OffensiveWeapon(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon, final JSONObject combatTalents,
 			final JSONObject actualTalents) {
 		super(weapon, baseWeapon);
@@ -55,10 +59,10 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 		this.combatTalents = combatTalents;
 
 		if (hero != null) {
-			hero.getObj("Eigenschaften").addListener(o -> recomputeAtPa());
-			hero.getObj("Sonderfertigkeiten").addLocalListener(o -> recomputeAtPa());
-			hero.getObj("Besitz").getArr("Ausrüstung").addListener(o -> recomputeAtPa());
-			hero.getObj("Eigenschaften").addListener(o -> tp.set(HeroUtil.getTPString(hero, weapon, baseWeapon)));
+			hero.getObj("Eigenschaften").addListener(recomputeListener);
+			hero.getObj("Sonderfertigkeiten").addLocalListener(recomputeListener);
+			hero.getObj("Besitz").getArr("Ausrüstung").addListener(recomputeListener);
+			hero.getObj("Eigenschaften").addListener(recomputeTPListener);
 		}
 
 		final JSONArray weaponTypes = weapon.getArrOrDefault("Waffentypen", baseWeapon.getArr("Waffentypen"));
@@ -132,7 +136,8 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 
 		ebe.set(combatTalents != null &&
 				combatTalents.getObjOrDefault(type.get(), null) != null ? combatTalents.getObj(type.get()).getIntOrDefault("BEAdditiv", 0) : 0);
-		tp.set(HeroUtil.getTPString(hero, item, baseItem));
+		recomputeAtPa();
+		recomputeTP();
 
 		final JSONArray weaponTypes = item.getArrOrDefault("Waffentypen", baseItem.getArr("Waffentypen"));
 		talents.get().clear();
@@ -144,6 +149,10 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 	}
 
 	abstract protected void recomputeAtPa();
+
+	private void recomputeTP() {
+		tp.set(HeroUtil.getTPString(hero, item, baseItem));
+	}
 
 	public final void setTalents(final List<String> talents) {
 		final JSONArray weaponTypes = item.getArrOrDefault("Waffentypen", baseItem.getArr("Waffentypen"));

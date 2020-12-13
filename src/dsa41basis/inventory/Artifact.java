@@ -29,7 +29,7 @@ import jsonant.value.JSONObject;
 
 public class Artifact extends InventoryItem {
 	public static String[] types = { "Applicatus", "Arcanovi (einmalig)", "Arcanovi (aufladbar)", "Arcanovi (semipermanent)", "Matrixgeber", "Zaubertalisman",
-			"Infinitum" };
+			"Infinitum", "Zauberzeichen", "Rune", "Bann-/Schutzkreis", "Objektweihe", "sonstiges" };
 
 	private final StringProperty type = new SimpleStringProperty();
 	private final IntegerProperty loadNum = new SimpleIntegerProperty();

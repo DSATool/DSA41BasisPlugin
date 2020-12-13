@@ -25,6 +25,7 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jsonant.event.JSONListener;
 import jsonant.value.JSONObject;
 
 public class DefensiveWeapon extends InventoryItem implements WithDefense {
@@ -37,6 +38,8 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 	private final JSONObject hero;
 	private final boolean shield;
 
+	private final JSONListener recomputeListener;
+
 	public DefensiveWeapon(final boolean shield, final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon) {
 		super(weapon, baseWeapon);
 
@@ -45,8 +48,9 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 
 		final JSONObject weaponModifiers = weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
 
+		recomputeListener = o -> recomputePa(hero, shield, weaponModifiers);
 		if (hero != null) {
-			hero.getObj("Eigenschaften").addLocalListener(o -> recomputePa(hero, shield, weaponModifiers));
+			hero.getObj("Eigenschaften").addLocalListener(recomputeListener);
 		}
 
 		recompute();

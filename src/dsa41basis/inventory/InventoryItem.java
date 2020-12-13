@@ -19,6 +19,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import jsonant.event.JSONListener;
 import jsonant.value.JSONObject;
 
 public class InventoryItem {
@@ -29,10 +30,12 @@ public class InventoryItem {
 	private final StringProperty itemType = new SimpleStringProperty();
 	protected final DoubleProperty weight = new SimpleDoubleProperty();
 
+	private final JSONListener recomputeListener = o -> recompute();
+
 	public InventoryItem(final JSONObject item, final JSONObject baseItem) {
 		this.item = item;
 		this.baseItem = baseItem;
-		baseItem.addListener(o -> recompute());
+		baseItem.addListener(recomputeListener);
 		recomputeBase();
 	}
 
