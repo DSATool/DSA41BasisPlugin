@@ -475,7 +475,9 @@ public class HeroUtil {
 
 		final int be = getEffectiveBE(hero, talent) / (!closeCombat || talent.getBoolOrDefault("NurAT", false) ? 1 : 2);
 
-		return baseValue + fromTalent + weaponModifier + specialisation + masteryAT - be;
+		final int TPKKModifier = Math.min(getTPKKModifier(hero, weapon, baseWeapon), 0);
+
+		return baseValue + fromTalent + weaponModifier + specialisation + masteryAT - be + TPKKModifier;
 	}
 
 	public static int getBE(final JSONObject hero) {
@@ -822,7 +824,9 @@ public class HeroUtil {
 
 		final int be = (getEffectiveBE(hero, talent) + 1) / 2;
 
-		return baseValue + fromTalent + weaponModifier + specialisation + masteryPA - be;
+		final int TPKKModifier = Math.min(getTPKKModifier(hero, weapon, baseWeapon), 0);
+
+		return baseValue + fromTalent + weaponModifier + specialisation + masteryPA - be + TPKKModifier;
 	}
 
 	public static String getProfessionString(final JSONObject hero, final JSONObject bio, final JSONObject professions, final boolean withVeteranBGB) {
@@ -1230,6 +1234,20 @@ public class HeroUtil {
 		return complexity;
 	}
 
+	private static int getTPKKModifier(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon) {
+		if (hero == null || !(weapon.containsKey("Trefferpunkte/Körperkraft") || baseWeapon.containsKey("Trefferpunkte/Körperkraft")))
+			return 0;
+
+		final JSONObject TPKKValues = weapon.getObjOrDefault("Trefferpunkte/Körperkraft", baseWeapon.getObj("Trefferpunkte/Körperkraft"));
+		final int threshold = TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE);
+		final int KK = HeroUtil.getCurrentValue(hero.getObj("Eigenschaften").getObj("KK"), true);
+		final int steps = TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE);
+		if (steps != Integer.MIN_VALUE && steps != 0)
+			return (KK - threshold) / steps;
+		else
+			return 0;
+	}
+
 	public static String getTPString(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon) {
 		final JSONObject TPValues = weapon.getObjOrDefault("Trefferpunkte", baseWeapon.getObjOrDefault("Trefferpunkte", null));
 		if (TPValues == null) return "";
@@ -1240,16 +1258,7 @@ public class HeroUtil {
 		TPString.append(TPValues.getIntOrDefault("Würfel:Typ", 6));
 		int TPAdditive = TPValues.getIntOrDefault("Trefferpunkte", 0);
 
-		if (hero != null && (weapon.containsKey("Trefferpunkte/Körperkraft") || baseWeapon.containsKey("Trefferpunkte/Körperkraft"))) {
-			final JSONObject TPKKValues = weapon.getObjOrDefault("Trefferpunkte/Körperkraft", baseWeapon.getObj("Trefferpunkte/Körperkraft"));
-			final int threshold = TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE);
-			final int KK = HeroUtil.getCurrentValue(hero.getObj("Eigenschaften").getObj("KK"), true);
-			final int steps = TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE);
-			if (threshold != Integer.MIN_VALUE && steps != Integer.MIN_VALUE) {
-				final int TPKKModifier = (KK - threshold) / steps;
-				TPAdditive += TPKKModifier;
-			}
-		}
+		TPAdditive += getTPKKModifier(hero, weapon, baseWeapon);
 
 		if (TPAdditive != 0) {
 			if (TPAdditive > 0) {
