@@ -160,7 +160,7 @@ public class ResourceSanitizer {
 				});
 				choices.addAll(((JSONArray) value).getObjs());
 				for (final JSONObject choice : choices) {
-					newArr.add(choice);
+					newArr.add(choice.clone(newArr));
 				}
 			}
 		}
