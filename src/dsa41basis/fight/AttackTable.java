@@ -109,12 +109,12 @@ public class AttackTable {
 
 	private void initAttacks(final DoubleExpression width, final boolean needsStart) {
 		attacksTable.prefWidthProperty().bind(width);
-		GUIUtil.autosizeTable(attacksTable, 0, 2);
+		GUIUtil.autosizeTable(attacksTable);
 		GUIUtil.cellValueFactories(attacksTable, "name", "tp", "at", "pa", "dk", "notes");
 
-		attackATColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99, 1, false));
+		attackATColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99));
 		attackATColumn.setOnEditCommit(t -> t.getRowValue().setAt(t.getNewValue()));
-		attackPAColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99, 1, false));
+		attackPAColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99));
 		attackPAColumn.setOnEditCommit(t -> t.getRowValue().setPa(t.getNewValue()));
 
 		attackNameColumn.setCellFactory(o -> {
@@ -187,9 +187,6 @@ public class AttackTable {
 
 			return row;
 		});
-
-		attacksTable.setMinHeight(26);
-		attacksTable.setMaxHeight(26);
 	}
 
 	public void setCharacter(final JSONObject newCharacter) {
@@ -208,8 +205,5 @@ public class AttackTable {
 		for (final String attack : attacks.keySet()) {
 			attacksTable.getItems().add(new Attack(attack, attacks.getObj(attack)));
 		}
-
-		attacksTable.setMinHeight(attacksTable.getItems().size() * 28 + 26);
-		attacksTable.setMaxHeight(attacksTable.getItems().size() * 28 + 26);
 	}
 }
