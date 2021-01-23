@@ -141,8 +141,9 @@ public class Spell extends Talent {
 				actualGroup.removeKey(name.get());
 				actualSpell = null;
 				actualGroup.notifyListeners(null);
+			} else {
+				actualSpell.notifyListeners(null);
 			}
-			actualSpell.notifyListeners(null);
 			actual = null;
 		}
 	}
