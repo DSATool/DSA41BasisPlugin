@@ -557,7 +557,9 @@ public class HeroUtil {
 			case "Talent":
 				final JSONObject talents = ResourceManager.getResource("data/Talente");
 				for (final String talentgroup : talents.keySet()) {
-					choices.addAll(talents.getObj(talentgroup).keySet());
+					if (!"Meta-Talente".equals(talentgroup)) {
+						choices.addAll(talents.getObj(talentgroup).keySet());
+					}
 				}
 				break;
 			case "Zauber":
