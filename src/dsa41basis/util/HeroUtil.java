@@ -562,6 +562,18 @@ public class HeroUtil {
 					}
 				}
 				break;
+			case "Sonderfertigkeit":
+				final JSONObject skills = ResourceManager.getResource("data/Sonderfertigkeiten");
+				for (final String skillGroup : skills.keySet()) {
+					choices.addAll(skills.getObj(skillGroup).keySet());
+				}
+				choices.addAll(ResourceManager.getResource("data/Liturgien").keySet());
+				final JSONObject ritualSkills = ResourceManager.getResource("data/Ritual");
+				for (final String ritualGroup : ritualSkills.keySet()) {
+					choices.addAll(ritualSkills.getObj(ritualGroup).keySet());
+				}
+				choices.addAll(ResourceManager.getResource("data/Schamanenrituale").keySet());
+				break;
 			case "Zauber":
 				choices.addAll(ResourceManager.getResource("data/Zauber").keySet());
 				break;
