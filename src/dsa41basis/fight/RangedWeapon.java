@@ -160,6 +160,11 @@ public class RangedWeapon extends OffensiveWeapon {
 		return load.get();
 	}
 
+	public int getWMraw() {
+		final JSONObject weaponModifiers = item.getObjOrDefault("Waffenmodifikatoren", baseItem.getObj("Waffenmodifikatoren"));
+		return weaponModifiers.getIntOrDefault("Attackemodifikator", 0);
+	}
+
 	public final ReadOnlyIntegerProperty loadProperty() {
 		return load;
 	}
@@ -297,5 +302,11 @@ public class RangedWeapon extends OffensiveWeapon {
 			item.getObj("Anzahl").put("Gesamt", amount);
 		}
 		item.notifyListeners(null);
+	}
+
+	public final void setWM(final int atMod) {
+		final JSONObject wm = item.getObj("Waffenmodifikatoren");
+		wm.put("Attackemodifikator", atMod);
+		wm.notifyListeners(null);
 	}
 }

@@ -467,7 +467,7 @@ public class HeroUtil {
 		}
 
 		final JSONObject weaponModifiers = weapon == null ? null : weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
-		final int weaponModifier = closeCombat && weaponModifiers != null ? weaponModifiers.getIntOrDefault("Attackemodifikator", 0) : 0;
+		final int weaponModifier = weaponModifiers != null ? weaponModifiers.getIntOrDefault("Attackemodifikator", 0) : 0;
 
 		final JSONObject weaponMastery = weapon == null ? null : HeroUtil.getSpecialisation(actualSkills.getArrOrDefault("Waffenmeister", null), type,
 				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
