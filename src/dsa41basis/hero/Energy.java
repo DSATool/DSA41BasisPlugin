@@ -27,7 +27,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.paint.Color;
 import jsonant.value.JSONObject;
 
-public class Energy extends DerivedValue {
+public class Energy extends DerivedValue implements Enhanceable {
 
 	public static Color COLOR_LEP = Color.RED;
 	public static Color COLOR_AUP = Color.DODGERBLUE;
@@ -40,6 +40,7 @@ public class Energy extends DerivedValue {
 	protected final IntegerProperty max = new SimpleIntegerProperty();
 	protected final IntegerProperty permanent = new SimpleIntegerProperty();
 	protected final IntegerProperty buyableMaximum = new SimpleIntegerProperty();
+	protected IntegerProperty ses;
 
 	protected final int enhancementCost;
 
@@ -52,6 +53,8 @@ public class Energy extends DerivedValue {
 		enhancementCost = derivation.getIntOrDefault("Zukauf", 8);
 
 		recalculate(derivation, hero);
+
+		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
 	}
 
 	public final IntegerProperty boughtProperty() {
@@ -113,6 +116,11 @@ public class Energy extends DerivedValue {
 		permanent.set(actual.getIntOrDefault("Permanent", 0));
 		max.set(value);
 		current.bind(max.add(manualModifier));
+	}
+
+	@Override
+	public final IntegerProperty sesProperty() {
+		return ses;
 	}
 
 	public final void setBought(final int bought) {

@@ -25,7 +25,7 @@ import javafx.beans.property.StringProperty;
 import jsonant.event.JSONListener;
 import jsonant.value.JSONObject;
 
-public class Attribute {
+public class Attribute implements Enhanceable {
 
 	protected final JSONObject actual;
 	private final IntegerProperty current;
@@ -59,6 +59,11 @@ public class Attribute {
 		return current;
 	}
 
+	@Override
+	public JSONObject getActual() {
+		return actual;
+	}
+
 	public final int getCurrent() {
 		return current.get();
 	}
@@ -77,10 +82,6 @@ public class Attribute {
 
 	public final String getName() {
 		return name.get();
-	}
-
-	public final int getSes() {
-		return ses.get();
 	}
 
 	public final int getStart() {
@@ -107,6 +108,7 @@ public class Attribute {
 		current.set(HeroUtil.getCurrentValue(actual, true));
 	}
 
+	@Override
 	public final IntegerProperty sesProperty() {
 		return ses;
 	}
@@ -129,17 +131,6 @@ public class Attribute {
 		}
 		actual.notifyListeners(null);
 		this.modifier.set(modifier);
-	}
-
-	public void setSes(final int ses) {
-		if (actual == null) return;
-		if (ses == 0) {
-			actual.removeKey("SEs");
-		} else {
-			actual.put("SEs", ses);
-		}
-		actual.notifyListeners(null);
-		this.ses.set(ses);
 	}
 
 	public final void setStart(final int start) {

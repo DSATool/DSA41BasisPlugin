@@ -32,7 +32,7 @@ import javafx.beans.property.StringProperty;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
-public class Talent {
+public class Talent implements Enhanceable {
 	private static Map<JSONObject, Talent> talentCache = new IdentityHashMap<>();
 
 	public static Talent getTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual,
@@ -100,6 +100,7 @@ public class Talent {
 		return attributes;
 	}
 
+	@Override
 	public JSONObject getActual() {
 		if (actual == null) {
 			insertTalent(true);
@@ -133,10 +134,6 @@ public class Talent {
 
 	public final String getName() {
 		return name.get();
-	}
-
-	public final int getSes() {
-		return ses.get();
 	}
 
 	public JSONObject getTalent() {
@@ -202,6 +199,7 @@ public class Talent {
 		}
 	}
 
+	@Override
 	public final IntegerProperty sesProperty() {
 		return ses;
 	}
@@ -219,17 +217,12 @@ public class Talent {
 		actual.notifyListeners(null);
 	}
 
+	@Override
 	public void setSes(final int ses) {
 		if (actual == null) {
 			insertTalent(false);
 		}
-		if (ses == 0) {
-			actual.removeKey("SEs");
-		} else {
-			actual.put("SEs", ses);
-		}
-		this.ses.set(ses);
-		actual.notifyListeners(null);
+		Enhanceable.super.setSes(ses);
 	}
 
 	public void setValue(final int value) {
