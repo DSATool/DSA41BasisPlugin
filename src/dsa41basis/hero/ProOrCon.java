@@ -531,10 +531,49 @@ public class ProOrCon {
 	}
 
 	public void setNumCheaper(final int numCheaper) {
-		if (numCheaper > 1) {
-			actual.put("Verbilligungen", numCheaper);
+		JSONObject cheaper = null;
+		final boolean isSkill = actual.getParent() == hero.getObj("Sonderfertigkeiten");
+		if (isSkill) {
+			final JSONObject cheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
+			if (proOrCon.containsKey("Auswahl") || proOrCon.containsKey("Freitext")) {
+				final JSONArray cheaperSkill = cheaperSkills.getArr(name.get());
+				for (int i = 0; i < cheaperSkill.size(); ++i) {
+					final JSONObject variant = cheaperSkill.getObj(i);
+					if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(getDescription())) {
+						continue;
+					}
+					if (proOrCon.containsKey("Freitext")
+							&& !variant.getStringOrDefault("Freitext", "").equals(proOrCon.containsKey("Auswahl") ? getDescription() : getVariant())) {
+						continue;
+					}
+					cheaper = variant;
+				}
+				if (cheaper == null) {
+					cheaper = new JSONObject(cheaperSkill);
+					if (proOrCon.containsKey("Auswahl")) {
+						cheaper.put("Auswahl", getDescription());
+					}
+					if (proOrCon.containsKey("Freitext")) {
+						cheaper.put("Freitext", proOrCon.containsKey("Auswahl") ? getDescription() : getVariant());
+					}
+					cheaperSkill.add(cheaper);
+				}
+			} else {
+				cheaperSkills.getObj(name.get());
+			}
 		} else {
-			actual.removeKey("Verbilligungen");
+			cheaper = actual;
+		}
+		if (numCheaper > 1) {
+			cheaper.put(isSkill ? "Verbilligungen" : "SEs", numCheaper);
+		} else if (numCheaper == 1) {
+			cheaper.removeKey(isSkill ? "Verbilligungen" : "SEs");
+		} else {
+			if (isSkill) {
+				cheaper.getParent().remove(cheaper);
+			} else {
+				cheaper.removeKey("SEs");
+			}
 		}
 		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
 		this.numCheaper.set(numCheaper);
