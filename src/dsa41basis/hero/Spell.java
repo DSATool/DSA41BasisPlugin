@@ -104,6 +104,7 @@ public class Spell extends Talent {
 			final JSONArray choiceTalent = actualSpell.getArr(representation.get());
 			if (actual == null) {
 				actual = new JSONObject(choiceTalent);
+				spellCache.put(actual, this);
 			}
 			if (!choiceTalent.contains(actual)) {
 				choiceTalent.add(actual);
@@ -111,6 +112,7 @@ public class Spell extends Talent {
 		} else {
 			if (actual == null) {
 				actual = new JSONObject(actualSpell);
+				spellCache.put(actual, this);
 			}
 			actualSpell.put(representation.get(), actual);
 		}
@@ -139,6 +141,7 @@ public class Spell extends Talent {
 			} else {
 				actualSpell.removeKey(representation.get());
 			}
+			spellCache.remove(actual);
 			if (actualSpell.size() == 0) {
 				actualGroup.removeKey(name.get());
 				actualSpell = null;
@@ -195,6 +198,7 @@ public class Spell extends Talent {
 		if (actual == null) {
 			insertTalent(false);
 		}
+
 		if (ses == 0) {
 			actual.removeKey("SEs");
 		} else {
@@ -202,6 +206,11 @@ public class Spell extends Talent {
 		}
 		this.ses.set(ses);
 		actualSpell.notifyListeners(null);
+
+		if (ses == 0 && !actual.getBoolOrDefault("aktiviert", true) && !actual.getBoolOrDefault("Hauszauber", false)
+				&& !actual.getBoolOrDefault("Leittalent", false)) {
+			removeTalent();
+		}
 	}
 
 	@Override
@@ -213,8 +222,12 @@ public class Spell extends Talent {
 			insertTalent(false);
 		}
 		if (value == Integer.MIN_VALUE) {
-			actual.removeKey("ZfW");
-			actual.put("aktiviert", false);
+			if (ses.get() == 0 && !actual.getBoolOrDefault("Hauszauber", false) && !actual.getBoolOrDefault("Leittalent", false)) {
+				removeTalent();
+			} else {
+				actual.removeKey("ZfW");
+				actual.put("aktiviert", false);
+			}
 		} else {
 			actual.put("ZfW", value);
 			actual.removeKey("aktiviert");

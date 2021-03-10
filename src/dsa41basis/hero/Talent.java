@@ -153,6 +153,7 @@ public class Talent implements Enhanceable {
 			final JSONArray choiceTalent = actualGroup.getArr(name.get());
 			if (actual == null) {
 				actual = new JSONObject(choiceTalent);
+				talentCache.put(actual, this);
 			}
 			if (!choiceTalent.contains(actual)) {
 				choiceTalent.add(actual);
@@ -160,6 +161,7 @@ public class Talent implements Enhanceable {
 		} else {
 			if (actual == null) {
 				actual = new JSONObject(actualGroup);
+				talentCache.put(actual, this);
 			}
 			if (actualGroup != null) {
 				actualGroup.put(name.get(), actual);
@@ -194,6 +196,7 @@ public class Talent implements Enhanceable {
 			} else {
 				actualGroup.removeKey(name.get());
 			}
+			talentCache.remove(actual);
 			actualGroup.notifyListeners(null);
 			actual = null;
 		}
@@ -222,7 +225,12 @@ public class Talent implements Enhanceable {
 		if (actual == null) {
 			insertTalent(false);
 		}
+
 		Enhanceable.super.setSes(ses);
+
+		if (ses == 0 && !actual.getBoolOrDefault("aktiviert", true) && !actual.getBoolOrDefault("Leittalent", false)) {
+			removeTalent();
+		}
 	}
 
 	public void setValue(final int value) {
@@ -230,8 +238,12 @@ public class Talent implements Enhanceable {
 			insertTalent(true);
 		}
 		if (value == Integer.MIN_VALUE) {
-			actual.removeKey("TaW");
-			actual.put("aktiviert", false);
+			if (ses.get() == 0 && !actual.getBoolOrDefault("Leittalent", false)) {
+				removeTalent();
+			} else {
+				actual.removeKey("TaW");
+				actual.put("aktiviert", false);
+			}
 		} else {
 			actual.put("TaW", value);
 			actual.removeKey("aktiviert");
