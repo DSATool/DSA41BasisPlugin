@@ -57,9 +57,11 @@ public class Spell extends Talent {
 		this.actualSpell = actualSpell;
 
 		this.representation = new SimpleStringProperty(representation);
-		complexity = new SimpleStringProperty(DSAUtil.getEnhancementGroupString(spell.getIntOrDefault("Komplexität", 1)));
+		final JSONObject spellRepresentation = spell.getObj("Repräsentationen").getObjOrDefault(representation, spell);
+		final int complexityValue = spellRepresentation.getIntOrDefault("Komplexität", spell.getIntOrDefault("Komplexität", 1));
+		complexity = new SimpleStringProperty(DSAUtil.getEnhancementGroupString(complexityValue));
 
-		final boolean autoPrimaryTalent = spell.getObj("Repräsentationen").getObj(representation).getBoolOrDefault("Leittalent", false);
+		final boolean autoPrimaryTalent = spellRepresentation.getBoolOrDefault("Leittalent", spell.getBoolOrDefault("Leittalent", false));
 		primarySpell = new SimpleBooleanProperty(actualRepresentation == null ? false : actualRepresentation.getBoolOrDefault("Hauszauber", false));
 		primaryTalent = new SimpleBooleanProperty(
 				actualRepresentation == null ? autoPrimaryTalent : actualRepresentation.getBoolOrDefault("Leittalent", autoPrimaryTalent));
