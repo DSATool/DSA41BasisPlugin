@@ -30,6 +30,7 @@ public interface Enhanceable {
 
 	default public void setSes(final int ses) {
 		final JSONObject actual = getActual();
+		sesProperty().set(ses);
 		if (actual == null) return;
 		if (ses == 0) {
 			actual.removeKey("SEs");
@@ -37,6 +38,5 @@ public interface Enhanceable {
 			actual.put("SEs", ses);
 		}
 		actual.notifyListeners(null);
-		sesProperty().set(ses);
 	}
 }
