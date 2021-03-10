@@ -42,11 +42,6 @@ public class DerivedValue {
 
 		actual = basicValues.getObj(name);
 
-		if (actual == null) {
-			actual = new JSONObject(basicValues);
-			basicValues.put(name, actual);
-		}
-
 		recalculateListener = o -> recalculate(derivation, hero);
 
 		attributes.addListener(recalculateListener);
