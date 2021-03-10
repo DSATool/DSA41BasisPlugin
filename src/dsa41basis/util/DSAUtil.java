@@ -535,6 +535,7 @@ public class DSAUtil {
 		for (final String abbreviation : representations.keySet()) {
 			if (representation.equals(representations.getObj(abbreviation).getString("Name"))) return abbreviation;
 		}
+		ErrorLogger.log("Unbekannte Repräsentation " + representation);
 		return null;
 	}
 
