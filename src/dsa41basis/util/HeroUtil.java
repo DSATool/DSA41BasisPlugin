@@ -357,8 +357,14 @@ public class HeroUtil {
 				final JSONObject talentGroup = actualTalentGroups.getObj(talentGroupName);
 				if (talentGroup.containsKey(talentName)) return new Tuple<>((JSONValue) talentGroup.getUnsafe(talentName), talentGroup);
 			}
+
 			final JSONObject spells = hero.getObjOrDefault("Zauber", null);
 			if (spells != null && spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), spells);
+
+			final String groupName = findTalent(talentName)._2;
+			if ("Zauber".equals(groupName))
+				return new Tuple<>(null, hero.getObj("Zauber"));
+			else if (groupName != null) return new Tuple<>(null, actualTalentGroups.getObj(groupName));
 		}
 		return new Tuple<>(null, null);
 	}
