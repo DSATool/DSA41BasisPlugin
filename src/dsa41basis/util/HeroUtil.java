@@ -49,10 +49,10 @@ public class HeroUtil {
 		infight.put("Trefferpunkte/Körperkraft", TPKK);
 		final JSONObject weaponModifiers = new JSONObject(infight);
 		infight.put("Waffenmodifikatoren", weaponModifiers);
-		final JSONArray distanceClasses = new JSONArray(null);
+		final JSONArray distanceClasses = new JSONArray(infight);
 		distanceClasses.add("H");
 		infight.put("Distanzklassen", distanceClasses);
-		final JSONArray weaponTypes = new JSONArray(null);
+		final JSONArray weaponTypes = new JSONArray(infight);
 		weaponTypes.add("Raufen");
 		weaponTypes.add("Ringen");
 		infight.put("Waffentypen", weaponTypes);

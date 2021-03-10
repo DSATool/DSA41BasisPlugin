@@ -63,10 +63,10 @@ public class ResourceSanitizer {
 			result.put("Biografie", sortBiography(result, object.getObj("Biografie")));
 			result.put("Eigenschaften", sortByResource(result, object.getObj("Eigenschaften"), ResourceManager.getResource("data/Eigenschaften")));
 			result.put("Basiswerte", sortByResource(result, object.getObj("Basiswerte"), ResourceManager.getResource("data/Basiswerte")));
-			result.put("Vorteile", sortProConSkills(result, object.getObj("Vorteile")));
-			result.put("Nachteile", sortProConSkills(result, object.getObj("Nachteile")));
-			result.put("Sonderfertigkeiten", sortProConSkills(result, object.getObj("Sonderfertigkeiten")));
-			result.put("Verbilligte Sonderfertigkeiten", sortProConSkills(result, object.getObj("Verbilligte Sonderfertigkeiten")));
+			result.put("Vorteile", sortActual(result, object.getObj("Vorteile")));
+			result.put("Nachteile", sortActual(result, object.getObj("Nachteile")));
+			result.put("Sonderfertigkeiten", sortActual(result, object.getObj("Sonderfertigkeiten")));
+			result.put("Verbilligte Sonderfertigkeiten", sortActual(result, object.getObj("Verbilligte Sonderfertigkeiten")));
 			result.put("Talente", sortTalents(result, object.getObj("Talente")));
 			if (object.containsKey("Zauber")) {
 				result.put("Zauber", sortSpells(result, object.getObj("Zauber")));
@@ -75,70 +75,16 @@ public class ResourceSanitizer {
 			result.put("Historie", object.getArr("Historie").clone(result));
 			result.addAll(object, false);
 		}
+
 		return result;
 	};
 
 	private static final Collator comparator = Collator.getInstance(Locale.GERMANY);
 
-	private static JSONObject sortBiography(final JSONObject hero, final JSONObject object) {
-		final JSONObject result = new JSONObject(hero);
-		result.put("Vorname", object.getStringOrDefault("Vorname", ""));
-		result.put("Nachname", object.getStringOrDefault("Nachname", ""));
-		result.put("Geburtstag", object.getIntOrDefault("Geburtstag", 1));
-		result.put("Geburtsmonat", object.getIntOrDefault("Geburtsmonat", 1));
-		result.put("Geburtsjahr", object.getIntOrDefault("Geburtsjahr", 1000));
-		result.put("Augenfarbe", object.getStringOrDefault("Augenfarbe", ""));
-		if (object.containsKey("Schuppenfarbe 1")) {
-			result.put("Schuppenfarbe 1", object.getStringOrDefault("Schuppenfarbe 1", ""));
-			result.put("Schuppenfarbe 2", object.getStringOrDefault("Schuppenfarbe 2", ""));
-		} else {
-			result.put("Haarfarbe", object.getStringOrDefault("Haarfarbe", ""));
-			result.put("Hautfarbe", object.getStringOrDefault("Hautfarbe", ""));
-		}
-		result.put("Rasse", object.getStringOrDefault("Rasse", ""));
-		if (object.containsKey("Rasse:Modifikation")) {
-			result.put("Rasse:Modifikation", object.getArr("Rasse:Modifikation").clone(result));
-		}
-		result.put("Kultur", object.getStringOrDefault("Kultur", ""));
-		if (object.containsKey("Kultur:Modifikation")) {
-			result.put("Kultur:Modifikation", object.getArr("Kultur:Modifikation").clone(result));
-		}
-		result.put("Profession", object.getStringOrDefault("Profession", ""));
-		if (object.containsKey("Profession:Modifikation")) {
-			result.put("Profession:Modifikation", object.getArr("Profession:Modifikation").clone(result));
-		}
-		result.put("Abenteuerpunkte", object.getIntOrDefault("Abenteuerpunkte", 0));
-		result.put("Abenteuerpunkte-Guthaben", object.getIntOrDefault("Abenteuerpunkte-Guthaben", 0));
-		result.addAll(object, false);
-		return result;
-	}
-
-	private static JSONObject sortByResource(final JSONObject hero, final JSONObject object, final JSONObject resource) {
-		final JSONObject result = new JSONObject(hero);
-		for (final String key : resource.keySet()) {
-			if (object.containsKey(key)) {
-				result.put(key, object.getObj(key).clone(result));
-			}
-		}
-		result.addAll(object, false);
-		return result;
-	}
-
-	private static JSONObject sortInventory(final JSONObject hero, final JSONObject object) {
-		final JSONObject result = new JSONObject(hero);
-		result.put("Geld", object.getObj("Geld").clone(result));
-		result.put("Ausrüstung", object.getArr("Ausrüstung").clone(result));
-		if (object.containsKey("Tiere")) {
-			result.put("Tiere", object.getArr("Tiere").clone(result));
-		}
-		result.addAll(object, false);
-		return result;
-	}
-
-	private static JSONObject sortProConSkills(final JSONObject hero, final JSONObject object) {
+	private static JSONObject sortActual(final JSONObject parent, final JSONObject object) {
 		final Set<String> actual = new TreeSet<>(comparator);
 		actual.addAll(object.keySet());
-		final JSONObject result = new JSONObject(hero);
+		final JSONObject result = new JSONObject(parent);
 		for (final String key : actual) {
 			final Object value = object.getUnsafe(key);
 			if (value instanceof JSONObject) {
@@ -167,25 +113,80 @@ public class ResourceSanitizer {
 		return result;
 	}
 
-	private static JSONObject sortSpells(final JSONObject hero, final JSONObject object) {
+	private static JSONObject sortBiography(final JSONObject hero, final JSONObject bio) {
+		final JSONObject result = new JSONObject(hero);
+		result.put("Vorname", bio.getStringOrDefault("Vorname", ""));
+		result.put("Nachname", bio.getStringOrDefault("Nachname", ""));
+		result.put("Geburtstag", bio.getIntOrDefault("Geburtstag", 1));
+		result.put("Geburtsmonat", bio.getIntOrDefault("Geburtsmonat", 1));
+		result.put("Geburtsjahr", bio.getIntOrDefault("Geburtsjahr", 1000));
+		result.put("Augenfarbe", bio.getStringOrDefault("Augenfarbe", ""));
+		if (bio.containsKey("Schuppenfarbe 1")) {
+			result.put("Schuppenfarbe 1", bio.getStringOrDefault("Schuppenfarbe 1", ""));
+			result.put("Schuppenfarbe 2", bio.getStringOrDefault("Schuppenfarbe 2", ""));
+		} else {
+			result.put("Haarfarbe", bio.getStringOrDefault("Haarfarbe", ""));
+			result.put("Hautfarbe", bio.getStringOrDefault("Hautfarbe", ""));
+		}
+		result.put("Rasse", bio.getStringOrDefault("Rasse", ""));
+		if (bio.containsKey("Rasse:Modifikation")) {
+			result.put("Rasse:Modifikation", bio.getArr("Rasse:Modifikation").clone(result));
+		}
+		result.put("Kultur", bio.getStringOrDefault("Kultur", ""));
+		if (bio.containsKey("Kultur:Modifikation")) {
+			result.put("Kultur:Modifikation", bio.getArr("Kultur:Modifikation").clone(result));
+		}
+		result.put("Profession", bio.getStringOrDefault("Profession", ""));
+		if (bio.containsKey("Profession:Modifikation")) {
+			result.put("Profession:Modifikation", bio.getArr("Profession:Modifikation").clone(result));
+		}
+		result.put("Abenteuerpunkte", bio.getIntOrDefault("Abenteuerpunkte", 0));
+		result.put("Abenteuerpunkte-Guthaben", bio.getIntOrDefault("Abenteuerpunkte-Guthaben", 0));
+		result.addAll(bio, false);
+		return result;
+	}
+
+	private static JSONObject sortByResource(final JSONObject hero, final JSONObject object, final JSONObject resource) {
+		final JSONObject result = new JSONObject(hero);
+		for (final String key : resource.keySet()) {
+			if (object.containsKey(key)) {
+				result.put(key, object.getObj(key).clone(result));
+			}
+		}
+		result.addAll(object, false);
+		return result;
+	}
+
+	private static JSONObject sortInventory(final JSONObject hero, final JSONObject inventory) {
+		final JSONObject result = new JSONObject(hero);
+		result.put("Geld", inventory.getObj("Geld").clone(result));
+		result.put("Ausrüstung", inventory.getArr("Ausrüstung").clone(result));
+		if (inventory.containsKey("Tiere")) {
+			result.put("Tiere", inventory.getArr("Tiere").clone(result));
+		}
+		result.addAll(inventory, false);
+		return result;
+	}
+
+	private static JSONObject sortSpells(final JSONObject hero, final JSONObject spells) {
 		final Set<String> actual = new TreeSet<>(comparator);
-		actual.addAll(object.keySet());
+		actual.addAll(spells.keySet());
 		final JSONObject result = new JSONObject(hero);
 		for (final String key : actual) {
-			result.put(key, sortProConSkills(hero, object.getObj(key)));
+			result.put(key, sortActual(result, spells.getObj(key)));
 		}
 		return result;
 	}
 
-	private static JSONObject sortTalents(final JSONObject hero, final JSONObject object) {
+	private static JSONObject sortTalents(final JSONObject hero, final JSONObject talents) {
 		final JSONObject result = new JSONObject(hero);
 		final JSONObject talentGroups = ResourceManager.getResource("data/Talentgruppen");
 		for (final String key : talentGroups.keySet()) {
-			if (object.containsKey(key)) {
-				result.put(key, sortProConSkills(hero, object.getObj(key)));
+			if (talents.containsKey(key)) {
+				result.put(key, sortActual(result, talents.getObj(key)));
 			}
 		}
-		result.addAll(object, false);
+		result.addAll(talents, false);
 		return result;
 	}
 
