@@ -29,13 +29,15 @@ public interface Enhanceable {
 	public IntegerProperty sesProperty();
 
 	default public void setSes(final int ses) {
-		final JSONObject actual = getActual();
-		sesProperty().set(ses);
-		if (ses == 0) {
-			actual.removeKey("SEs");
-		} else {
-			actual.put("SEs", ses);
+		if (sesProperty().get() != ses) {
+			final JSONObject actual = getActual();
+			if (ses == 0) {
+				actual.removeKey("SEs");
+			} else {
+				actual.put("SEs", ses);
+			}
+			sesProperty().set(ses);
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 }

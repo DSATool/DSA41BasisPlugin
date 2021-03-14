@@ -149,6 +149,7 @@ public class Talent implements Enhanceable {
 	}
 
 	public void insertTalent(final boolean activated) {
+		boolean inserted = false;
 		if (actualGroup != null && (talent.containsKey("Auswahl") || talent.containsKey("Freitext"))) {
 			final JSONArray choiceTalent = actualGroup.getArr(name.get());
 			if (actual == null) {
@@ -157,20 +158,25 @@ public class Talent implements Enhanceable {
 			}
 			if (!choiceTalent.contains(actual)) {
 				choiceTalent.add(actual);
+				inserted = true;
 			}
 		} else {
 			if (actual == null) {
 				actual = new JSONObject(actualGroup);
 				talentCache.put(actual, this);
+				inserted = true;
 			}
-			if (actualGroup != null) {
+			if (actualGroup != null && !actualGroup.containsKey(name.get())) {
 				actualGroup.put(name.get(), actual);
+				inserted = true;
 			}
 		}
-		if (!activated) {
-			actual.put("aktiviert", false);
+		if (inserted) {
+			if (!activated) {
+				actual.put("aktiviert", false);
+			}
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 
 	public final boolean isPrimaryTalent() {
@@ -197,7 +203,9 @@ public class Talent implements Enhanceable {
 				actualGroup.removeKey(name.get());
 			}
 			talentCache.remove(actual);
-			actualGroup.notifyListeners(null);
+			if (actual != null) {
+				actualGroup.notifyListeners(null);
+			}
 			actual = null;
 		}
 	}
@@ -208,16 +216,18 @@ public class Talent implements Enhanceable {
 	}
 
 	public void setPrimaryTalent(final boolean primary) {
-		if (actual == null) {
-			insertTalent(false);
+		if (primaryTalent.get() != primary) {
+			if (actual == null) {
+				insertTalent(false);
+			}
+			if (primary) {
+				actual.put("Leittalent", true);
+			} else {
+				actual.removeKey("Leittalent");
+			}
+			primaryTalent.set(primary);
+			actual.notifyListeners(null);
 		}
-		if (primary) {
-			actual.put("Leittalent", true);
-		} else {
-			actual.removeKey("Leittalent");
-		}
-		primaryTalent.set(primary);
-		actual.notifyListeners(null);
 	}
 
 	@Override
@@ -234,36 +244,40 @@ public class Talent implements Enhanceable {
 	}
 
 	public void setValue(final int value) {
-		if (actual == null) {
-			insertTalent(true);
-		}
-		if (value == Integer.MIN_VALUE) {
-			if (ses.get() == 0 && !actual.getBoolOrDefault("Leittalent", false)) {
-				removeTalent();
-			} else {
-				actual.removeKey("TaW");
-				actual.put("aktiviert", false);
+		if (this.value.get() != value) {
+			if (actual == null) {
+				insertTalent(true);
 			}
-		} else {
-			actual.put("TaW", value);
-			actual.removeKey("aktiviert");
+			if (value == Integer.MIN_VALUE) {
+				if (ses.get() == 0 && !actual.getBoolOrDefault("Leittalent", false)) {
+					removeTalent();
+				} else {
+					actual.removeKey("TaW");
+					actual.put("aktiviert", false);
+				}
+			} else {
+				actual.put("TaW", value);
+				actual.removeKey("aktiviert");
+			}
+			this.value.set(value);
+			actual.notifyListeners(null);
 		}
-		this.value.set(value);
-		actual.notifyListeners(null);
 	}
 
 	public void setVariant(final String variant) {
-		if (actual == null) {
-			insertTalent(true);
+		if (!this.variant.get().equals(variant)) {
+			if (actual == null) {
+				insertTalent(true);
+			}
+			if (talent.containsKey("Auswahl")) {
+				actual.put("Auswahl", variant);
+			} else if (talent.containsKey("Freitext")) {
+				actual.put("Freitext", variant);
+			}
+			this.variant.set(variant);
+			displayName.set(name.get() + ": " + variant);
+			actual.notifyListeners(null);
 		}
-		if (talent.containsKey("Auswahl")) {
-			actual.put("Auswahl", variant);
-		} else if (talent.containsKey("Freitext")) {
-			actual.put("Freitext", variant);
-		}
-		this.variant.set(variant);
-		displayName.set(name.get() + ": " + variant);
-		actual.notifyListeners(null);
 	}
 
 	public IntegerProperty valueProperty() {

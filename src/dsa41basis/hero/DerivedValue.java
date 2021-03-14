@@ -93,21 +93,25 @@ public class DerivedValue {
 	}
 
 	public final void setManualModifier(final int modifier) {
-		if (modifier == 0) {
-			actual.removeKey("Modifikator:Manuell");
-		} else {
-			actual.put("Modifikator:Manuell", modifier);
+		if (manualModifier.get() != modifier) {
+			if (modifier == 0) {
+				actual.removeKey("Modifikator:Manuell");
+			} else {
+				actual.put("Modifikator:Manuell", modifier);
+			}
+			manualModifier.set(modifier);
+			actual.notifyListeners(null);
 		}
-		manualModifier.set(modifier);
-		actual.notifyListeners(null);
 	}
 
 	public final void setModifier(final int modifier) {
-		if (modifier == 0) {
-			actual.removeKey("Modifikator");
-		} else {
-			actual.put("Modifikator", modifier);
+		if (actual.getIntOrDefault("Modifikator", 0) != modifier) {
+			if (modifier == 0) {
+				actual.removeKey("Modifikator");
+			} else {
+				actual.put("Modifikator", modifier);
+			}
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 }

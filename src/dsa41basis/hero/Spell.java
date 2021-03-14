@@ -97,6 +97,7 @@ public class Spell extends Talent {
 
 	@Override
 	public void insertTalent(final boolean activated) {
+		boolean inserted = false;
 		if (actualSpell == null) {
 			insertSpell();
 		}
@@ -108,18 +109,25 @@ public class Spell extends Talent {
 			}
 			if (!choiceTalent.contains(actual)) {
 				choiceTalent.add(actual);
+				inserted = true;
 			}
 		} else {
 			if (actual == null) {
 				actual = new JSONObject(actualSpell);
 				spellCache.put(actual, this);
+				inserted = true;
 			}
-			actualSpell.put(representation.get(), actual);
+			if (!actualSpell.containsKey(representation.get())) {
+				actualSpell.put(representation.get(), actual);
+				inserted = true;
+			}
 		}
-		if (!activated) {
-			actual.put("aktiviert", false);
+		if (inserted) {
+			if (!activated) {
+				actual.put("aktiviert", false);
+			}
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 
 	public final boolean isPrimarySpell() {
@@ -145,9 +153,13 @@ public class Spell extends Talent {
 			if (actualSpell.size() == 0) {
 				actualGroup.removeKey(name.get());
 				actualSpell = null;
-				actualGroup.notifyListeners(null);
+				if (actual != null) {
+					actualGroup.notifyListeners(null);
+				}
 			} else {
-				actualSpell.notifyListeners(null);
+				if (actual != null) {
+					actualSpell.notifyListeners(null);
+				}
 			}
 			actual = null;
 		}
@@ -158,58 +170,64 @@ public class Spell extends Talent {
 	}
 
 	public final void setPrimarySpell(final boolean primary) {
-		if (actualSpell == null) {
-			insertSpell();
+		if (primarySpell.get() != primary) {
+			if (actualSpell == null) {
+				insertSpell();
+			}
+			if (actual == null) {
+				insertTalent(false);
+			}
+			if (primary) {
+				actual.put("Hauszauber", true);
+			} else {
+				actual.removeKey("Hauszauber");
+			}
+			primarySpell.set(primary);
+			actualSpell.notifyListeners(null);
 		}
-		if (actual == null) {
-			insertTalent(false);
-		}
-		if (primary) {
-			actual.put("Hauszauber", true);
-		} else {
-			actual.removeKey("Hauszauber");
-		}
-		primarySpell.set(primary);
-		actualSpell.notifyListeners(null);
 	}
 
 	@Override
 	public void setPrimaryTalent(final boolean primary) {
-		if (actualSpell == null) {
-			insertSpell();
+		if (primaryTalent.get() != primary) {
+			if (actualSpell == null) {
+				insertSpell();
+			}
+			if (actual == null) {
+				insertTalent(false);
+			}
+			if (primary) {
+				actual.put("Leittalent", true);
+			} else {
+				actual.removeKey("Leittalent");
+			}
+			primaryTalent.set(primary);
+			actualSpell.notifyListeners(null);
 		}
-		if (actual == null) {
-			insertTalent(false);
-		}
-		if (primary) {
-			actual.put("Leittalent", true);
-		} else {
-			actual.removeKey("Leittalent");
-		}
-		primaryTalent.set(primary);
-		actualSpell.notifyListeners(null);
 	}
 
 	@Override
 	public void setSes(final int ses) {
-		if (actualSpell == null) {
-			insertSpell();
-		}
-		if (actual == null) {
-			insertTalent(false);
-		}
+		if (this.ses.get() != ses) {
+			if (actualSpell == null) {
+				insertSpell();
+			}
+			if (actual == null) {
+				insertTalent(false);
+			}
 
-		if (ses == 0) {
-			actual.removeKey("SEs");
-		} else {
-			actual.put("SEs", ses);
-		}
-		this.ses.set(ses);
-		actualSpell.notifyListeners(null);
+			if (ses == 0) {
+				actual.removeKey("SEs");
+			} else {
+				actual.put("SEs", ses);
+			}
+			this.ses.set(ses);
+			actualSpell.notifyListeners(null);
 
-		if (ses == 0 && !actual.getBoolOrDefault("aktiviert", true) && !actual.getBoolOrDefault("Hauszauber", false)
-				&& !actual.getBoolOrDefault("Leittalent", false)) {
-			removeTalent();
+			if (ses == 0 && !actual.getBoolOrDefault("aktiviert", true) && !actual.getBoolOrDefault("Hauszauber", false)
+					&& !actual.getBoolOrDefault("Leittalent", false)) {
+				removeTalent();
+			}
 		}
 	}
 

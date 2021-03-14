@@ -100,55 +100,60 @@ public class FightTalent extends Talent {
 	}
 
 	public final void setAt(final int at) {
-		if (!attackOnly.get()) {
-			pa.set(value.get() - at);
-			actual.put("PA", pa.get());
+		if (this.at.get() != at) {
+			if (!attackOnly.get()) {
+				pa.set(value.get() - at);
+				actual.put("PA", pa.get());
+			}
+			actual.put("AT", at);
+			this.at.set(at);
+			actual.notifyListeners(null);
 		}
-		actual.put("AT", at);
-		actual.notifyListeners(null);
-		this.at.set(at);
 	}
 
 	public final void setPa(final int pa) {
 		if (attackOnly.get()) return;
-		at.set(value.get() - pa);
-		actual.put("AT", at.get());
-		actual.put("PA", pa);
-		actual.notifyListeners(null);
-		this.pa.set(pa);
+		if (this.pa.get() != pa) {
+			at.set(value.get() - pa);
+			actual.put("AT", at.get());
+			actual.put("PA", pa);
+			this.pa.set(pa);
+			actual.notifyListeners(null);
+		}
 	}
 
 	@Override
 	public final void setValue(final int value) {
-		super.setValue(value);
-
 		if (attackOnly.get()) {
 			setAt(value);
 			return;
-		}
-
-		int at = this.at.get();
-		int pa = this.pa.get();
-
-		final int diff = at - pa;
-
-		at = (value - diff + (diff < 0 ? 0 : 1)) / 2 + diff;
-		pa = value - at;
-
-		if (at - pa > 5) {
-			at -= 1;
-		} else if (at - pa < -5) {
-			at += 1;
-		}
-
-		if (value == 0) {
-			at = 0;
-		} else if (value > 0) {
-			at = Math.min(value, Math.max(0, at));
 		} else {
-			at = Math.max(value, Math.min(at, 0));
+
+			int at = this.at.get();
+			int pa = this.pa.get();
+
+			final int diff = at - pa;
+
+			at = (value - diff + (diff < 0 ? 0 : 1)) / 2 + diff;
+			pa = value - at;
+
+			if (at - pa > 5) {
+				at -= 1;
+			} else if (at - pa < -5) {
+				at += 1;
+			}
+
+			if (value == 0) {
+				at = 0;
+			} else if (value > 0) {
+				at = Math.min(value, Math.max(0, at));
+			} else {
+				at = Math.max(value, Math.min(at, 0));
+			}
+
+			setAt(at);
 		}
 
-		setAt(at);
+		super.setValue(value);
 	}
 }

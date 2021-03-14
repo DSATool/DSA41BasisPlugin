@@ -498,117 +498,127 @@ public class ProOrCon {
 	}
 
 	public final void setCost(final int cost) {
-		actual.put("Kosten", cost);
-		this.cost.set(cost);
-		actual.notifyListeners(null);
+		if (this.cost.get() != cost) {
+			actual.put("Kosten", cost);
+			this.cost.set(cost);
+			actual.notifyListeners(null);
+		}
 	}
 
 	public void setDescription(final String description, final boolean applyEffect) {
-		if (applyEffect) {
-			HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
-		}
-		if (proOrCon.containsKey("Auswahl") || "Auswahl".equals(proOrCon.getString("Spezialisierung"))) {
-			actual.put("Auswahl", description);
-		} else if (proOrCon.containsKey("Freitext")) {
-			actual.put("Freitext", description);
-		} else if ("Breitgefächerte Bildung".equals(name.get())) {
-			actual.put("Profession", description);
-			variant.set("");
-		} else if ("Veteran".equals(name.get())) {
-			final JSONArray variants = new JSONArray(actual);
-			final String[] variantStrings = description.trim().split(", ");
-			for (final String variantName : variantStrings) {
-				variants.add(variantName);
+		if (!this.description.get().equals(description)) {
+			if (applyEffect) {
+				HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
 			}
-			actual.put("Profession:Modifikation", variants);
+			if (proOrCon.containsKey("Auswahl") || "Auswahl".equals(proOrCon.getString("Spezialisierung"))) {
+				actual.put("Auswahl", description);
+			} else if (proOrCon.containsKey("Freitext")) {
+				actual.put("Freitext", description);
+			} else if ("Breitgefächerte Bildung".equals(name.get())) {
+				actual.put("Profession", description);
+				variant.set("");
+			} else if ("Veteran".equals(name.get())) {
+				final JSONArray variants = new JSONArray(actual);
+				final String[] variantStrings = description.trim().split(", ");
+				for (final String variantName : variantStrings) {
+					variants.add(variantName);
+				}
+				actual.put("Profession:Modifikation", variants);
+			}
+			if (applyEffect) {
+				HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+			}
+			this.description.set(description);
+			updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
+			actual.notifyListeners(null);
 		}
-		if (applyEffect) {
-			HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
-		}
-		this.description.set(description);
-		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
-		actual.notifyListeners(null);
 	}
 
 	public void setNumCheaper(final int numCheaper) {
-		JSONObject cheaper = null;
-		final boolean isSkill = actual.getParent() == hero.getObj("Sonderfertigkeiten");
-		if (isSkill) {
-			final JSONObject cheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
-			if (proOrCon.containsKey("Auswahl") || proOrCon.containsKey("Freitext")) {
-				final JSONArray cheaperSkill = cheaperSkills.getArr(name.get());
-				for (int i = 0; i < cheaperSkill.size(); ++i) {
-					final JSONObject variant = cheaperSkill.getObj(i);
-					if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(getDescription())) {
-						continue;
-					}
-					if (proOrCon.containsKey("Freitext")
-							&& !variant.getStringOrDefault("Freitext", "").equals(proOrCon.containsKey("Auswahl") ? getDescription() : getVariant())) {
-						continue;
-					}
-					cheaper = variant;
-				}
-				if (cheaper == null) {
-					cheaper = new JSONObject(cheaperSkill);
-					if (proOrCon.containsKey("Auswahl")) {
-						cheaper.put("Auswahl", getDescription());
-					}
-					if (proOrCon.containsKey("Freitext")) {
-						cheaper.put("Freitext", proOrCon.containsKey("Auswahl") ? getDescription() : getVariant());
-					}
-					cheaperSkill.add(cheaper);
-				}
-			} else {
-				cheaperSkills.getObj(name.get());
-			}
-		} else {
-			cheaper = actual;
-		}
-		if (numCheaper > 1) {
-			cheaper.put(isSkill ? "Verbilligungen" : "SEs", numCheaper);
-		} else if (numCheaper == 1) {
-			cheaper.removeKey(isSkill ? "Verbilligungen" : "SEs");
-		} else {
+		if (this.numCheaper.get() != numCheaper) {
+			JSONObject cheaper = null;
+			final boolean isSkill = actual.getParent() == hero.getObj("Sonderfertigkeiten");
 			if (isSkill) {
-				cheaper.getParent().remove(cheaper);
+				final JSONObject cheaperSkills = hero.getObj("Verbilligte Sonderfertigkeiten");
+				if (proOrCon.containsKey("Auswahl") || proOrCon.containsKey("Freitext")) {
+					final JSONArray cheaperSkill = cheaperSkills.getArr(name.get());
+					for (int i = 0; i < cheaperSkill.size(); ++i) {
+						final JSONObject variant = cheaperSkill.getObj(i);
+						if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(getDescription())) {
+							continue;
+						}
+						if (proOrCon.containsKey("Freitext")
+								&& !variant.getStringOrDefault("Freitext", "").equals(proOrCon.containsKey("Auswahl") ? getDescription() : getVariant())) {
+							continue;
+						}
+						cheaper = variant;
+					}
+					if (cheaper == null) {
+						cheaper = new JSONObject(cheaperSkill);
+						if (proOrCon.containsKey("Auswahl")) {
+							cheaper.put("Auswahl", getDescription());
+						}
+						if (proOrCon.containsKey("Freitext")) {
+							cheaper.put("Freitext", proOrCon.containsKey("Auswahl") ? getDescription() : getVariant());
+						}
+						cheaperSkill.add(cheaper);
+					}
+				} else {
+					cheaperSkills.getObj(name.get());
+				}
 			} else {
-				cheaper.removeKey("SEs");
+				cheaper = actual;
 			}
+			if (numCheaper > 1) {
+				cheaper.put(isSkill ? "Verbilligungen" : "SEs", numCheaper);
+			} else if (numCheaper == 1) {
+				cheaper.removeKey(isSkill ? "Verbilligungen" : "SEs");
+			} else {
+				if (isSkill) {
+					cheaper.getParent().remove(cheaper);
+				} else {
+					cheaper.removeKey("SEs");
+				}
+			}
+			updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
+			this.numCheaper.set(numCheaper);
+			actual.notifyListeners(null);
 		}
-		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
-		this.numCheaper.set(numCheaper);
-		actual.notifyListeners(null);
 	}
 
 	public void setValue(final int value) {
-		HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
-		actual.put("Stufe", value);
-		HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
-		updateCost(value, actual.getString("Auswahl"), actual.getString("Freitext"));
-		this.value.set(value);
-		actual.notifyListeners(null);
+		if (this.value.get() != value) {
+			HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
+			actual.put("Stufe", value);
+			HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+			updateCost(value, actual.getString("Auswahl"), actual.getString("Freitext"));
+			this.value.set(value);
+			actual.notifyListeners(null);
+		}
 	}
 
 	public void setVariant(final String variant, final boolean applyEffect) {
-		if (applyEffect) {
-			HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
-		}
-		if (proOrCon.containsKey("Auswahl") && proOrCon.containsKey("Freitext")) {
-			actual.put("Freitext", variant);
-		} else if ("Breitgefächerte Bildung".equals(name.get())) {
-			final JSONArray variants = new JSONArray(actual);
-			final String[] variantStrings = variant.trim().split(", ");
-			for (final String variantName : variantStrings) {
-				variants.add(variantName);
+		if (!getVariant().equals(variant)) {
+			if (applyEffect) {
+				HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
 			}
-			actual.put("Profession:Modifikation", variants);
+			if (proOrCon.containsKey("Auswahl") && proOrCon.containsKey("Freitext")) {
+				actual.put("Freitext", variant);
+			} else if ("Breitgefächerte Bildung".equals(name.get())) {
+				final JSONArray variants = new JSONArray(actual);
+				final String[] variantStrings = variant.trim().split(", ");
+				for (final String variantName : variantStrings) {
+					variants.add(variantName);
+				}
+				actual.put("Profession:Modifikation", variants);
+			}
+			if (applyEffect) {
+				HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
+			}
+			this.variant.set(variant);
+			updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
+			actual.notifyListeners(null);
 		}
-		if (applyEffect) {
-			HeroUtil.applyEffect(hero, name.get(), proOrCon, actual);
-		}
-		this.variant.set(variant);
-		updateCost(value.get(), actual.getString("Auswahl"), actual.getString("Freitext"));
-		actual.notifyListeners(null);
 	}
 
 	protected void updateCost(final int value, final String choice, final String text) {

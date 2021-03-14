@@ -124,20 +124,26 @@ public class Energy extends DerivedValue implements Enhanceable {
 	}
 
 	public final void setBought(final int bought) {
-		if (bought == 0) {
-			actual.removeKey("Kauf");
-		} else {
-			actual.put("Kauf", bought);
+		if (this.bought.get() != bought) {
+			if (bought == 0) {
+				actual.removeKey("Kauf");
+			} else {
+				actual.put("Kauf", bought);
+			}
+			this.bought.set(bought);
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 
 	public final void setPermanent(final int permanent) {
-		if (permanent == 0) {
-			actual.removeKey("Permanent");
-		} else {
-			actual.put("Permanent", permanent);
+		if (this.permanent.get() != permanent) {
+			if (permanent == 0) {
+				actual.removeKey("Permanent");
+			} else {
+				actual.put("Permanent", permanent);
+			}
+			this.permanent.set(permanent);
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 }

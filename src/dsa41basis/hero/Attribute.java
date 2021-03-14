@@ -114,38 +114,46 @@ public class Attribute implements Enhanceable {
 	}
 
 	public final void setManualModifier(final int modifier) {
-		if (modifier == 0) {
-			actual.removeKey("Modifikator:Manuell");
-		} else {
-			actual.put("Modifikator:Manuell", modifier);
+		if (manualModifier.get() != modifier) {
+			if (modifier == 0) {
+				actual.removeKey("Modifikator:Manuell");
+			} else {
+				actual.put("Modifikator:Manuell", modifier);
+			}
+			manualModifier.set(modifier);
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
-		manualModifier.set(modifier);
 	}
 
 	public final void setModifier(final int modifier) {
-		if (modifier == 0) {
-			actual.removeKey("Modifikator");
-		} else {
-			actual.put("Modifikator", modifier);
+		if (this.modifier.get() != modifier) {
+			if (modifier == 0) {
+				actual.removeKey("Modifikator");
+			} else {
+				actual.put("Modifikator", modifier);
+			}
+			this.modifier.set(modifier);
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
-		this.modifier.set(modifier);
 	}
 
 	public final void setStart(final int start) {
-		if (start == 0) {
-			actual.removeKey("Start");
-		} else {
-			actual.put("Start", start);
+		if (actual.getIntOrDefault("Start", 0) != start) {
+			if (start == 0) {
+				actual.removeKey("Start");
+			} else {
+				actual.put("Start", start);
+			}
+			actual.notifyListeners(null);
 		}
-		actual.notifyListeners(null);
 	}
 
 	public final void setValue(final int value) {
-		actual.put("Wert", value);
-		actual.notifyListeners(null);
-		this.value.set(value);
+		if (this.value.get() != value) {
+			actual.put("Wert", value);
+			this.value.set(value);
+			actual.notifyListeners(null);
+		}
 	}
 
 	public final IntegerProperty valueProperty() {
