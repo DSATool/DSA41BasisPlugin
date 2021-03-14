@@ -108,7 +108,7 @@ public class Artifact extends InventoryItem {
 	public final void recompute() {
 		super.recompute();
 
-		type.set(item.getStringOrDefault("Typ", baseItem.getStringOrDefault("Typ", "Applicatus")));
+		type.set(item.getStringOrDefault("Artefakttyp", baseItem.getStringOrDefault("Artefakttyp", "Applicatus")));
 		final JSONObject loads = item.getObjOrDefault("Ladungen", baseItem.getObj("Ladungen"));
 		loadNum.set(loads.getIntOrDefault("Additiv", loads.getIntOrDefault("Multiplikativ", 1)));
 		loadFreq.set(loads.getStringOrDefault("Grundmenge", "Jahr"));
@@ -191,7 +191,7 @@ public class Artifact extends InventoryItem {
 	}
 
 	public final void setType(final String type) {
-		item.put("Typ", type);
+		item.put("Artefakttyp", type);
 		this.type.set(type);
 		item.notifyListeners(null);
 	}

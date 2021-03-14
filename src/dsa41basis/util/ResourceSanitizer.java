@@ -16,16 +16,47 @@
 package dsa41basis.util;
 
 import java.text.Collator;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import dsa41basis.inventory.Artifact;
 import dsatool.resources.ResourceManager;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
 public class ResourceSanitizer {
+
+	public static final Function<JSONObject, JSONObject> artifactSanitizer = object -> {
+		if (object.containsKey("Besitz")) {
+			final JSONArray equipment = object.getObj("Besitz").getArr("Ausrüstung");
+			for (final JSONObject item : equipment.getObjs()) {
+				if (item.containsKey("Typ")) {
+					final String type = item.getString("Typ");
+					if (Arrays.asList(Artifact.types).contains(type)) {
+						item.removeKey("Typ");
+						item.put("Artefakttyp", type);
+					}
+				}
+				for (final String key : item.keySet()) {
+					final Object value = item.getUnsafe(key);
+					if (value instanceof JSONObject) {
+						final JSONObject subItem = (JSONObject) value;
+						if (subItem.containsKey("Typ")) {
+							final String type = subItem.getString("Typ");
+							if (Arrays.asList(Artifact.types).contains(type)) {
+								subItem.removeKey("Typ");
+								subItem.put("Artefakttyp", type);
+							}
+						}
+					}
+				}
+			}
+		}
+		return object;
+	};
 
 	public static final Function<JSONObject, JSONObject> animalSanitizer = object -> {
 		if (object.containsKey("Tiere")) {
