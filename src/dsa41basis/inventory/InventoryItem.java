@@ -39,8 +39,12 @@ public class InventoryItem {
 		recomputeBase();
 	}
 
-	public JSONObject getItem() {
+	public JSONObject getBaseItem() {
 		return baseItem;
+	}
+
+	public JSONObject getItem() {
+		return item;
 	}
 
 	public final String getItemType() {
