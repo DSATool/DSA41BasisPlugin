@@ -25,7 +25,10 @@ import dsatool.plugins.Plugin;
 import dsatool.resources.ResourceManager;
 import dsatool.resources.Settings;
 import dsatool.settings.StringChoiceSetting;
+import dsatool.util.ErrorLogger;
 import dsatool.util.Util;
+import jsonant.value.JSONArray;
+import jsonant.value.JSONObject;
 
 /**
  * Basic plugin for the DSA 4.1 rules
@@ -55,7 +58,19 @@ public class DSA41Basis extends Plugin {
 		getNotifications = true;
 
 		ResourceManager.setDiscriminatingAttribute("Bücher");
-		ResourceManager.setPriorities(Settings.getSettingArray("Allgemein", "Bücher").getStrings());
+		JSONArray priorities = Settings.getSettingArray("Allgemein", "Bücher");
+		if (priorities == null) {
+			ErrorLogger.log(
+					"Einstellung für zu verwendende Bücher fehlt.\nAuf Standardeinstellung zurückgesetzt.\nBitte unter Einstellungen -> Regelwerke überprüfen.");
+			final JSONObject books = ResourceManager.getResource("data/Buecher");
+			final JSONObject general = ResourceManager.getResource("settings/Einstellungen").getObj("Allgemein");
+			priorities = new JSONArray(general);
+			for (final String bookName : books.getObj(books.keySet().iterator().next()).keySet()) {
+				priorities.add(bookName);
+			}
+			general.put("Bücher", priorities);
+		}
+		ResourceManager.setPriorities(priorities.getStrings());
 
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.animalSanitizer);
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.artifactSanitizer);
