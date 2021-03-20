@@ -15,6 +15,7 @@
  */
 package dsa41basis.fight;
 
+import dsa41basis.inventory.BooksEditor;
 import dsatool.resources.Settings;
 import dsatool.ui.ReactiveSpinner;
 import dsatool.util.ErrorLogger;
@@ -23,6 +24,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -100,6 +102,8 @@ public class ArmorEditor {
 	private HBox additionalBox;
 	@FXML
 	private CheckBox additionalArmor;
+	@FXML
+	private Hyperlink books;
 	@FXML
 	private Button cancelButton;
 
@@ -204,6 +208,9 @@ public class ArmorEditor {
 			item.setAdditionalArmor(additionalArmor.isSelected());
 			stage.close();
 		});
+
+		books.setVisible(true);
+		books.setOnAction(event -> new BooksEditor(stage, item));
 	}
 
 	public ArmorEditor(final Window window, final JSONObject item) {

@@ -2,6 +2,7 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
@@ -74,6 +75,7 @@
       <TextField fx:id="notes" prefWidth="200" />
    </HBox>
    <HBox spacing="2" alignment="CENTER_LEFT" >
+      <Hyperlink fx:id="books" text="Bücher" visible="false" />
       <Label maxWidth="Infinity" HBox.hgrow="ALWAYS" />
       <Button fx:id="okButton" text="Ok" prefWidth="75" />
       <Button fx:id="cancelButton" text="Abbrechen" prefWidth="75" />
