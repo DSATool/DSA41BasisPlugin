@@ -248,6 +248,7 @@ public class Talent implements Enhanceable {
 			if (actual == null) {
 				insertTalent(true);
 			}
+			final JSONObject actualTalent = actual;
 			if (value == Integer.MIN_VALUE) {
 				if (ses.get() == 0 && !actual.getBoolOrDefault("Leittalent", false)) {
 					removeTalent();
@@ -260,7 +261,7 @@ public class Talent implements Enhanceable {
 				actual.removeKey("aktiviert");
 			}
 			this.value.set(value);
-			actual.notifyListeners(null);
+			actualTalent.notifyListeners(null);
 		}
 	}
 
