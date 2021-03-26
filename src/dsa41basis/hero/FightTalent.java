@@ -126,7 +126,6 @@ public class FightTalent extends Talent {
 	public final void setValue(final int value) {
 		if (attackOnly.get()) {
 			setAt(value);
-			return;
 		} else {
 
 			int at = this.at.get();
