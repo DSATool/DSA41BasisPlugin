@@ -35,7 +35,7 @@ public class DSAToolJSONHeroLoader implements FileLoader {
 	}
 
 	@Override
-	public List<JSONObject> loadFile(File file) {
+	public List<JSONObject> loadFile(final File file) {
 		final String fileName = file.getName();
 		final JSONObject hero = ResourceManager.loadExternalResource(file, "characters/" + fileName.substring(0, fileName.indexOf('.')));
 		ResourceManager.moveResource(hero, "characters/" + hero.getObj("Biografie").getString("Vorname"));

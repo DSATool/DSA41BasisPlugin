@@ -17,9 +17,9 @@ package dsa41basis.fight;
 
 public interface WithDefense {
 
-	public String getName();
+	String getName();
 
-	public String getNotes();
+	String getNotes();
 
-	public int getPa();
+	int getPa();
 }

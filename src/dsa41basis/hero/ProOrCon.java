@@ -544,11 +544,9 @@ public class ProOrCon {
 					final JSONArray cheaperSkill = cheaperSkills.getArr(name.get());
 					for (int i = 0; i < cheaperSkill.size(); ++i) {
 						final JSONObject variant = cheaperSkill.getObj(i);
-						if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(getDescription())) {
-							continue;
-						}
-						if (proOrCon.containsKey("Freitext")
-								&& !variant.getStringOrDefault("Freitext", "").equals(proOrCon.containsKey("Auswahl") ? getDescription() : getVariant())) {
+						if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(getDescription()) ||
+								proOrCon.containsKey("Freitext") &&
+										!variant.getStringOrDefault("Freitext", "").equals(proOrCon.containsKey("Auswahl") ? getDescription() : getVariant())) {
 							continue;
 						}
 						cheaper = variant;
@@ -632,10 +630,8 @@ public class ProOrCon {
 					final JSONArray cheaperSkill = cheaperSkills.getArr(name.get());
 					for (int i = 0; i < cheaperSkill.size(); ++i) {
 						final JSONObject variant = cheaperSkill.getObj(i);
-						if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(choice)) {
-							continue;
-						}
-						if (proOrCon.containsKey("Freitext") && !variant.getStringOrDefault("Freitext", "").equals(text)) {
+						if (proOrCon.containsKey("Auswahl") && !variant.getStringOrDefault("Auswahl", "").equals(choice)
+								|| proOrCon.containsKey("Freitext") && !variant.getStringOrDefault("Freitext", "").equals(text)) {
 							continue;
 						}
 						numCheaper.set(variant.getIntOrDefault("Verbilligungen", 1));

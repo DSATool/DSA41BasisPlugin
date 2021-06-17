@@ -49,10 +49,10 @@ public class SingleRollDialog {
 
 		public String title;
 
-		private Type(final String title) {
+		Type(final String title) {
 			this.title = title;
 		}
-	};
+	}
 
 	@FXML
 	private VBox root;

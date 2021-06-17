@@ -22,9 +22,9 @@ import jsonant.value.JSONObject;
 
 public interface FileLoader {
 
-	public List<String> getExtensions();
+	List<String> getExtensions();
 
-	public String getName();
+	String getName();
 
-	public List<JSONObject> loadFile(File file);
+	List<JSONObject> loadFile(File file);
 }

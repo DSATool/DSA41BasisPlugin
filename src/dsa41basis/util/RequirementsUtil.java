@@ -416,7 +416,7 @@ public class RequirementsUtil {
 				final JSONObject actual = languages.getObj(language);
 				if (value < 0) {
 					if (actual == null || actual.getIntOrDefault("TaW", 0) > -value) return false;
-				} else if (actual != null && actual.getIntOrDefault("TaW", 0) >= value && actual.getBoolOrDefault("aktiviert", true)) return true;
+				} else if (actual != null && actual.getIntOrDefault("TaW", 0) >= value && actual.getBoolOrDefault("aktiviert", true)) {}
 				return true;
 			}
 			return value < 0;

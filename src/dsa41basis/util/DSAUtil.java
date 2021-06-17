@@ -17,6 +17,7 @@ package dsa41basis.util;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -634,7 +635,7 @@ public class DSAUtil {
 			variants.add(currentString.toString());
 		}, actual);
 
-		variants.sort(null);
+		Collections.sort(variants);
 
 		boolean first = true;
 		for (final String variant : variants) {

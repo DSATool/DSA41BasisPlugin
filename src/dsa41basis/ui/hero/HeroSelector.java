@@ -205,7 +205,7 @@ public class HeroSelector {
 
 		reload();
 
-		ResourceManager.addPathListener("characters/", (discard) -> {
+		ResourceManager.addPathListener("characters/", discard -> {
 			if (!discard) {
 				reload();
 			}

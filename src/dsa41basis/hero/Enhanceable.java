@@ -20,15 +20,15 @@ import jsonant.value.JSONObject;
 
 public interface Enhanceable {
 
-	public JSONObject getActual();
+	JSONObject getActual();
 
-	default public int getSes() {
+	default int getSes() {
 		return sesProperty().get();
 	}
 
-	public IntegerProperty sesProperty();
+	IntegerProperty sesProperty();
 
-	default public void setSes(final int ses) {
+	default void setSes(final int ses) {
 		if (sesProperty().get() != ses) {
 			final JSONObject actual = getActual();
 			if (ses == 0) {

@@ -18,5 +18,5 @@ package dsa41basis.ui.hero;
 import jsonant.value.JSONObject;
 
 public interface HeroController {
-	public void setHero(JSONObject hero);
+	void setHero(JSONObject hero);
 }

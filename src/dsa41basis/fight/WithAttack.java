@@ -19,13 +19,13 @@ import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 
 public interface WithAttack {
-	public int getAt();
+	int getAt();
 
-	public String getName();
+	String getName();
 
-	public String getTp();
+	String getTp();
 
-	public Tuple<Boolean, Boolean> getTPModifiers();
+	Tuple<Boolean, Boolean> getTPModifiers();
 
-	public Tuple3<Integer, Integer, Integer> getTpRaw();
+	Tuple3<Integer, Integer, Integer> getTpRaw();
 }

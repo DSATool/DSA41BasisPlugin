@@ -147,10 +147,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				final JSONArray actual = actualSkills.getArr(name);
 				for (int i = 0; i < cheaper.size(); ++i) {
 					final JSONObject cheaperSkill = cheaper.getObj(i);
-					if (hasChoice && !cheaperSkill.containsKey("Auswahl")) {
-						continue;
-					}
-					if (hasText && !cheaperSkill.containsKey("Freitext")) {
+					if ((hasChoice && !cheaperSkill.containsKey("Auswahl")) || (hasText && !cheaperSkill.containsKey("Freitext"))) {
 						continue;
 					}
 					for (int j = 0; j < actual.size(); ++j) {
@@ -371,9 +368,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			} else if ("Stammes-Achaz".equals(cultureName) && "beliebiger Stamm".equals(name)) {
 				variants.add("Stammes-Achaz");
 			} else {
-				for (final String variant : cultureReplacements.getStringOrDefault(name, name).split("\\|")) {
-					variants.add(variant);
-				}
+				Collections.addAll(variants, cultureReplacements.getStringOrDefault(name, name).split("\\|"));
 			}
 		}));
 
@@ -883,7 +878,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						} else if (skillName.startsWith("Wahrer Name")) {
 							final int detailsIndex = skillName.indexOf('(');
 							final String quality = skillName.substring(detailsIndex + 2, skillName.indexOf(' ', detailsIndex));
-							historyEntry.put("Stufe", Integer.valueOf(quality));
+							historyEntry.put("Stufe", Integer.parseInt(quality));
 							final String being = skillName.substring(skillName.lastIndexOf(' ') + 1, skillName.indexOf(')', detailsIndex));
 							historyEntry.put("Freitext", being);
 							skillName = "Wahre Namen";
@@ -1204,9 +1199,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						} else if ("Tänzer".equals(finalProName) && "Gaukler".equals(name)) {
 							proVariants.add("Gaukler-Tänzer");
 						} else {
-							for (final String variant : professionReplacements.getStringOrDefault(name, name).split("\\|")) {
-								proVariants.add(variant);
-							}
+							Collections.addAll(proVariants, professionReplacements.getStringOrDefault(name, name).split("\\|"));
 						}
 					}));
 
@@ -1530,9 +1523,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 			if ("Ork".equals(raceName) && "keine Variante".equals(name)) {
 				variants.add("Korogai");
 			} else {
-				for (final String variant : raceReplacements.getStringOrDefault(name, name).split("\\|")) {
-					variants.add(variant);
-				}
+				Collections.addAll(variants, raceReplacements.getStringOrDefault(name, name).split("\\|"));
 			}
 		}), new Tuple<>("groesse", () -> {
 			bio.put("Größe", Integer.parseInt(get("value")));
@@ -1745,7 +1736,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 
 				apply("sonderfertigkeit", new Tuple<>("auswahl", () -> {
 					final Map<String, String> values = extract("auswahl", new Tuple3<>("wahl", () -> get("position"), () -> get("value")));
-					enterSkill(skillName, Integer.valueOf(values.getOrDefault("0", "")), "", values.getOrDefault("2", ""), false, false);
+					enterSkill(skillName, Integer.parseInt(values.getOrDefault("0", "")), "", values.getOrDefault("2", ""), false, false);
 				}));
 				return;
 			} else if ("Akoluth".equals(name)) {

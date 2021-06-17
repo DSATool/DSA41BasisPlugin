@@ -162,7 +162,7 @@ public class AttackTable {
 			};
 
 			row.setOnMouseClicked(event -> {
-				if (event.getButton().equals(MouseButton.PRIMARY) && event.getClickCount() == 2) {
+				if (MouseButton.PRIMARY.equals(event.getButton()) && event.getClickCount() == 2) {
 					edit.accept(null);
 				}
 			});
