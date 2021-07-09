@@ -755,7 +755,7 @@ public class HeroUtil {
 	}
 
 	private static int getEffectiveBE(final JSONObject hero, final JSONObject talent) {
-		return Math.max(talent.getIntOrDefault("BEMultiplikativ", 1) * getBE(hero) + talent.getIntOrDefault("BEAdditiv", Integer.MIN_VALUE), 0);
+		return talent.getIntOrDefault("BEMultiplikativ", 0) * getBE(hero) + Math.max(getBE(hero) + talent.getIntOrDefault("BEAdditiv", Integer.MIN_VALUE), 0);
 	}
 
 	private static int getInfightSpecialisationCount(final JSONObject actualSkills, final String talent) {
