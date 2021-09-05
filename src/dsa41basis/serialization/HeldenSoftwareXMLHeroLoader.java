@@ -147,7 +147,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 				final JSONArray actual = actualSkills.getArr(name);
 				for (int i = 0; i < cheaper.size(); ++i) {
 					final JSONObject cheaperSkill = cheaper.getObj(i);
-					if ((hasChoice && !cheaperSkill.containsKey("Auswahl")) || (hasText && !cheaperSkill.containsKey("Freitext"))) {
+					if (hasChoice && !cheaperSkill.containsKey("Auswahl") || hasText && !cheaperSkill.containsKey("Freitext")) {
 						continue;
 					}
 					for (int j = 0; j < actual.size(); ++j) {
@@ -1469,7 +1469,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					if (pro.getBoolOrDefault("Abgestuft", false)) {
 						currentPro.put("Stufe", Integer.parseInt(value));
 					}
-					if ("Flink".equals(name)) {
+					if (Set.of("Flink", "Eisern").contains(name)) {
 						HeroUtil.applyEffect(hero, name, pro, currentPro);
 					}
 				}
@@ -1494,8 +1494,12 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 					if (con.getBoolOrDefault("Abgestuft", false)) {
 						currentCon.put("Stufe", Integer.parseInt(value));
 					}
-					if (Set.of("Behäbig", "Kleinwüchsig", "Lahm", "Zwergenwuchs").contains(name)) {
+					if (Set.of("Behäbig", "Kleinwüchsig", "Zwergenwuchs", "Glasknochen").contains(name)) {
 						HeroUtil.applyEffect(hero, name, con, currentCon);
+					} else if (Set.of("Einbeinig", "Lahm").contains(name)) {
+						final JSONObject originalAttributes = hero.getObj("Eigenschaften").clone(hero);
+						HeroUtil.applyEffect(hero, name, con, currentCon);
+						hero.put("Eigenschaften", originalAttributes);
 					}
 				}
 			}
