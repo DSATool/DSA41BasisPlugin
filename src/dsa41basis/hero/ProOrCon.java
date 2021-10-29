@@ -562,7 +562,7 @@ public class ProOrCon {
 						cheaperSkill.add(cheaper);
 					}
 				} else {
-					cheaperSkills.getObj(name.get());
+					cheaper = cheaperSkills.getObj(name.get());
 				}
 			} else {
 				cheaper = actual;
