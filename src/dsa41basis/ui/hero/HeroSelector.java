@@ -258,8 +258,10 @@ public class HeroSelector {
 	@FXML
 	private void removeHero() {
 		final int index = list.getSelectionModel().getSelectedIndex();
-		removeHero(index);
-		list.getSelectionModel().clearAndSelect(Math.min(list.getItems().size() - 1, index));
+		if (index > -1) {
+			removeHero(index);
+			list.getSelectionModel().clearAndSelect(Math.min(list.getItems().size() - 1, index));
+		}
 	}
 
 	private void removeHero(final int index) {

@@ -113,9 +113,17 @@ public class AttackTable {
 		GUIUtil.cellValueFactories(attacksTable, "name", "tp", "at", "pa", "dk", "notes");
 
 		attackATColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99));
-		attackATColumn.setOnEditCommit(t -> t.getRowValue().setAt(t.getNewValue()));
+		attackATColumn.setOnEditCommit(t -> {
+			if (t.getRowValue() != null) {
+				t.getRowValue().setAt(t.getNewValue());
+			}
+		});
 		attackPAColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99));
-		attackPAColumn.setOnEditCommit(t -> t.getRowValue().setPa(t.getNewValue()));
+		attackPAColumn.setOnEditCommit(t -> {
+			if (t.getRowValue() != null) {
+				t.getRowValue().setPa(t.getNewValue());
+			}
+		});
 
 		attackNameColumn.setCellFactory(o -> {
 			final TableCell<Attack, String> cell = new GraphicTableCell<>(false) {
