@@ -775,6 +775,18 @@ public class HeroUtil {
 		return Math.min(result, 2);
 	}
 
+	public static String getItemNotes(final JSONObject item, final JSONObject baseItem) {
+		String defaultNotes = " ";
+		if (item.containsKey("Bannschwert") && item.getObj("Bannschwert").getObj("Rituale").containsKey("Bannschwert")) {
+			defaultNotes = "Bannschwert";
+			if (item.getObj("Bannschwert").getObj("Rituale").containsKey("Apport")) {
+				defaultNotes += ", Apport";
+			}
+		}
+
+		return item.getStringOrDefault("Anmerkungen", baseItem.getStringOrDefault("Anmerkungen", defaultNotes));
+	}
+
 	public static int getLoadTime(final JSONObject hero, JSONObject weapon, final String type) {
 		final JSONObject baseWeapon = weapon;
 		if (weapon.containsKey("Fernkampfwaffe")) {
@@ -1373,6 +1385,81 @@ public class HeroUtil {
 			}
 		}
 		return professionString.toString();
+	}
+
+	public static String getWeaponNotes(final JSONObject weapon, final JSONObject baseWeapon, final String type, final JSONObject hero) {
+		final StringBuilder notes = new StringBuilder(weapon.getStringOrDefault("Anmerkungen", baseWeapon.getStringOrDefault("Anmerkungen", "")));
+		boolean first = notes.isEmpty();
+
+		if (Arrays.asList("Raufen", "Ringen").contains(type) && hero != null) {
+			final JSONObject anatomy = hero.getObj("Talente").getObj("Wissenstalente").getObjOrDefault("Anatomie", null);
+			if (anatomy != null && anatomy.getIntOrDefault("TaW", 0) >= 10) {
+				if (first) {
+					first = false;
+				} else {
+					notes.append(", ");
+				}
+				notes.append("+1TP");
+				if (weapon.getObj("Trefferpunkte").getBoolOrDefault("Ausdauerschaden", false)) {
+					notes.append("(A)");
+				}
+				notes.append(" gg. Menschen");
+			}
+		}
+
+		if (baseWeapon.containsKey("Bannschwert") && baseWeapon.getObj("Bannschwert").getObj("Rituale").containsKey("Bannschwert")) {
+			if (first) {
+				first = false;
+			} else {
+				notes.append(", ");
+			}
+			notes.append("Bannschwert");
+			if (baseWeapon.getObj("Bannschwert").getObj("Rituale").containsKey("Apport")) {
+				notes.append(", Apport");
+			}
+		}
+
+		final JSONObject weaponMastery = HeroUtil.getSpecialisation(hero.getObj("Sonderfertigkeiten").getArrOrDefault("Waffenmeister", null),
+				type, weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
+		if (weaponMastery != null) {
+			final JSONObject easierManeuvers = weaponMastery.getObjOrDefault("Manöver:Erleichterung", null);
+			final JSONArray additionalManeuvers = weaponMastery.getArrOrDefault("Manöver:Zusätzlich", null);
+			final JSONObject pros = weaponMastery.getObjOrDefault("Vorteile", null);
+			if (easierManeuvers != null) {
+				for (final String maneuver : easierManeuvers.keySet()) {
+					if (first) {
+						first = false;
+					} else {
+						notes.append(", ");
+					}
+					notes.append(maneuver);
+					notes.append('-');
+					notes.append(easierManeuvers.getInt(maneuver));
+				}
+			}
+			if (additionalManeuvers != null) {
+				for (final String maneuver : additionalManeuvers.getStrings()) {
+					if (first) {
+						first = false;
+					} else {
+						notes.append(", ");
+					}
+					notes.append(maneuver);
+				}
+			}
+			if (pros != null) {
+				for (final String pro : pros.keySet()) {
+					if (first) {
+						first = false;
+					} else {
+						notes.append(", ");
+					}
+					notes.append(pro);
+				}
+			}
+		}
+
+		return notes.toString();
 	}
 
 	public static int getZoneRS(final JSONObject hero, final String zone) {
