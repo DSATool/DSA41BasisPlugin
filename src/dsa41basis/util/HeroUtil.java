@@ -890,7 +890,7 @@ public class HeroUtil {
 	}
 
 	public static JSONObject getSpecialisation(final JSONArray specialisations, final String talent, final String specialisation) {
-		if (specialisations == null || specialisation == null) return null;
+		if (specialisations == null || talent == null || specialisation == null) return null;
 		for (int i = 0; i < specialisations.size(); ++i) {
 			final JSONObject skill = specialisations.getObj(i);
 			if (talent.equals(skill.getString("Auswahl"))) {
