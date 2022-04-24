@@ -16,6 +16,7 @@
 package dsa41basis.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -417,18 +418,23 @@ public class HeroUtil {
 		return new Tuple<>(null, null);
 	}
 
-	public static void foreachInventoryItem(final boolean isAnimal, final Predicate<JSONObject> filter, final BiConsumer<JSONObject, Boolean> function,
-			final JSONObject inventory) {
+	public static void foreachInventoryItem(final boolean isExtraInventory, final Predicate<JSONObject> filter, final BiConsumer<JSONObject, Boolean> function,
+			final JSONArray inventory) {
 		DSAUtil.foreach(filter, item -> {
-			function.accept(item, isAnimal);
-			foreachInventoryItem(isAnimal, filter, function, item);
-		}, inventory.getArr("Ausrüstung"));
+			function.accept(item, isExtraInventory);
+		}, inventory);
 	}
 
 	public static void foreachInventoryItem(final JSONObject hero, final Predicate<JSONObject> filter, final BiConsumer<JSONObject, Boolean> function) {
-		foreachInventoryItem(false, filter, function, hero.getObj("Besitz"));
+		foreachInventoryItem(false, filter, function, hero.getObj("Besitz").getArr("Ausrüstung"));
+		DSAUtil.foreach(inventory -> true, inventory -> {
+			foreachInventoryItem(true, filter, function, inventory.getArr("Ausrüstung"));
+		}, hero.getObj("Besitz").getArr("Inventare"));
 		DSAUtil.foreach(animal -> true, animal -> {
-			foreachInventoryItem(true, filter, function, animal);
+			foreachInventoryItem(true, filter, function, animal.getArr("Ausrüstung"));
+			DSAUtil.foreach(inventory -> true, inventory -> {
+				foreachInventoryItem(true, filter, function, inventory.getArr("Ausrüstung"));
+			}, animal.getArr("Inventare"));
 		}, hero.getArr("Tiere"));
 	}
 
