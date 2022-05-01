@@ -493,59 +493,61 @@ public class HeroUtil {
 	}
 
 	public static int getBE(final JSONObject hero) {
-		double BE = getBERaw(hero);
+		final double[] BE = { getBERaw(hero) };
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 		if (skills.containsKey("Rüstungsgewöhnung III")) {
-			BE -= 2;
+			BE[0] -= 2;
 		} else if (skills.containsKey("Rüstungsgewöhnung II")) {
-			BE -= 1;
+			BE[0] -= 1;
 		} else if (skills.containsKey("Rüstungsgewöhnung I")) {
-			final JSONArray items = hero.getObj("Besitz").getArr("Ausrüstung");
-			boolean BEReduced = false;
+			final boolean[] BEReduced = { false };
+			final String armorSet = hero.getObj("Kampf").getStringOrDefault("Rüstung", null);
 			final JSONArray armorAdaption = skills.getArr("Rüstungsgewöhnung I");
-			for (int i = 0; i < armorAdaption.size() && !BEReduced; ++i) {
-				for (int j = 0; j < items.size(); ++j) {
-					final JSONObject item = items.getObj(j);
-					final JSONArray categories = item.getArr("Kategorien");
-					if (categories.contains("Rüstung")) {
-						JSONObject armor = item;
-						if (item.containsKey("Rüstung")) {
-							armor = item.getObj("Rüstung");
-						}
-						if (armorAdaption.getObj(i).getString("Freitext").equals(armor.getStringOrDefault("Typ", item.getString("Typ")))) {
-							BE -= 1;
-							BEReduced = true;
-							break;
-						}
-					}
-				}
+			for (int i = 0; i < armorAdaption.size() && !BEReduced[0]; ++i) {
+				final String adaptation = armorAdaption.getObj(i).getString("Freitext");
+				foreachInventoryItem(hero, item -> !BEReduced[0] && item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"),
+						(item, extraInventory) -> {
+							JSONObject armor = item;
+							if (item.containsKey("Rüstung")) {
+								armor = item.getObj("Rüstung");
+							}
+							final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen",
+									item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
+							if (armorSet == null && armorSets.size() == 0 || armorSet != null && armorSets.contains(armorSet)) {
+								if (adaptation.equals(armor.getStringOrDefault("Typ", item.getString("Typ")))) {
+									BE[0] -= 1;
+									BEReduced[0] = true;
+								}
+							}
+						});
 			}
 		}
-		return (int) Math.max(0, Math.round(BE));
+		return (int) Math.max(0, Math.round(BE[0]));
 	}
 
 	public static double getBERaw(final JSONObject hero) {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
+		final String armorSet = hero.getObj("Kampf").getStringOrDefault("Rüstung", null);
 
-		final JSONArray items = hero.getObj("Besitz").getArr("Ausrüstung");
-		double BE = 0;
-		for (int i = 0; i < items.size(); ++i) {
-			final JSONObject item = items.getObj(i);
-			final JSONArray categories = item.getArr("Kategorien");
-			if (categories.contains("Rüstung")) {
-				JSONObject armor = item;
-				if (item.containsKey("Rüstung")) {
-					armor = item.getObj("Rüstung");
-				}
+		final double[] BE = { 0 };
+
+		foreachInventoryItem(hero, item -> item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"), (item, extraInventory) -> {
+			JSONObject armor = item;
+			if (item.containsKey("Rüstung")) {
+				armor = item.getObj("Rüstung");
+			}
+			final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen", item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
+			if (armorSet == null && armorSets.size() == 0 || armorSet != null && armorSets.contains(armorSet)) {
 				if ("Gesamtrüstung".equals(armorSetting)) {
-					BE += armor.getIntOrDefault("Gesamtbehinderung", item.getIntOrDefault("Gesamtbehinderung", 0));
+					BE[0] += armor.getIntOrDefault("Gesamtbehinderung", item.getIntOrDefault("Gesamtbehinderung", 0));
 				} else {
-					BE += armor.getDoubleOrDefault("Behinderung", item.getDoubleOrDefault("Behinderung",
+					BE[0] += armor.getDoubleOrDefault("Behinderung", item.getDoubleOrDefault("Behinderung",
 							armor.getIntOrDefault("Gesamtbehinderung", item.getIntOrDefault("Gesamtbehinderung", 0)).doubleValue()));
 				}
 			}
-		}
-		return BE;
+		});
+
+		return BE[0];
 	}
 
 	public static Set<String> getChoices(final JSONObject hero, final String choice, final String other) {
@@ -1470,34 +1472,34 @@ public class HeroUtil {
 
 	public static int getZoneRS(final JSONObject hero, final String zone) {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
+		final String armorSet = hero.getObj("Kampf").getStringOrDefault("Rüstung", null);
 
-		final JSONArray armorList = hero.getObj("Besitz").getArr("Ausrüstung");
-		double RS = 0;
-		for (int i = 0; i < armorList.size(); ++i) {
-			final JSONObject item = armorList.getObj(i);
-			final JSONArray categories = item.getArr("Kategorien");
-			if (categories != null && categories.contains("Rüstung")) {
-				JSONObject armor = item;
-				if (item.containsKey("Rüstung")) {
-					armor = item.getObj("Rüstung");
-				}
+		final double[] RS = { 0 };
+
+		foreachInventoryItem(hero, item -> item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"), (item, extraInventory) -> {
+			JSONObject armor = item;
+			if (item.containsKey("Rüstung")) {
+				armor = item.getObj("Rüstung");
+			}
+			final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen", item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
+			if (armorSet == null && armorSets.size() == 0 || armorSet != null && armorSets.contains(armorSet)) {
 				final JSONObject zoneRS = armor.getObjOrDefault("Rüstungsschutz", item.getObjOrDefault("Rüstungsschutz", null));
 				if ("Gesamtrüstung".equals(armorSetting) || zoneRS == null && !(armor.containsKey("Rüstungsschutz") || item.containsKey("Rüstungsschutz"))) {
-					RS += armor.getIntOrDefault("Gesamtrüstungsschutz", item.getIntOrDefault("Gesamtrüstungsschutz", 0));
+					RS[0] += armor.getIntOrDefault("Gesamtrüstungsschutz", item.getIntOrDefault("Gesamtrüstungsschutz", 0));
 				} else if (zoneRS == null) {
-					RS += armor.getDoubleOrDefault("Rüstungsschutz", item.getDoubleOrDefault("Rüstungsschutz", 0.0));
+					RS[0] += armor.getDoubleOrDefault("Rüstungsschutz", item.getDoubleOrDefault("Rüstungsschutz", 0.0));
 				} else {
-					RS += zoneRS.getIntOrDefault(zone, 0);
+					RS[0] += zoneRS.getIntOrDefault(zone, 0);
 				}
 			}
-		}
+		});
 
 		final JSONObject pros = hero.getObj("Vorteile");
 		if (pros.containsKey("Natürlicher Rüstungsschutz")) {
-			RS += pros.getObj("Natürlicher Rüstungsschutz").getIntOrDefault("Stufe", 0);
+			RS[0] += pros.getObj("Natürlicher Rüstungsschutz").getIntOrDefault("Stufe", 0);
 		}
 
-		return (int) Math.round(RS);
+		return (int) Math.round(RS[0]);
 	}
 
 	public static Integer interpretSpellRoll(final JSONObject hero, final String talentName, final String representation, final String specialization,
