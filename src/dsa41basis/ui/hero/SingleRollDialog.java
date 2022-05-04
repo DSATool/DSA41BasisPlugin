@@ -15,7 +15,7 @@
  */
 package dsa41basis.ui.hero;
 
-import java.util.Arrays;
+import java.util.List;
 
 import dsa41basis.fight.WithAttack;
 import dsa41basis.fight.WithDefense;
@@ -203,7 +203,7 @@ public class SingleRollDialog {
 		final JSONObject zones = ResourceManager.getResource("data/Wunden").getObj("Zonenwunden");
 		for (final String zone : zones.keySet()) {
 			if (zones.getObj(zone).getObj("Zufall").getArr("Werte").contains(roll)) {
-				final boolean needsBack = Arrays.asList("Brust", "Bauch").contains(zone);
+				final boolean needsBack = List.of("Brust", "Bauch").contains(zone);
 				back.setVisible(needsBack);
 				back.setManaged(needsBack);
 				if ("Beine".equals(zone))

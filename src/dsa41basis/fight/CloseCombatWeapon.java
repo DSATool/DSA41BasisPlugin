@@ -49,8 +49,8 @@ public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 
 	private Tuple<Integer, Integer> computeAtPa() {
 		if (hero != null && type.get() != null) {
-			final Integer at = HeroUtil.getAT(hero, item, type.get(), true, false, true);
-			final Integer pa = HeroUtil.getPA(hero, item, type.get(), false, true);
+			final Integer at = HeroUtil.getAT(hero, baseItem, type.get(), true, false, true);
+			final Integer pa = HeroUtil.getPA(hero, baseItem, type.get(), false, true);
 
 			return new Tuple<>(at != null ? at : 0, pa != null ? pa : Integer.MIN_VALUE);
 		} else

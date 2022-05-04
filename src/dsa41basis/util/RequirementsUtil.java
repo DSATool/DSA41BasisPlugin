@@ -93,7 +93,7 @@ public class RequirementsUtil {
 
 		for (int i = 0; i < skill.size() && !found; ++i) {
 			final JSONObject actualSkill = skill.getObj(i);
-			if (requiredChoice == null || requiredChoice.equals(actualSkill.getString(matchText ? "Freitext" : "Auswahl")) ^ negate) {
+			if (requiredChoice == null || requiredChoice.equals(actualSkill.getString(matchText ? "Freitext" : "Auswahl")) != negate) {
 				found = actualSkill.getIntOrDefault("Stufe", 0) >= requiredLevel;
 			}
 		}

@@ -56,7 +56,7 @@ public class RangedWeapon extends OffensiveWeapon {
 
 	private int computeAt() {
 		if (hero == null) return 0;
-		final Integer at = HeroUtil.getAT(hero, item, type.get(), false, false, true);
+		final Integer at = HeroUtil.getAT(hero, baseItem, type.get(), false, false, true);
 		return at != null ? at : 0;
 	}
 

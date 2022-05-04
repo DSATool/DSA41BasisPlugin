@@ -482,13 +482,13 @@ public class DSAUtil {
 		final JSONArray[] consonantic = new JSONArray[2];
 		for (int i = 0; i < generator.size(); ++i) {
 			final JSONObject part = generator.getObj(i);
-			if (part.containsKey("männlich") && male ^ part.getBool("männlich")) {
+			if (part.containsKey("männlich") && male != part.getBool("männlich")) {
 				continue;
 			}
-			if (part.containsKey("bürgerlich") && (middleClass || noble) ^ part.getBool("bürgerlich")) {
+			if (part.containsKey("bürgerlich") && (middleClass || noble) != part.getBool("bürgerlich")) {
 				continue;
 			}
-			if (part.containsKey("adlig") && noble ^ part.getBool("adlig")) {
+			if (part.containsKey("adlig") && noble != part.getBool("adlig")) {
 				continue;
 			}
 			if (part.containsKey("Wahrscheinlichkeit")) {
