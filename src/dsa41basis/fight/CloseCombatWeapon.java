@@ -17,9 +17,12 @@ package dsa41basis.fight;
 
 import dsa41basis.util.HeroUtil;
 import dsatool.util.Tuple;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -36,6 +39,8 @@ public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 	private final StringProperty tpkk = new SimpleStringProperty();
 	private final StringProperty special = new SimpleStringProperty();
 	private final StringProperty wm = new SimpleStringProperty();
+	private final BooleanProperty secondHand = new SimpleBooleanProperty();
+	private final BooleanProperty mainWeapon = new SimpleBooleanProperty();
 
 	public CloseCombatWeapon(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon, final JSONObject closeCombatTalents,
 			final JSONObject actualTalents) {
@@ -126,8 +131,20 @@ public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 		return ini;
 	}
 
+	public final boolean isMainWeapon() {
+		return mainWeapon.get();
+	}
+
+	public final boolean isSecondHand() {
+		return secondHand.get();
+	}
+
 	public final IntegerProperty lengthProperty() {
 		return length;
+	}
+
+	public final ReadOnlyBooleanProperty mainWeaponProperty() {
+		return mainWeapon;
 	}
 
 	public final ReadOnlyIntegerProperty paProperty() {
@@ -160,6 +177,10 @@ public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 		wm.set(weaponModifier.getIntOrDefault("Attackemodifikator", 0).toString() + "/" + weaponModifier.getIntOrDefault("Parademodifikator", 0));
 
 		special.set(computeSpecial());
+
+		secondHand.set(item.getBoolOrDefault("Zweithand", baseItem.getBoolOrDefault("Zweithand", false)));
+
+		mainWeapon.set(item.getBoolOrDefault("Hauptwaffe", baseItem.getBoolOrDefault("Hauptwaffe", false)));
 	}
 
 	@Override
@@ -167,6 +188,10 @@ public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 		final Tuple<Integer, Integer> atpa = computeAtPa();
 		at.set(atpa._1);
 		pa.set(atpa._2);
+	}
+
+	public final ReadOnlyBooleanProperty secondHandProperty() {
+		return secondHand;
 	}
 
 	public final void setBf(final int bf) {
@@ -196,6 +221,26 @@ public class CloseCombatWeapon extends OffensiveWeapon implements WithDefense {
 	public final void setLength(final int length) {
 		baseItem.put("Länge", length);
 		baseItem.notifyListeners(null);
+	}
+
+	public final void setMainWeapon(final boolean mainWeapon) {
+		if (mainWeapon) {
+			item.put("Hauptwaffe", true);
+		} else {
+			item.removeKey("Hauptwaffe");
+			baseItem.removeKey("Hauptwaffe");
+		}
+		item.notifyListeners(null);
+	}
+
+	public final void setSecondHand(final boolean secondHand) {
+		if (secondHand) {
+			item.put("Zweithand", true);
+		} else {
+			item.removeKey("Zweithand");
+			baseItem.removeKey("Zweithand");
+		}
+		item.notifyListeners(null);
 	}
 
 	public final void setSpecial(final boolean improvisational, final boolean twohanded, final boolean privileged) {

@@ -17,11 +17,13 @@ package dsa41basis.fight;
 
 import dsa41basis.inventory.InventoryItem;
 import dsa41basis.util.HeroUtil;
-import dsatool.resources.ResourceManager;
 import dsatool.util.Tuple;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyIntegerProperty;
 import javafx.beans.property.ReadOnlyStringProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -34,6 +36,7 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 	private final IntegerProperty ini = new SimpleIntegerProperty();
 	private final IntegerProperty pa = new SimpleIntegerProperty();
 	private final StringProperty wm = new SimpleStringProperty();
+	private final BooleanProperty mainWeapon = new SimpleBooleanProperty();
 
 	private final JSONObject hero;
 	private final boolean shield;
@@ -94,6 +97,14 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 		return ini;
 	}
 
+	public final boolean isMainWeapon() {
+		return mainWeapon.get();
+	}
+
+	public final ReadOnlyBooleanProperty mainWeaponProperty() {
+		return mainWeapon;
+	}
+
 	public final ReadOnlyIntegerProperty paProperty() {
 		return pa;
 	}
@@ -116,45 +127,17 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 		wm.set(weaponModifiers.getIntOrDefault("Attackemodifikator", 0).toString() + "/" + weaponModifiers.getIntOrDefault("Parademodifikator", 0));
 
 		weight.set(item.getDoubleOrDefault("Gewicht", baseItem.getDoubleOrDefault("Gewicht", 0.0)) * 40);
+
+		mainWeapon.set(item.getBoolOrDefault("Seitenwaffe", baseItem.getBoolOrDefault("Seitenwaffe", false)));
 	}
 
 	private int recomputePa(final JSONObject hero, final boolean shield, final JSONObject weaponModifiers) {
 		if (hero == null) return 0;
 
-		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
-
-		int PA = weaponModifiers.getIntOrDefault("Parademodifikator", 0);
-
-		if (shield) {
-			final int PABase = HeroUtil.deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero,
-					hero.getObj("Basiswerte").getObj("Parade-Basis"), true);
-			PA += PABase;
-
-			if (skills.containsKey("Linkhand")) {
-				PA += 1;
-			}
-			if (skills.containsKey("Schildkampf I")) {
-				PA += 2;
-			}
-			if (skills.containsKey("Schildkampf II")) {
-				PA += 2;
-			}
-
-			return PA;
-		} else {
-			if (skills.containsKey("Linkhand")) {
-				PA -= 4;
-				if (skills.containsKey("Parierwaffen I")) {
-					PA += 3;
-				}
-				if (skills.containsKey("Parierwaffen II")) {
-					PA += 3;
-				}
-
-				return PA;
-			} else
-				return Integer.MIN_VALUE;
-		}
+		if (shield)
+			return HeroUtil.getShieldPA(hero, baseItem, true);
+		else
+			return HeroUtil.getDefensiveWeaponPA(hero, baseItem, true);
 	}
 
 	public final void setBf(final int bf) {
@@ -169,6 +152,16 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 
 	public final void setIni(final int ini) {
 		item.put("Initiative:Modifikator", ini);
+		item.notifyListeners(null);
+	}
+
+	public final void setMainWeapon(final boolean mainWeapon) {
+		if (mainWeapon) {
+			item.put("Seitenwaffe", true);
+		} else {
+			item.removeKey("Seitenwaffe");
+			baseItem.removeKey("Seitenwaffe");
+		}
 		item.notifyListeners(null);
 	}
 

@@ -57,6 +57,7 @@ public class HeroUtil {
 		weaponTypes.add("Raufen");
 		weaponTypes.add("Ringen");
 		infight.put("Waffentypen", weaponTypes);
+		infight.put("Zweihändig", true);
 	}
 
 	public static final Set<String> scaleColors = new HashSet<>();
@@ -452,6 +453,22 @@ public class HeroUtil {
 
 	public static Integer getAT(final JSONObject hero, JSONObject weapon, final String type, final boolean closeCombat, final boolean wrongHand,
 			final boolean includeManualMods) {
+		JSONObject secondaryWeapon = null;
+		if (closeCombat) {
+			final JSONObject baseWeapon = weapon;
+			if (weapon != null && weapon.containsKey("Nahkampfwaffe")) {
+				weapon = weapon.getObj("Nahkampfwaffe");
+			}
+			if (!weapon.getBoolOrDefault("Zweihändig", weapon.getBoolOrDefault("Zweihändig", false))) {
+				secondaryWeapon = weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false)) ? getMainWeapon(hero)
+						: getSecondaryWeapon(hero);
+			}
+		}
+		return getAT(hero, weapon, type, closeCombat, wrongHand, secondaryWeapon, includeManualMods);
+	}
+
+	public static Integer getAT(final JSONObject hero, JSONObject weapon, final String type, final boolean closeCombat, final boolean wrongHand,
+			JSONObject secondaryWeapon, final boolean includeManualMods) {
 		final JSONObject baseWeapon = weapon;
 		if (weapon != null && weapon.containsKey(closeCombat ? "Nahkampfwaffe" : "Fernkampfwaffe")) {
 			weapon = weapon.getObj(closeCombat ? "Nahkampfwaffe" : "Fernkampfwaffe");
@@ -489,7 +506,67 @@ public class HeroUtil {
 
 		final int TPKKModifier = Math.min(getTPKKModifier(hero, weapon, baseWeapon), 0);
 
-		return baseValue + fromTalent + weaponModifier + specialisation + masteryAT - be + TPKKModifier;
+		int secondHandModifier = 0;
+
+		if (weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
+			if (!hero.getObj("Vorteile").containsKey("Beidhändig") && !actualSkills.containsKey("Beidhändiger Kampf II")) {
+				if (actualSkills.containsKey("Beidhändiger Kampf I")) {
+					secondHandModifier = -3;
+				} else if (actualSkills.containsKey("Linkand")) {
+					secondHandModifier = -6;
+				} else {
+					secondHandModifier = -9;
+				}
+			}
+		}
+
+		int secondWeaponModifier = 0;
+
+		if (secondaryWeapon != null) {
+			JSONObject secondaryBase = null;
+			boolean isCloseCombatWeapon = false;
+			final JSONValue parent = secondaryWeapon.getParent();
+			if (parent instanceof JSONObject) {
+				final JSONObject parentObject = (JSONObject) parent;
+				if ("Nahkampfwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
+					secondaryBase = parentObject;
+					isCloseCombatWeapon = true;
+				} else if ("Schild".equals(parentObject.keyOf(secondaryWeapon)) || "Parierwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
+					secondaryBase = parentObject;
+				}
+			}
+			if (secondaryBase == null) {
+				secondaryBase = secondaryWeapon;
+				if (secondaryWeapon.containsKey("Nahkampfwaffe")) {
+					secondaryWeapon = secondaryWeapon.getObj("Nahkampfwaffe");
+					isCloseCombatWeapon = true;
+				} else if (secondaryWeapon.containsKey("Schild")) {
+					secondaryWeapon = secondaryWeapon.getObj("Schild");
+				} else if (secondaryWeapon.containsKey("Parierwaffe")) {
+					secondaryWeapon = secondaryWeapon.getObj("Parierwaffe");
+				} else {
+					final JSONArray categories = secondaryWeapon.getArr("Kategorien");
+					if (categories.contains("Nahkampfwaffe")) {
+						isCloseCombatWeapon = true;
+					} else if (!categories.contains("Schild") && !categories.contains("Parierwaffe")) return null;
+				}
+			}
+			if (isCloseCombatWeapon) {
+				final String mainType = weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"));
+				if (!mainType.equals(secondaryWeapon.getStringOrDefault("Typ", secondaryBase.getString("Typ")))) {
+					if (type.equals(secondaryWeapon.getStringOrDefault("Waffentyp:Primär", secondaryBase.getString("Waffentyp:Primär")))) {
+						secondWeaponModifier = -1;
+					} else {
+						secondWeaponModifier = -2;
+					}
+				}
+			} else {
+				secondWeaponModifier = secondaryWeapon.getObjOrDefault("Waffenmodifikatoren", secondaryBase.getObj("Waffenmodifikatoren"))
+						.getIntOrDefault("Attackemodifikator", 0);
+			}
+		}
+
+		return baseValue + fromTalent + weaponModifier + specialisation + masteryAT - be + TPKKModifier + secondHandModifier + secondWeaponModifier;
 	}
 
 	public static int getBE(final JSONObject hero) {
@@ -747,6 +824,50 @@ public class HeroUtil {
 		return actual.getIntOrDefault("Wert", 0) + (includeManualMod ? actual.getIntOrDefault("Modifikator:Manuell", 0) : 0);
 	}
 
+	public static int getDefensiveWeaponPA(final JSONObject hero, final JSONObject defensiveWeapon, final boolean includeManualMods) {
+		return getDefensiveWeaponPA(hero, defensiveWeapon, getMainWeapon(hero), includeManualMods);
+	}
+
+	public static Integer getDefensiveWeaponPA(final JSONObject hero, JSONObject defensiveWeapon, JSONObject mainWeapon, final boolean includeManualMods) {
+		final JSONObject baseDefensiveWeapon = defensiveWeapon;
+		if (defensiveWeapon != null && defensiveWeapon.containsKey("Parierwaffe")) {
+			defensiveWeapon = defensiveWeapon.getObj("Parierwaffe");
+		}
+
+		final JSONObject weaponModifiers = defensiveWeapon == null ? null
+				: defensiveWeapon.getObjOrDefault("Waffenmodifikatoren", baseDefensiveWeapon.getObj("Waffenmodifikatoren"));
+		int PA = weaponModifiers == null ? 0 : weaponModifiers.getIntOrDefault("Parademodifikator", 0);
+
+		if (mainWeapon != null) {
+			final JSONObject baseWeapon = mainWeapon;
+			if (mainWeapon != null && mainWeapon.containsKey("Nahkampfwaffe")) {
+				mainWeapon = mainWeapon.getObj("Nahkampfwaffe");
+			}
+			String type = mainWeapon.getStringOrDefault("Waffentyp:Primär", baseWeapon.getStringOrDefault("Waffentyp:Primär", null));
+			if (type == null) {
+				type = mainWeapon.getArrOrDefault("Waffentypen", baseWeapon.getArr("Waffentypen")).getString(0);
+			}
+			final Integer mainPA = getPA(hero, mainWeapon, type, false, null, includeManualMods);
+			if (mainPA == null) return null;
+			PA += mainPA;
+		}
+
+		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
+
+		if (skills.containsKey("Linkhand")) {
+			PA -= 4;
+			if (skills.containsKey("Parierwaffen I")) {
+				PA += 3;
+			}
+			if (skills.containsKey("Parierwaffen II")) {
+				PA += 3;
+			}
+
+			return PA;
+		} else
+			return Integer.MIN_VALUE;
+	}
+
 	public static int getDistance(final JSONObject hero, JSONObject weapon, final String type, final String distance) {
 		final JSONObject baseWeapon = weapon;
 		if (weapon != null && weapon.containsKey("Fernkampfwaffe")) {
@@ -826,7 +947,40 @@ public class HeroUtil {
 		return (int) Math.round(loadTime);
 	}
 
+	public static JSONObject getMainWeapon(final JSONObject hero) {
+		final JSONObject[] mainWeapon = { null };
+
+		foreachInventoryItem(hero, item -> mainWeapon[0] == null && item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Nahkampfwaffe"),
+				(item, extraInventory) -> {
+					final JSONObject baseWeapon = item;
+					if (item != null && item.containsKey("Nahkampfwaffe")) {
+						item = item.getObj("Nahkampfwaffe");
+					}
+
+					if (item.getBoolOrDefault("Hauptwaffe", baseWeapon.getBoolOrDefault("Hauptwaffe", false))
+							&& !item.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
+						mainWeapon[0] = baseWeapon;
+					}
+				});
+
+		return mainWeapon[0];
+	}
+
 	public static Integer getPA(final JSONObject hero, JSONObject weapon, final String type, final boolean wrongHand, final boolean includeManualMods) {
+		JSONObject secondaryWeapon = null;
+		final JSONObject baseWeapon = weapon;
+		if (weapon != null && weapon.containsKey("Nahkampfwaffe")) {
+			weapon = weapon.getObj("Nahkampfwaffe");
+		}
+		if (!weapon.getBoolOrDefault("Zweihändig", weapon.getBoolOrDefault("Zweihändig", false))) {
+			secondaryWeapon = weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false)) ? getMainWeapon(hero)
+					: getSecondaryWeapon(hero);
+		}
+		return getPA(hero, weapon, type, wrongHand, secondaryWeapon, includeManualMods);
+	}
+
+	public static Integer getPA(final JSONObject hero, JSONObject weapon, final String type, final boolean wrongHand, JSONObject secondaryWeapon,
+			final boolean includeManualMods) {
 		final JSONObject talent = ResourceManager.getResource("data/Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
 
 		if (talent == null) return null;
@@ -834,13 +988,67 @@ public class HeroUtil {
 		final boolean ATonly = talent.getBoolOrDefault("NurAT", false);
 		if (ATonly) return null;
 
-		final JSONObject baseValueDerivation = ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis");
-		final int baseValue = deriveValue(baseValueDerivation, hero, hero.getObj("Basiswerte"), includeManualMods);
-
 		final JSONObject baseWeapon = weapon;
 		if (weapon != null && weapon.containsKey("Nahkampfwaffe")) {
 			weapon = weapon.getObj("Nahkampfwaffe");
 		}
+
+		int secondWeaponModifier = 0;
+
+		if (secondaryWeapon != null) {
+			JSONObject secondaryBase = null;
+			boolean isCloseCombatWeapon = false;
+			boolean isShield = false;
+			final JSONValue parent = secondaryWeapon.getParent();
+			if (parent instanceof JSONObject) {
+				final JSONObject parentObject = (JSONObject) parent;
+				if ("Nahkampfwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
+					secondaryBase = parentObject;
+					isCloseCombatWeapon = true;
+				} else if ("Schild".equals(parentObject.keyOf(secondaryWeapon))) {
+					secondaryBase = parentObject;
+					isShield = true;
+				} else if ("Parierwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
+					secondaryBase = parentObject;
+				} else {
+					final JSONArray categories = secondaryWeapon.getArr("Kategorien");
+					if (categories.contains("Nahkampfwaffe")) {
+						isCloseCombatWeapon = true;
+					} else if (categories.contains("Schild")) {
+						isShield = true;
+					} else if (!categories.contains("Parierwaffe")) return null;
+				}
+			}
+			if (secondaryBase == null) {
+				secondaryBase = secondaryWeapon;
+				if (secondaryWeapon.containsKey("Nahkampfwaffe")) {
+					secondaryWeapon = secondaryWeapon.getObj("Nahkampfwaffe");
+					isCloseCombatWeapon = true;
+				} else if (secondaryWeapon.containsKey("Schild")) {
+					secondaryWeapon = secondaryWeapon.getObj("Schild");
+					isShield = true;
+				} else if (secondaryWeapon.containsKey("Parierwaffe")) {
+					secondaryWeapon = secondaryWeapon.getObj("Parierwaffe");
+				}
+			}
+			if (isCloseCombatWeapon) {
+				final String mainType = weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"));
+				if (!mainType.equals(secondaryWeapon.getStringOrDefault("Typ", secondaryBase.getString("Typ")))) {
+					if (type.equals(secondaryWeapon.getStringOrDefault("Waffentyp:Primär", secondaryBase.getString("Waffentyp:Primär")))) {
+						secondWeaponModifier = -1;
+					} else {
+						secondWeaponModifier = -2;
+					}
+				}
+			} else if (isShield)
+				return getShieldPA(hero, secondaryBase, baseWeapon, includeManualMods);
+			else {
+				secondWeaponModifier = getDefensiveWeaponPA(hero, secondaryBase, null, includeManualMods);
+			}
+		}
+
+		final JSONObject baseValueDerivation = ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis");
+		final int baseValue = deriveValue(baseValueDerivation, hero, hero.getObj("Basiswerte"), includeManualMods);
 
 		final JSONObject actualTalent = hero.getObj("Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
 		final int fromTalent = actualTalent != null ? actualTalent.getIntOrDefault("PA", 0) : 0;
@@ -866,7 +1074,21 @@ public class HeroUtil {
 
 		final int TPKKModifier = Math.min(getTPKKModifier(hero, weapon, baseWeapon), 0);
 
-		return baseValue + fromTalent + weaponModifier + specialisation + masteryPA - be + TPKKModifier;
+		int secondHandModifier = 0;
+
+		if (weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
+			if (!hero.getObj("Vorteile").containsKey("Beidhändig") && !actualSkills.containsKey("Beidhändiger Kampf II")) {
+				if (actualSkills.containsKey("Beidhändiger Kampf I")) {
+					secondHandModifier = -3;
+				} else if (actualSkills.containsKey("Linkand")) {
+					secondHandModifier = -6;
+				} else {
+					secondHandModifier = -9;
+				}
+			}
+		}
+
+		return baseValue + fromTalent + weaponModifier + specialisation + masteryPA - be + TPKKModifier + secondHandModifier + secondWeaponModifier;
 	}
 
 	public static String getProfessionString(final JSONObject hero, final JSONObject bio, final JSONObject professions, final boolean withVeteranBGB) {
@@ -895,6 +1117,102 @@ public class HeroUtil {
 		}
 
 		return professionString.toString();
+	}
+
+	public static JSONObject getSecondaryWeapon(final JSONObject hero) {
+		final JSONObject[] secondaryWeapon = { null };
+
+		foreachInventoryItem(hero, item -> secondaryWeapon[0] == null && item.containsKey("Kategorien"),
+				(item, extraInventory) -> {
+					if (item.getArr("Kategorien").contains("Nahkampfwaffe")) {
+						final JSONObject baseWeapon = item;
+						if (item != null && item.containsKey("Nahkampfwaffe")) {
+							item = item.getObj("Nahkampfwaffe");
+						}
+
+						if (item.getBoolOrDefault("Hauptwaffe", baseWeapon.getBoolOrDefault("Hauptwaffe", false))
+								&& item.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
+							secondaryWeapon[0] = item;
+						}
+					}
+					if (item.getArr("Kategorien").contains("Schild")) {
+						final JSONObject baseWeapon = item;
+						if (item != null && item.containsKey("Schild")) {
+							item = item.getObj("Schild");
+						}
+
+						if (item.getBoolOrDefault("Seitenwaffe", baseWeapon.getBoolOrDefault("Seitenwaffe", false))) {
+							secondaryWeapon[0] = item;
+						}
+					}
+					if (item.getArr("Kategorien").contains("Parierwaffe")) {
+						final JSONObject baseWeapon = item;
+						if (item != null && item.containsKey("Parierwaffe")) {
+							item = item.getObj("Parierwaffe");
+						}
+
+						if (item.getBoolOrDefault("Seitenwaffe", baseWeapon.getBoolOrDefault("Seitenwaffe", false))) {
+							secondaryWeapon[0] = item;
+						}
+					}
+				});
+
+		return secondaryWeapon[0];
+	}
+
+	public static int getShieldPA(final JSONObject hero, final JSONObject shield, final boolean includeManualMods) {
+		return getShieldPA(hero, shield, getMainWeapon(hero), includeManualMods);
+	}
+
+	public static int getShieldPA(final JSONObject hero, JSONObject shield, JSONObject mainWeapon, final boolean includeManualMods) {
+
+		final JSONObject baseValueDerivation = ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis");
+		final int baseValue = deriveValue(baseValueDerivation, hero, hero.getObj("Basiswerte"), includeManualMods);
+
+		final JSONObject baseShield = shield;
+		if (shield != null && shield.containsKey("Schild")) {
+			shield = shield.getObj("Schild");
+		}
+
+		final JSONObject weaponModifiers = shield == null ? null : shield.getObjOrDefault("Waffenmodifikatoren", baseShield.getObj("Waffenmodifikatoren"));
+		final int weaponModifier = weaponModifiers == null ? 0 : weaponModifiers.getIntOrDefault("Parademodifikator", 0);
+
+		int PA = baseValue + weaponModifier;
+
+		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
+
+		if (skills.containsKey("Linkhand")) {
+			PA += 1;
+		}
+		if (skills.containsKey("Schildkampf I")) {
+			PA += 2;
+		}
+		if (skills.containsKey("Schildkampf II")) {
+			PA += 2;
+		}
+
+		if (mainWeapon != null) {
+			final JSONObject baseWeapon = mainWeapon;
+			if (mainWeapon != null && mainWeapon.containsKey("Nahkampfwaffe")) {
+				mainWeapon = mainWeapon.getObj("Nahkampfwaffe");
+			}
+			String type = mainWeapon.getStringOrDefault("Waffentyp:Primär", baseWeapon.getStringOrDefault("Waffentyp:Primär", null));
+			if (type == null) {
+				type = mainWeapon.getArrOrDefault("Waffentypen", baseWeapon.getArr("Waffentypen")).getString(0);
+			}
+			final Integer mainWeaponPA = getPA(hero, mainWeapon, type, false, null, includeManualMods);
+			if (mainWeaponPA != null) {
+				if (mainWeaponPA >= 21) {
+					PA += 3;
+				} else if (mainWeaponPA >= 18) {
+					PA += 2;
+				} else if (mainWeaponPA >= 15) {
+					PA += 1;
+				}
+			}
+		}
+
+		return PA;
 	}
 
 	public static JSONObject getSpecialisation(final JSONArray specialisations, final String talent, final String specialisation) {
@@ -1282,9 +1600,17 @@ public class HeroUtil {
 		final int threshold = TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE);
 		final int KK = HeroUtil.getCurrentValue(hero.getObj("Eigenschaften").getObj("KK"), true);
 		final int steps = TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE);
-		if (steps != Integer.MIN_VALUE && steps != 0)
-			return (KK - threshold) / steps;
-		else
+		if (steps != Integer.MIN_VALUE && steps != 0) {
+			int modifier = (KK - threshold) / steps;
+
+			if (weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
+				if (!hero.getObj("Vorteile").containsKey("Beidhändig") && !hero.getObj("Sonderfertigkeiten").containsKey("Beidhändiger Kampf I")) {
+					modifier = Math.min(modifier, 0);
+				}
+			}
+
+			return modifier;
+		} else
 			return 0;
 	}
 
@@ -1412,6 +1738,19 @@ public class HeroUtil {
 					notes.append("(A)");
 				}
 				notes.append(" gg. Menschen");
+			}
+		}
+
+		if (weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
+			if (first) {
+				first = false;
+			} else {
+				notes.append(", ");
+			}
+			if (hero.getObj("Vorteile").containsKey("Linkshänder")) {
+				notes.append("Rechte Hand");
+			} else {
+				notes.append("Linke Hand");
 			}
 		}
 
