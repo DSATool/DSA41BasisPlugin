@@ -124,12 +124,21 @@ public class Talent implements Enhanceable {
 		final JSONObject attributes = hero.getObj("Eigenschaften");
 		int max = 0;
 		for (int i = 0; i < 3; ++i) {
-			final int attribute = HeroUtil.getCurrentValue(attributes.getObj(challenge.getString(i)), false);
-			if (attribute + 3 > max) {
-				max = attribute + 3;
+			max = Math.max(max, HeroUtil.getCurrentValue(attributes.getObj(challenge.getString(i)), false));
+		}
+		final JSONArray aptitude = hero.getObj("Vorteile").getArrOrDefault("Begabung für Talent", null);
+		if (aptitude != null) {
+			for (int i = 0; i < aptitude.size(); ++i) {
+				if (name.get().equals(aptitude.getObj(i).getStringOrDefault("Auswahl", null))) return max + 5;
 			}
 		}
-		return max;
+		final JSONArray aptitudes = hero.getObj("Vorteile").getArrOrDefault("Begabung für Talentgruppe", null);
+		if (aptitudes != null) {
+			for (int i = 0; i < aptitudes.size(); ++i) {
+				if (HeroUtil.findTalent(name.get())._2.equals(aptitudes.getObj(i).getStringOrDefault("Auswahl", null))) return max + 5;
+			}
+		}
+		return max + 3;
 	}
 
 	public final String getName() {

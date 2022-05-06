@@ -84,6 +84,22 @@ public class Spell extends Talent {
 		return HeroUtil.getSpellComplexity(hero, name.get(), representation.get(), targetZfW);
 	}
 
+	@Override
+	public int getMaximum(final JSONObject hero) {
+		final JSONObject attributes = hero.getObj("Eigenschaften");
+		int max = 0;
+		for (int i = 0; i < 3; ++i) {
+			max = Math.max(max, HeroUtil.getCurrentValue(attributes.getObj(challenge.getString(i)), false));
+		}
+		final JSONArray aptitude = hero.getObj("Vorteile").getArrOrDefault("Begabung für Zauber", null);
+		if (aptitude != null) {
+			for (int i = 0; i < aptitude.size(); ++i) {
+				if (name.get().equals(aptitude.getObj(i).getStringOrDefault("Auswahl", null))) return max + 5;
+			}
+		}
+		return max + 3;
+	}
+
 	public final String getRepresentation() {
 		return representation.get();
 	}
