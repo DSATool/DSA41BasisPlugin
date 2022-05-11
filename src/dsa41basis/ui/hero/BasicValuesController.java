@@ -18,6 +18,7 @@ package dsa41basis.ui.hero;
 import java.util.Optional;
 
 import dsa41basis.fight.ArmorEditor;
+import dsa41basis.util.HeroUtil;
 import dsatool.resources.Settings;
 import dsatool.ui.ReactiveSpinner;
 import dsatool.util.ErrorLogger;
@@ -147,8 +148,6 @@ public class BasicValuesController implements JSONListener {
 	@FXML
 	private ReactiveSpinner<Integer> staminaGallopMod;
 	@FXML
-	private Label feedLabel;
-	@FXML
 	private Node feedBox;
 	@FXML
 	private ReactiveSpinner<Integer> feedBase;
@@ -158,6 +157,30 @@ public class BasicValuesController implements JSONListener {
 	private ReactiveSpinner<Integer> feedMedium;
 	@FXML
 	private ReactiveSpinner<Integer> feedHeavy;
+	@FXML
+	private Label tkLabel;
+	@FXML
+	private Node tkBox;
+	@FXML
+	private Node tkModBox;
+	@FXML
+	private ReactiveSpinner<Double> tkFactor;
+	@FXML
+	private ReactiveSpinner<Double> tkMod;
+	@FXML
+	private Label tkValue;
+	@FXML
+	private Label zkLabel;
+	@FXML
+	private Node zkBox;
+	@FXML
+	private Node zkModBox;
+	@FXML
+	private ReactiveSpinner<Double> zkFactor;
+	@FXML
+	private ReactiveSpinner<Double> zkMod;
+	@FXML
+	private Label zkValue;
 	@FXML
 	private Node apBox;
 	@FXML
@@ -172,7 +195,7 @@ public class BasicValuesController implements JSONListener {
 
 	private ChangeListener<? super Integer> rsListener;
 
-	public BasicValuesController(final BooleanExpression disabled, final CharacterType type) {
+	public BasicValuesController(final BooleanExpression disabled, final CharacterType type, final boolean needsTKZK) {
 		this.type = type;
 
 		final FXMLLoader fxmlLoader = new FXMLLoader();
@@ -201,7 +224,6 @@ public class BasicValuesController implements JSONListener {
 			controls.remove(staminaLabel);
 			controls.remove(staminaBox);
 			controls.remove(staminaModBox);
-			controls.remove(feedLabel);
 			controls.remove(feedBox);
 		}
 
@@ -214,6 +236,15 @@ public class BasicValuesController implements JSONListener {
 			controls.remove(mrBought);
 			controls.remove(mrBoughtBox);
 			controls.remove(apBox);
+		}
+
+		if (!needsTKZK) {
+			controls.remove(tkLabel);
+			controls.remove(tkBox);
+			controls.remove(tkModBox);
+			controls.remove(zkLabel);
+			controls.remove(zkBox);
+			controls.remove(zkModBox);
 		}
 
 		iniBase.disableProperty().bind(disabled);
@@ -257,6 +288,10 @@ public class BasicValuesController implements JSONListener {
 		feedLight.disableProperty().bind(disabled);
 		feedMedium.disableProperty().bind(disabled);
 		feedHeavy.disableProperty().bind(disabled);
+		tkFactor.disableProperty().bind(disabled);
+		tkMod.disableProperty().bind(disabled);
+		zkFactor.disableProperty().bind(disabled);
+		zkMod.disableProperty().bind(disabled);
 		freeAp.disableProperty().bind(disabled);
 		rkw.disableProperty().bind(disabled);
 
@@ -399,6 +434,13 @@ public class BasicValuesController implements JSONListener {
 			feedLight.valueProperty().addListener(listener("Futterbedarf", "Leicht"));
 			feedMedium.valueProperty().addListener(listener("Futterbedarf", "Mittel"));
 			feedHeavy.valueProperty().addListener(listener("Futterbedarf", "Schwer"));
+
+			tkFactor.valueProperty().addListener(listenerDouble("Tragkraft", "Wert"));
+			tkFactor.valueProperty().addListener((o, oldV, newV) -> updateTkZk());
+			tkMod.valueProperty().addListener(listenerDouble("Tragkraft", "Modifikator"));
+			zkFactor.valueProperty().addListener(listenerDouble("Zugkraft", "Wert"));
+			zkFactor.valueProperty().addListener((o, oldV, newV) -> updateTkZk());
+			zkMod.valueProperty().addListener(listenerDouble("Zugkraft", "Modifikator"));
 		} else {
 			speedChoice.setItems(FXCollections.observableArrayList("Geschwindigkeit", "GS (Boden/Luft)"));
 
@@ -448,6 +490,19 @@ public class BasicValuesController implements JSONListener {
 		};
 	}
 
+	private ChangeListener<Double> listenerDouble(final String value, final String key) {
+		return (o, oldV, newV) -> {
+			final JSONObject actualValue = character.getObj("Basiswerte").getObj(value);
+			final int intV = (int) (double) newV;
+			if (intV == newV) {
+				actualValue.put(key, intV);
+			} else {
+				actualValue.put(key, newV);
+			}
+			actualValue.notifyListeners(this);
+		};
+	}
+
 	@Override
 	public void notifyChanged(final JSONValue changed) {
 		setCharacter(character);
@@ -455,6 +510,7 @@ public class BasicValuesController implements JSONListener {
 
 	public void setCharacter(final JSONObject character) {
 		if (this.character != null) {
+			this.character.getObj("Eigenschaften").getObj("KK").removeListener(this);
 			this.character.getObj("Basiswerte").removeListener(this);
 		}
 		this.character = character;
@@ -524,6 +580,18 @@ public class BasicValuesController implements JSONListener {
 			feedLight.getValueFactory().setValue(feed.getIntOrDefault("Leicht", 0));
 			feedMedium.getValueFactory().setValue(feed.getIntOrDefault("Mittel", 0));
 			feedHeavy.getValueFactory().setValue(feed.getIntOrDefault("Schwer", 0));
+
+			final JSONObject tk = baseValues.getObj("Tragkraft");
+			tkFactor.getValueFactory().setValue(tk.getDoubleOrDefault("Wert", 1.0));
+			tkMod.getValueFactory().setValue(tk.getDoubleOrDefault("Modifikator", 0.0));
+
+			final JSONObject zk = baseValues.getObj("Zugkraft");
+			zkFactor.getValueFactory().setValue(zk.getDoubleOrDefault("Wert", 1.0));
+			zkMod.getValueFactory().setValue(zk.getDoubleOrDefault("Modifikator", 0.0));
+
+			final JSONObject strength = character.getObj("Eigenschaften").getObj("KK");
+			strength.addListener(this);
+			updateTkZk();
 		} else {
 			final JSONObject actualSpeed = baseValues.getObj("Geschwindigkeit");
 			speedChoice.getSelectionModel().select(actualSpeed.containsKey("Boden") ? 1 : 0);
@@ -541,5 +609,11 @@ public class BasicValuesController implements JSONListener {
 				speedAirBought.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Luft:Kauf", 0.0));
 			}
 		}
+	}
+
+	private void updateTkZk() {
+		final int strength = HeroUtil.getCurrentValue(character.getObj("Eigenschaften").getObj("KK"), true);
+		tkValue.setText(Integer.toString((int) Math.round(tkFactor.getValue() * strength)));
+		zkValue.setText(Integer.toString((int) Math.round(zkFactor.getValue() * strength)));
 	}
 }
