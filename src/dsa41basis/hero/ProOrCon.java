@@ -339,6 +339,22 @@ public class ProOrCon {
 			final JSONObject talents = ResourceManager.getResource("data/Talente");
 			choices.removeAll(talents.getObj("Nahkampftalente").keySet());
 			choices.removeAll(talents.getObj("Fernkampftalente").keySet());
+			DSAUtil.foreach(group -> true, (groupName, group) -> {
+				DSAUtil.foreach(talent -> {
+					final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
+					return specializations != null && specializations.size() == 0;
+				}, (talentName, talent) -> {
+					choices.remove(talentName);
+				}, group);
+			}, talents);
+		} else if ("Waffenspezialisierung".equals(name.get())) {
+			final JSONObject talents = ResourceManager.getResource("data/Talente");
+			DSAUtil.foreach(talent -> {
+				final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
+				return specializations != null && specializations.size() == 0;
+			}, (talentName, talent) -> {
+				choices.remove(talentName);
+			}, talents.getObj("Nahkampftalente"), talents.getObj("Fernkampftalente"));
 		}
 
 		if (proOrCon.containsKey("Voraussetzungen")) {

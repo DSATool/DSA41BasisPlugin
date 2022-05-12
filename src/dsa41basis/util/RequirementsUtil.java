@@ -374,7 +374,14 @@ public class RequirementsUtil {
 				final JSONObject must = skills.getObj("Muss");
 				for (final String name : must.keySet()) {
 					final JSONObject skill = must.getObj(name);
-					if (!hasProConSkill(hero, name, skill, choice, text, false)) return false;
+					if (!"Waffenspezialisierung".equals(name) || !"Auswahl".equals(skill.getObj("Auswahl").getStringOrDefault("Muss", null))) {
+						if (!hasProConSkill(hero, name, skill, choice, text, false))
+							return false;
+					} else {
+						final JSONObject talent = HeroUtil.findTalent(choice)._1;
+						if (talent != null && talent.getArrOrDefault("Spezialisierungen", new JSONArray(null)).size() != 0)
+							if (!hasProConSkill(hero, name, skill, choice, text, false)) return false;
+					}
 				}
 			}
 			if (skills.containsKey("Wahl")) {
