@@ -797,9 +797,10 @@ public class HeroUtil {
 					choices.addAll(specializations.getStrings());
 				} else {
 					final JSONObject weaponItems = ResourceManager.getResource("data/Ausruestung");
-					for (final String item : weaponItems.keySet()) {
-						if (weaponItems.getObj(item).getArr("Waffentypen").contains(other)) {
-							choices.add(weaponItems.getObj(item).getString("Typ"));
+					for (final String itemName : weaponItems.keySet()) {
+						final JSONObject item = weaponItems.getObj(itemName);
+						if (item.getArr("Waffentypen").contains(other) && !item.getBoolOrDefault("Improvisiert", false)) {
+							choices.add(item.getString("Typ"));
 						}
 					}
 				}
