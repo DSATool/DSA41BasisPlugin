@@ -578,7 +578,8 @@ public class HeroUtil {
 			BE[0] -= 1;
 		} else if (skills.containsKey("Rüstungsgewöhnung I")) {
 			final boolean[] BEReduced = { false };
-			final String armorSet = hero.getObj("Kampf").getStringOrDefault("Rüstung", null);
+			final JSONObject armorSet = getDefaultArmor(hero);
+			final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
 			final JSONArray armorAdaption = skills.getArr("Rüstungsgewöhnung I");
 			for (int i = 0; i < armorAdaption.size() && !BEReduced[0]; ++i) {
 				final String adaptation = armorAdaption.getObj(i).getString("Freitext");
@@ -590,7 +591,7 @@ public class HeroUtil {
 							}
 							final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen",
 									item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
-							if (armorSet == null && armorSets.size() == 0 || armorSet != null && armorSets.contains(armorSet)) {
+							if (armorSetName == null && armorSets.size() == 0 || armorSetName != null && armorSets.contains(armorSetName)) {
 								if (adaptation.equals(armor.getStringOrDefault("Typ", item.getString("Typ")))) {
 									BE[0] -= 1;
 									BEReduced[0] = true;
@@ -604,7 +605,8 @@ public class HeroUtil {
 
 	public static double getBERaw(final JSONObject hero) {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
-		final String armorSet = hero.getObj("Kampf").getStringOrDefault("Rüstung", null);
+		final JSONObject armorSet = getDefaultArmor(hero);
+		final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
 
 		final double[] BE = { 0 };
 
@@ -614,7 +616,7 @@ public class HeroUtil {
 				armor = item.getObj("Rüstung");
 			}
 			final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen", item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
-			if (armorSet == null && armorSets.size() == 0 || armorSet != null && armorSets.contains(armorSet)) {
+			if (armorSetName == null && armorSets.size() == 0 || armorSetName != null && armorSets.contains(armorSetName)) {
 				if ("Gesamtrüstung".equals(armorSetting)) {
 					BE[0] += armor.getIntOrDefault("Gesamtbehinderung", item.getIntOrDefault("Gesamtbehinderung", 0));
 				} else {
@@ -823,6 +825,16 @@ public class HeroUtil {
 
 	public static int getCurrentValue(final JSONObject actual, final boolean includeManualMod) {
 		return actual.getIntOrDefault("Wert", 0) + (includeManualMod ? actual.getIntOrDefault("Modifikator:Manuell", 0) : 0);
+	}
+
+	public static JSONObject getDefaultArmor(final JSONObject hero) {
+		final JSONArray armorSets = hero.getObj("Kampf").getArrOrDefault("Rüstungskombinationen", null);
+		if (armorSets != null) {
+			for (int i = 0; i < armorSets.size(); ++i) {
+				if (armorSets.getObj(i).getBoolOrDefault("Standardrüstung", false)) return armorSets.getObj(i);
+			}
+		}
+		return null;
 	}
 
 	public static int getDefensiveWeaponPA(final JSONObject hero, final JSONObject defensiveWeapon, final boolean includeManualMods) {
@@ -1812,7 +1824,8 @@ public class HeroUtil {
 
 	public static int getZoneRS(final JSONObject hero, final String zone) {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
-		final String armorSet = hero.getObj("Kampf").getStringOrDefault("Rüstung", null);
+		final JSONObject armorSet = getDefaultArmor(hero);
+		final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
 
 		final double[] RS = { 0 };
 
@@ -1822,7 +1835,7 @@ public class HeroUtil {
 				armor = item.getObj("Rüstung");
 			}
 			final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen", item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
-			if (armorSet == null && armorSets.size() == 0 || armorSet != null && armorSets.contains(armorSet)) {
+			if (armorSetName == null && armorSets.size() == 0 || armorSetName != null && armorSets.contains(armorSetName)) {
 				final JSONObject zoneRS = armor.getObjOrDefault("Rüstungsschutz", item.getObjOrDefault("Rüstungsschutz", null));
 				if ("Gesamtrüstung".equals(armorSetting) || zoneRS == null && !(armor.containsKey("Rüstungsschutz") || item.containsKey("Rüstungsschutz"))) {
 					RS[0] += armor.getIntOrDefault("Gesamtrüstungsschutz", item.getIntOrDefault("Gesamtrüstungsschutz", 0));
