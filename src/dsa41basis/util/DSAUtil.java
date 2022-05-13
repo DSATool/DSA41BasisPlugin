@@ -47,6 +47,8 @@ public class DSAUtil {
 
 	public static final Random random = new Random();
 
+	public static DecimalFormat oneDecimalPlace = new DecimalFormat("#.#");
+
 	public static DecimalFormat threeDecimalPlaces = new DecimalFormat("#.###");
 
 	public static final String[] months = { "Praios", "Rondra", "Efferd", "Travia", "Boron", "Hesinde", "Firun", "Tsa", "Phex", "Peraine", "Ingerimm", "Rahja",
