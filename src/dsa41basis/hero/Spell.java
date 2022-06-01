@@ -255,6 +255,7 @@ public class Spell extends Talent {
 		if (actual == null) {
 			insertTalent(false);
 		}
+		final JSONObject actualSpell = this.actualSpell;
 		if (value == Integer.MIN_VALUE) {
 			if (ses.get() == 0 && !actual.getBoolOrDefault("Hauszauber", false) && !actual.getBoolOrDefault("Leittalent", false)) {
 				removeTalent();
