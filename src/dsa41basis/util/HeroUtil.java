@@ -16,7 +16,6 @@
 package dsa41basis.util;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -570,42 +569,26 @@ public class HeroUtil {
 	}
 
 	public static int getBE(final JSONObject hero) {
-		final double[] BE = { getBERaw(hero) };
+		return getBE(hero, getDefaultArmor(hero));
+	}
+
+	public static int getBE(final JSONObject hero, final JSONObject armorSet) {
+		final double[] BE = { getBERaw(hero, armorSet) };
 		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
 		if (skills.containsKey("Rüstungsgewöhnung III")) {
 			BE[0] -= 2;
-		} else if (skills.containsKey("Rüstungsgewöhnung II")) {
+		} else if (skills.containsKey("Rüstungsgewöhnung II") || skills.containsKey("Rüstungsgewöhnung I") && hasReducedBE(hero, armorSet)) {
 			BE[0] -= 1;
-		} else if (skills.containsKey("Rüstungsgewöhnung I")) {
-			final boolean[] BEReduced = { false };
-			final JSONObject armorSet = getDefaultArmor(hero);
-			final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
-			final JSONArray armorAdaption = skills.getArr("Rüstungsgewöhnung I");
-			for (int i = 0; i < armorAdaption.size() && !BEReduced[0]; ++i) {
-				final String adaptation = armorAdaption.getObj(i).getString("Freitext");
-				foreachInventoryItem(hero, item -> !BEReduced[0] && item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"),
-						(item, extraInventory) -> {
-							JSONObject armor = item;
-							if (item.containsKey("Rüstung")) {
-								armor = item.getObj("Rüstung");
-							}
-							final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen",
-									item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
-							if (armorSetName == null && armorSets.size() == 0 || armorSetName != null && armorSets.contains(armorSetName)) {
-								if (adaptation.equals(armor.getStringOrDefault("Typ", item.getString("Typ")))) {
-									BE[0] -= 1;
-									BEReduced[0] = true;
-								}
-							}
-						});
-			}
 		}
 		return (int) Math.max(0, Math.round(BE[0]));
 	}
 
 	public static double getBERaw(final JSONObject hero) {
+		return getBERaw(hero, getDefaultArmor(hero));
+	}
+
+	public static double getBERaw(final JSONObject hero, final JSONObject armorSet) {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
-		final JSONObject armorSet = getDefaultArmor(hero);
 		final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
 
 		final double[] BE = { 0 };
@@ -1738,7 +1721,7 @@ public class HeroUtil {
 		final StringBuilder notes = new StringBuilder(weapon.getStringOrDefault("Anmerkungen", baseWeapon.getStringOrDefault("Anmerkungen", "")));
 		boolean first = notes.isEmpty();
 
-		if (Arrays.asList("Raufen", "Ringen").contains(type) && hero != null) {
+		if (List.of("Raufen", "Ringen").contains(type) && hero != null) {
 			final JSONObject anatomy = hero.getObj("Talente").getObj("Wissenstalente").getObjOrDefault("Anatomie", null);
 			if (anatomy != null && anatomy.getIntOrDefault("TaW", 0) >= 10) {
 				if (first) {
@@ -1853,6 +1836,31 @@ public class HeroUtil {
 		}
 
 		return (int) Math.round(RS[0]);
+	}
+
+	public static boolean hasReducedBE(final JSONObject hero, final JSONObject armorSet) {
+		final boolean[] BEReduced = { false };
+		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
+		final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
+		final JSONArray armorAdaption = skills.getArr("Rüstungsgewöhnung I");
+		for (int i = 0; i < armorAdaption.size() && !BEReduced[0]; ++i) {
+			final String adaptation = armorAdaption.getObj(i).getString("Freitext");
+			foreachInventoryItem(hero, item -> !BEReduced[0] && item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"),
+					(item, extraInventory) -> {
+						JSONObject armor = item;
+						if (item.containsKey("Rüstung")) {
+							armor = item.getObj("Rüstung");
+						}
+						final JSONArray armorSets = armor.getArrOrDefault("Rüstungskombinationen",
+								item.getArrOrDefault("Rüstungskombinationen", new JSONArray(null)));
+						if (armorSetName == null && armorSets.size() == 0 || armorSetName != null && armorSets.contains(armorSetName)) {
+							if (adaptation.equals(armor.getStringOrDefault("Typ", item.getString("Typ")))) {
+								BEReduced[0] = true;
+							}
+						}
+					});
+		}
+		return BEReduced[0];
 	}
 
 	public static Integer interpretSpellRoll(final JSONObject hero, final String talentName, final String representation, final String specialization,
