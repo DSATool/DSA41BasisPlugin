@@ -107,7 +107,7 @@ public class RequirementsUtil {
 		final JSONObject cons = hero.getObj("Nachteile");
 		final JSONObject actualSkills = hero.getObj("Sonderfertigkeiten");
 
-		JSONValue skill = null;
+		final JSONValue skill;
 		if (pros.containsKey(name)) {
 			skill = (JSONValue) pros.getUnsafe(name);
 		} else if (cons.containsKey(name)) {
@@ -144,8 +144,8 @@ public class RequirementsUtil {
 		}
 
 		if (!requiredSkill.containsKey("Auswahl") && !requiredSkill.containsKey("Freitext")) {
-			if (skill instanceof JSONObject) {
-				if (((JSONObject) skill).getIntOrDefault("Stufe", 0) < requiredLevel) return false;
+			if (skill instanceof final JSONObject obj) {
+				if (obj.getIntOrDefault("Stufe", 0) < requiredLevel) return false;
 			} else {
 				if (!hasChoice((JSONArray) skill, requiredLevel, "Auswahl", null, null, false, false, false)) return false;
 			}
@@ -305,7 +305,7 @@ public class RequirementsUtil {
 				final JSONObject must = ap.getObj("Muss");
 				for (final String groupName : must.keySet()) {
 					int requiredAP = must.getInt(groupName);
-					JSONObject group = null;
+					final JSONObject group;
 					if (skills.containsKey(groupName)) {
 						group = skills.getObj(groupName);
 					} else if (rituals.containsKey(groupName)) {
@@ -336,7 +336,7 @@ public class RequirementsUtil {
 					boolean match = false;
 					for (final String groupName : curChoice.keySet()) {
 						int requiredAP = curChoice.getInt(groupName);
-						JSONObject group = null;
+						final JSONObject group;
 						if (skills.containsKey(groupName)) {
 							group = skills.getObj(groupName);
 						} else if (rituals.containsKey(groupName)) {

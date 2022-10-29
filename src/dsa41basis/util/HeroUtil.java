@@ -525,8 +525,7 @@ public class HeroUtil {
 			JSONObject secondaryBase = null;
 			boolean isCloseCombatWeapon = false;
 			final JSONValue parent = secondaryWeapon.getParent();
-			if (parent instanceof JSONObject) {
-				final JSONObject parentObject = (JSONObject) parent;
+			if (parent instanceof final JSONObject parentObject) {
 				if ("Nahkampfwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
 					secondaryBase = parentObject;
 					isCloseCombatWeapon = true;
@@ -996,8 +995,7 @@ public class HeroUtil {
 			boolean isCloseCombatWeapon = false;
 			boolean isShield = false;
 			final JSONValue parent = secondaryWeapon.getParent();
-			if (parent instanceof JSONObject) {
-				final JSONObject parentObject = (JSONObject) parent;
+			if (parent instanceof final JSONObject parentObject) {
 				if ("Nahkampfwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
 					secondaryBase = parentObject;
 					isCloseCombatWeapon = true;
@@ -1573,14 +1571,14 @@ public class HeroUtil {
 			final JSONValue actualTalent = HeroUtil.findActualTalent(hero, talentName)._1;
 			if (talent.getBoolOrDefault("Leittalent", false)) {
 				--complexity;
-			} else if (actualTalent instanceof JSONArray) {
+			} else if (actualTalent instanceof final JSONArray arr) {
 				for (int i = 0; i < actualTalent.size(); ++i) {
-					if (((JSONArray) actualTalent).getObj(i).getBoolOrDefault("Leittalent", false)) {
+					if (arr.getObj(i).getBoolOrDefault("Leittalent", false)) {
 						--complexity;
 						break;
 					}
 				}
-			} else if (actualTalent instanceof JSONObject && ((JSONObject) actualTalent).getBoolOrDefault("Leittalent", false)) {
+			} else if (actualTalent instanceof final JSONObject obj && obj.getBoolOrDefault("Leittalent", false)) {
 				--complexity;
 			}
 		}
@@ -1921,11 +1919,11 @@ public class HeroUtil {
 		final JSONObject talentGroup = ResourceManager.getResource("data/Talente").getObj(talentAndGroup._2);
 		if (talent == null || actualTalent == null && !talent.getBoolOrDefault("Basis", false)) return null;
 		int taw = 0;
-		if (actualTalent instanceof JSONArray) {
+		if (actualTalent instanceof final JSONArray arr) {
 			for (int i = 0; i < actualTalent.size(); ++i) {
-				taw = Math.max(taw, ((JSONArray) actualTalent).getObj(i).getIntOrDefault("TaW", 0));
+				taw = Math.max(taw, arr.getObj(i).getIntOrDefault("TaW", 0));
 			}
-		} else if (actualTalent instanceof JSONObject) {
+		} else {
 			taw = ((JSONObject) actualTalent).getIntOrDefault("TaW", 0);
 		}
 		if (specialization != null && actualTalent != null) {

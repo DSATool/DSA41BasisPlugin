@@ -42,8 +42,7 @@ public class ResourceSanitizer {
 				}
 				for (final String key : item.keySet()) {
 					final Object value = item.getUnsafe(key);
-					if (value instanceof JSONObject) {
-						final JSONObject subItem = (JSONObject) value;
+					if (value instanceof final JSONObject subItem) {
 						if (subItem.containsKey("Typ")) {
 							final String type = subItem.getString("Typ");
 							if (Arrays.asList(Artifact.types).contains(type)) {
@@ -118,9 +117,9 @@ public class ResourceSanitizer {
 		final JSONObject result = new JSONObject(parent);
 		for (final String key : actual) {
 			final Object value = object.getUnsafe(key);
-			if (value instanceof JSONObject) {
-				result.put(key, ((JSONObject) value).clone(result));
-			} else if (value instanceof JSONArray) {
+			if (value instanceof final JSONObject obj) {
+				result.put(key, obj.clone(result));
+			} else if (value instanceof final JSONArray arr) {
 				final JSONArray newArr = new JSONArray(result);
 				result.put(key, newArr);
 				final Set<JSONObject> choices = new TreeSet<>((o1, o2) -> {
@@ -135,7 +134,7 @@ public class ResourceSanitizer {
 					if (text1 != null && text2 != null) return comparator.compare(text1, text2);
 					return 0;
 				});
-				choices.addAll(((JSONArray) value).getObjs());
+				choices.addAll(arr.getObjs());
 				for (final JSONObject choice : choices) {
 					newArr.add(choice.clone(newArr));
 				}

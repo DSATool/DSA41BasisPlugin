@@ -67,10 +67,10 @@ public class Ritual {
 
 	public void setChoice(final Object choice) {
 		this.choice.set(choice);
-		if (choice instanceof Integer) {
-			actual.put("Anzahl", (Integer) choice);
-		} else if (choice instanceof String) {
-			actual.put("Auswahl", (String) choice);
+		if (choice instanceof final Integer i) {
+			actual.put("Anzahl", i);
+		} else if (choice instanceof final String str) {
+			actual.put("Auswahl", str);
 		}
 		actual.notifyListeners(null);
 	}
