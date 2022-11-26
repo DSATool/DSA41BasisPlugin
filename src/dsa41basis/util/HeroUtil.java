@@ -1040,13 +1040,6 @@ public class HeroUtil {
 					isShield = true;
 				} else if ("Parierwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
 					secondaryBase = parentObject;
-				} else {
-					final JSONArray categories = secondaryWeapon.getArr("Kategorien");
-					if (categories.contains("Nahkampfwaffe")) {
-						isCloseCombatWeapon = true;
-					} else if (categories.contains("Schild")) {
-						isShield = true;
-					} else if (!categories.contains("Parierwaffe")) return null;
 				}
 			}
 			if (secondaryBase == null) {
@@ -1059,6 +1052,13 @@ public class HeroUtil {
 					isShield = true;
 				} else if (secondaryWeapon.containsKey("Parierwaffe")) {
 					secondaryWeapon = secondaryWeapon.getObj("Parierwaffe");
+				} else {
+					final JSONArray categories = secondaryWeapon.getArr("Kategorien");
+					if (categories.contains("Nahkampfwaffe")) {
+						isCloseCombatWeapon = true;
+					} else if (categories.contains("Schild")) {
+						isShield = true;
+					} else if (!categories.contains("Parierwaffe")) return null;
 				}
 			}
 			if (isCloseCombatWeapon) {
