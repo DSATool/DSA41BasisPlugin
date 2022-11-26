@@ -466,8 +466,13 @@ public class HeroUtil {
 		return getAT(hero, weapon, type, closeCombat, wrongHand, secondaryWeapon, includeManualMods);
 	}
 
+	public static Integer getAT(final JSONObject hero, final JSONObject weapon, final String type, final boolean closeCombat, final boolean wrongHand,
+			final JSONObject secondaryWeapon, final boolean includeManualMods) {
+		return getAT(hero, weapon, type, closeCombat, wrongHand, secondaryWeapon, getDefaultArmor(hero), includeManualMods);
+	}
+
 	public static Integer getAT(final JSONObject hero, JSONObject weapon, final String type, final boolean closeCombat, final boolean wrongHand,
-			JSONObject secondaryWeapon, final boolean includeManualMods) {
+			JSONObject secondaryWeapon, final JSONObject armorSet, final boolean includeManualMods) {
 		final JSONObject baseWeapon = weapon;
 		if (weapon != null && weapon.containsKey(closeCombat ? "Nahkampfwaffe" : "Fernkampfwaffe")) {
 			weapon = weapon.getObj(closeCombat ? "Nahkampfwaffe" : "Fernkampfwaffe");
@@ -501,7 +506,7 @@ public class HeroUtil {
 				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 		final int masteryAT = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Attackemodifikator", 0) : 0;
 
-		final int be = getEffectiveBE(hero, talent) / (!closeCombat || talent.getBoolOrDefault("NurAT", false) ? 1 : 2);
+		final int be = getEffectiveBE(hero, talent, getBE(hero, armorSet)) / (!closeCombat || talent.getBoolOrDefault("NurAT", false) ? 1 : 2);
 
 		final int TPKKModifier = Math.min(getTPKKModifier(hero, weapon, baseWeapon), 0);
 
@@ -550,7 +555,7 @@ public class HeroUtil {
 				}
 			}
 			if (isCloseCombatWeapon) {
-				final String mainType = weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ"));
+				final String mainType = weapon.getStringOrDefault("Typ", baseWeapon.getStringOrDefault("Typ", ""));
 				if (!mainType.equals(secondaryWeapon.getStringOrDefault("Typ", secondaryBase.getString("Typ")))) {
 					if (type.equals(secondaryWeapon.getStringOrDefault("Waffentyp:Primär", secondaryBase.getString("Waffentyp:Primär")))) {
 						secondWeaponModifier = -1;
@@ -878,8 +883,8 @@ public class HeroUtil {
 		return (int) Math.round(dist * (1 + (weaponMastery != null ? weaponMastery.getIntOrDefault("Reichweite", 0) * 0.1 : 0)));
 	}
 
-	private static int getEffectiveBE(final JSONObject hero, final JSONObject talent) {
-		return talent.getIntOrDefault("BEMultiplikativ", 0) * getBE(hero) + Math.max(getBE(hero) + talent.getIntOrDefault("BEAdditiv", Integer.MIN_VALUE), 0);
+	private static int getEffectiveBE(final JSONObject hero, final JSONObject talent, final int BE) {
+		return talent.getIntOrDefault("BEMultiplikativ", 0) * BE + Math.max(BE + talent.getIntOrDefault("BEAdditiv", Integer.MIN_VALUE), 0);
 	}
 
 	private static int getInfightSpecialisationCount(final JSONObject actualSkills, final String talent) {
@@ -974,8 +979,13 @@ public class HeroUtil {
 		return getPA(hero, weapon, type, wrongHand, secondaryWeapon, includeManualMods);
 	}
 
-	public static Integer getPA(final JSONObject hero, JSONObject weapon, final String type, final boolean wrongHand, JSONObject secondaryWeapon,
+	public static Integer getPA(final JSONObject hero, final JSONObject weapon, final String type, final boolean wrongHand, final JSONObject secondaryWeapon,
 			final boolean includeManualMods) {
+		return getPA(hero, weapon, type, wrongHand, secondaryWeapon, getDefaultArmor(hero), includeManualMods);
+	}
+
+	public static Integer getPA(final JSONObject hero, JSONObject weapon, final String type, final boolean wrongHand, JSONObject secondaryWeapon,
+			final JSONObject armorSet, final boolean includeManualMods) {
 		final JSONObject talent = ResourceManager.getResource("data/Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
 
 		if (talent == null) return null;
@@ -1064,7 +1074,7 @@ public class HeroUtil {
 				weapon.getStringOrDefault("Typ", baseWeapon.getString("Typ")));
 		final int masteryPA = weaponMastery != null ? weaponMastery.getObj("Waffenmodifikatoren").getIntOrDefault("Parademodifikator", 0) : 0;
 
-		final int be = (getEffectiveBE(hero, talent) + 1) / 2;
+		final int be = (getEffectiveBE(hero, talent, getBE(hero, armorSet)) + 1) / 2;
 
 		final int TPKKModifier = Math.min(getTPKKModifier(hero, weapon, baseWeapon), 0);
 
@@ -1728,7 +1738,7 @@ public class HeroUtil {
 					notes.append(", ");
 				}
 				notes.append("+1TP");
-				if (weapon.getObj("Trefferpunkte").getBoolOrDefault("Ausdauerschaden", false)) {
+				if (weapon.getObjOrDefault("Trefferpunkte", baseWeapon.getObj("Trefferpunkte")).getBoolOrDefault("Ausdauerschaden", false)) {
 					notes.append("(A)");
 				}
 				notes.append(" gg. Menschen");
@@ -1804,8 +1814,11 @@ public class HeroUtil {
 	}
 
 	public static int getZoneRS(final JSONObject hero, final String zone) {
+		return getZoneRS(hero, zone, getDefaultArmor(hero));
+	}
+
+	public static int getZoneRS(final JSONObject hero, final String zone, final JSONObject armorSet) {
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
-		final JSONObject armorSet = getDefaultArmor(hero);
 		final String armorSetName = armorSet != null ? armorSet.getStringOrDefault("Name", null) : null;
 
 		final double[] RS = { 0 };
