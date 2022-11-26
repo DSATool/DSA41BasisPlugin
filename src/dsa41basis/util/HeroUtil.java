@@ -824,6 +824,32 @@ public class HeroUtil {
 		return null;
 	}
 
+	public static Integer getDefensiveWeaponAT(final JSONObject hero, final JSONObject weapon, final JSONObject mainWeapon, final boolean includeManualMods) {
+		return getDefensiveWeaponAT(hero, weapon, mainWeapon, getDefaultArmor(hero), includeManualMods);
+	}
+
+	public static Integer getDefensiveWeaponAT(final JSONObject hero, JSONObject weapon, final JSONObject mainWeapon, final JSONObject armorSet,
+			final boolean includeManualMods) {
+
+		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
+		if (!skills.containsKey("Tod von Links")) return null;
+
+		final JSONObject baseWeapon = weapon;
+		if (weapon != null && weapon.containsKey("Parierwaffe")) {
+			weapon = weapon.getObj("Parierwaffe");
+		}
+
+		final JSONArray types = weapon.getArrOrDefault("Waffentypen", baseWeapon.getArrOrDefault("Waffentypen", new JSONArray(null)));
+		if (types.size() == 0) return null;
+		final String type = types.getString(0);
+		final JSONObject actualTalent = hero.getObj("Talente").getObj("Nahkampftalente").getObjOrDefault(type, null);
+		final int be = getEffectiveBE(hero, actualTalent, getBE(hero, armorSet)) / 2;
+
+		if (be > 4) return null;
+
+		return getAT(hero, weapon, type, true, true, mainWeapon, armorSet, includeManualMods);
+	}
+
 	public static int getDefensiveWeaponPA(final JSONObject hero, final JSONObject defensiveWeapon, final boolean includeManualMods) {
 		return getDefensiveWeaponPA(hero, defensiveWeapon, getMainWeapon(hero), includeManualMods);
 	}
@@ -1164,6 +1190,43 @@ public class HeroUtil {
 		return secondaryWeapon[0];
 	}
 
+	public static Integer getShieldAT(final JSONObject hero, final JSONObject shield, final boolean includeManualMods) {
+		return getShieldAT(hero, shield, getDefaultArmor(hero), includeManualMods);
+	}
+
+	public static Integer getShieldAT(final JSONObject hero, JSONObject shield, final JSONObject armorSet, final boolean includeManualMods) {
+
+		final JSONObject skills = hero.getObj("Sonderfertigkeiten");
+
+		if (!skills.containsKey("Schildkampf I")) return null;
+
+		final JSONObject baseValueDerivation = ResourceManager.getResource("data/Basiswerte").getObj("Attacke-Basis");
+		final int baseValue = deriveValue(baseValueDerivation, hero, hero.getObj("Basiswerte"), includeManualMods);
+
+		final JSONObject talent = ResourceManager.getResource("data/Talente").getObj("Nahkampftalente").getObjOrDefault("Raufen", null);
+		if (talent == null) return null;
+
+		final JSONObject actualTalent = hero.getObj("Talente").getObj("Nahkampftalente").getObjOrDefault("Raufen", null);
+		final int fromTalent = actualTalent != null ? actualTalent.getIntOrDefault("AT", 0) : 0;
+
+		final JSONObject baseShield = shield;
+		if (shield != null && shield.containsKey("Schild")) {
+			shield = shield.getObj("Schild");
+		}
+
+		final JSONObject weaponModifiers = shield == null ? null : shield.getObjOrDefault("Waffenmodifikatoren", baseShield.getObj("Waffenmodifikatoren"));
+		final int weaponModifier = weaponModifiers != null ? weaponModifiers.getIntOrDefault("Attackemodifikator", 0) : 0;
+
+		final int be = getEffectiveBE(hero, talent, getBE(hero, armorSet)) / 2;
+
+		final int TPKKModifier = Math.min(getTPKKModifierRaw(hero, 13, 3), 0);
+
+		final int shieldModifier = skills.containsKey("Schildkampf II") || skills.containsKey("Knaufschlag") || skills.containsKey("Schmutzige Tricks") ? 0
+				: -3;
+
+		return baseValue + fromTalent + weaponModifier - be + TPKKModifier - shieldModifier;
+	}
+
 	public static int getShieldPA(final JSONObject hero, final JSONObject shield, final boolean includeManualMods) {
 		return getShieldPA(hero, shield, getMainWeapon(hero), includeManualMods);
 	}
@@ -1217,6 +1280,15 @@ public class HeroUtil {
 		}
 
 		return PA;
+	}
+
+	public static String getShieldTPString(final JSONObject hero, JSONObject shield) {
+		final JSONObject baseShield = shield;
+		if (shield != null && shield.containsKey("Schild")) {
+			shield = shield.getObj("Schild");
+		}
+
+		return getTPString(shield, baseShield, "1W6+1(A)", getTPKKModifierRaw(hero, 13, 3));
 	}
 
 	public static JSONObject getSpecialisation(final JSONArray specialisations, final String talent, final String specialisation) {
@@ -1602,10 +1674,9 @@ public class HeroUtil {
 
 		final JSONObject TPKKValues = weapon.getObjOrDefault("Trefferpunkte/Körperkraft", baseWeapon.getObj("Trefferpunkte/Körperkraft"));
 		final int threshold = TPKKValues.getIntOrDefault("Schwellenwert", Integer.MIN_VALUE);
-		final int KK = HeroUtil.getCurrentValue(hero.getObj("Eigenschaften").getObj("KK"), true);
 		final int steps = TPKKValues.getIntOrDefault("Schadensschritte", Integer.MIN_VALUE);
 		if (steps != Integer.MIN_VALUE && steps != 0) {
-			int modifier = (KK - threshold) / steps;
+			int modifier = getTPKKModifierRaw(hero, threshold, steps);
 
 			if (weapon.getBoolOrDefault("Zweithand", baseWeapon.getBoolOrDefault("Zweithand", false))) {
 				if (!hero.getObj("Vorteile").containsKey("Beidhändig") && !hero.getObj("Sonderfertigkeiten").containsKey("Beidhändiger Kampf I")) {
@@ -1618,17 +1689,28 @@ public class HeroUtil {
 			return 0;
 	}
 
+	public static int getTPKKModifierRaw(final JSONObject hero, final int threshold, final int steps) {
+		final int KK = HeroUtil.getCurrentValue(hero.getObj("Eigenschaften").getObj("KK"), true);
+		if (steps != Integer.MIN_VALUE && steps != 0) {
+			final int modifier = (KK - threshold) / steps;
+			return modifier;
+		} else
+			return 0;
+	}
+
 	public static String getTPString(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon) {
+		return getTPString(weapon, baseWeapon, "", getTPKKModifier(hero, weapon, baseWeapon));
+	}
+
+	private static String getTPString(final JSONObject weapon, final JSONObject baseWeapon, final String defaultTP, final int TPKKModifier) {
 		final JSONObject TPValues = weapon.getObjOrDefault("Trefferpunkte", baseWeapon.getObjOrDefault("Trefferpunkte", null));
-		if (TPValues == null) return "";
+		if (TPValues == null) return defaultTP;
 
 		final StringBuilder TPString = new StringBuilder();
 		TPString.append(TPValues.getIntOrDefault("Würfel:Anzahl", 1));
 		TPString.append('W');
 		TPString.append(TPValues.getIntOrDefault("Würfel:Typ", 6));
-		int TPAdditive = TPValues.getIntOrDefault("Trefferpunkte", 0);
-
-		TPAdditive += getTPKKModifier(hero, weapon, baseWeapon);
+		final int TPAdditive = TPValues.getIntOrDefault("Trefferpunkte", 0) + TPKKModifier;
 
 		if (TPAdditive != 0) {
 			if (TPAdditive > 0) {
