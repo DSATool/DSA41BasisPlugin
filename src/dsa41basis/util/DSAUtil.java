@@ -36,8 +36,10 @@ import dsatool.util.ErrorLogger;
 import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import dsatool.util.Util;
+import javafx.util.StringConverter;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
+import jsonant.value.JSONValue;
 
 public class DSAUtil {
 
@@ -50,6 +52,25 @@ public class DSAUtil {
 	public static DecimalFormat oneDecimalPlace = new DecimalFormat("#.#");
 
 	public static DecimalFormat threeDecimalPlaces = new DecimalFormat("#.###");
+
+	public static StringConverter<JSONObject> itemNameConverter = new StringConverter<>() {
+		@Override
+		public JSONObject fromString(final String name) {
+			return null;
+		}
+
+		@Override
+		public String toString(final JSONObject item) {
+			String name = item.getString("Name");
+			if (name == null && item.getParent() != null) {
+				final JSONValue parent = item.getParent();
+				if (parent instanceof final JSONObject obj) {
+					name = obj.getStringOrDefault("Name", "Unbenannt");
+				}
+			}
+			return name;
+		}
+	};
 
 	public static final String[] months = { "Praios", "Rondra", "Efferd", "Travia", "Boron", "Hesinde", "Firun", "Tsa", "Phex", "Peraine", "Ingerimm", "Rahja",
 			"Namenloser" };
