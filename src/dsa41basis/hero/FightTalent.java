@@ -124,33 +124,39 @@ public class FightTalent extends Talent {
 
 	@Override
 	public final void setValue(final int value) {
-		if (attackOnly.get()) {
-			setAt(value);
-		} else {
-
-			int at = this.at.get();
-			int pa = this.pa.get();
-
-			final int diff = at - pa;
-
-			at = (value - diff + (diff < 0 ? 0 : 1)) / 2 + diff;
-			pa = value - at;
-
-			if (at - pa > 5) {
-				at -= 1;
-			} else if (at - pa < -5) {
-				at += 1;
+		if (this.value.get() != value) {
+			if (actual == null) {
+				insertTalent(true);
 			}
 
-			if (value == 0) {
-				at = 0;
-			} else if (value > 0) {
-				at = Math.min(value, Math.max(0, at));
+			if (attackOnly.get()) {
+				setAt(value);
 			} else {
-				at = Math.max(value, Math.min(at, 0));
-			}
 
-			setAt(at);
+				int at = this.at.get();
+				int pa = this.pa.get();
+
+				final int diff = at - pa;
+
+				at = (value - diff + (diff < 0 ? 0 : 1)) / 2 + diff;
+				pa = value - at;
+
+				if (at - pa > 5) {
+					at -= 1;
+				} else if (at - pa < -5) {
+					at += 1;
+				}
+
+				if (value == 0) {
+					at = 0;
+				} else if (value > 0) {
+					at = Math.min(value, Math.max(0, at));
+				} else {
+					at = Math.max(value, Math.min(at, 0));
+				}
+
+				setAt(at);
+			}
 		}
 
 		super.setValue(value);
