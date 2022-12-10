@@ -40,7 +40,12 @@ public class Valuable extends InventoryItem {
 	}
 
 	public final void setValue(final double value) {
-		item.put("Wert", value);
+		item.removeKey("Wert");
+		if (value != 0) {
+			baseItem.put("Wert", value);
+		} else {
+			baseItem.removeKey("Wert");
+		}
 		item.notifyListeners(null);
 	}
 
