@@ -129,8 +129,8 @@ public class HeroUtil {
 			for (; i < modifiers.length; ++i) {
 				final String modifierName = modifiers[i];
 				JSONObject parent = profession.getObjOrDefault("Varianten", null);
-				while (parent != null && !parent.containsKey(modifierName)) {
-					parent = (JSONObject) profession.getParent().getParent();
+				while (parent != null && parent.getParent() != null && !parent.containsKey(modifierName)) {
+					parent = (JSONObject) parent.getParent().getParent();
 				}
 				if (parent != null) {
 					professionString.append(parent.getObj("Varianten").getObj(modifierName).getStringOrDefault("Weiblich", modifierName));
