@@ -553,18 +553,18 @@ public class HeroUtil {
 			}
 			if (secondaryBase == null) {
 				secondaryBase = secondaryWeapon;
-				if (secondaryWeapon.containsKey("Nahkampfwaffe")) {
+				final JSONArray categories = secondaryWeapon.getArr("Kategorien");
+				if (secondaryWeapon.containsKey("Nahkampfwaffe") && !categories.contains("Schild") && !categories.contains("Parierwaffe")) {
 					secondaryWeapon = secondaryWeapon.getObj("Nahkampfwaffe");
 					isCloseCombatWeapon = true;
-				} else if (secondaryWeapon.containsKey("Schild")) {
+				} else if (secondaryWeapon.containsKey("Schild") && !categories.contains("Nahkampfwaffe") && !categories.contains("Parierwaffe")) {
 					secondaryWeapon = secondaryWeapon.getObj("Schild");
-				} else if (secondaryWeapon.containsKey("Parierwaffe")) {
+				} else if (secondaryWeapon.containsKey("Parierwaffe") && !categories.contains("Nahkampfwaffe") && !categories.contains("Schild")) {
 					secondaryWeapon = secondaryWeapon.getObj("Parierwaffe");
 				} else {
-					final JSONArray categories = secondaryWeapon.getArr("Kategorien");
-					if (categories.contains("Nahkampfwaffe")) {
+					if (categories.contains("Nahkampfwaffe") && !secondaryWeapon.containsKey("Nahkampfwaffe")) {
 						isCloseCombatWeapon = true;
-					} else if (!categories.contains("Schild") && !categories.contains("Parierwaffe")) return null;
+					}
 				}
 			}
 			if (isCloseCombatWeapon) {
@@ -1043,6 +1043,8 @@ public class HeroUtil {
 			JSONObject secondaryBase = null;
 			boolean isCloseCombatWeapon = false;
 			boolean isShield = false;
+			boolean isDefensiveWeapon = false;
+
 			final JSONValue parent = secondaryWeapon.getParent();
 			if (parent instanceof final JSONObject parentObject) {
 				if ("Nahkampfwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
@@ -1053,25 +1055,29 @@ public class HeroUtil {
 					isShield = true;
 				} else if ("Parierwaffe".equals(parentObject.keyOf(secondaryWeapon))) {
 					secondaryBase = parentObject;
+					isDefensiveWeapon = true;
 				}
 			}
 			if (secondaryBase == null) {
 				secondaryBase = secondaryWeapon;
-				if (secondaryWeapon.containsKey("Nahkampfwaffe")) {
+				final JSONArray categories = secondaryWeapon.getArr("Kategorien");
+				if (secondaryWeapon.containsKey("Nahkampfwaffe") && !categories.contains("Schild") && !categories.contains("Parierwaffe")) {
 					secondaryWeapon = secondaryWeapon.getObj("Nahkampfwaffe");
 					isCloseCombatWeapon = true;
-				} else if (secondaryWeapon.containsKey("Schild")) {
+				} else if (secondaryWeapon.containsKey("Schild") && !categories.contains("Nahkampfwaffe") && !categories.contains("Parierwaffe")) {
 					secondaryWeapon = secondaryWeapon.getObj("Schild");
 					isShield = true;
-				} else if (secondaryWeapon.containsKey("Parierwaffe")) {
+				} else if (secondaryWeapon.containsKey("Parierwaffe") && !categories.contains("Nahkampfwaffe") && !categories.contains("Schild")) {
 					secondaryWeapon = secondaryWeapon.getObj("Parierwaffe");
+					isDefensiveWeapon = true;
 				} else {
-					final JSONArray categories = secondaryWeapon.getArr("Kategorien");
-					if (categories.contains("Nahkampfwaffe")) {
+					if (categories.contains("Nahkampfwaffe") && !secondaryWeapon.containsKey("Nahkampfwaffe")) {
 						isCloseCombatWeapon = true;
-					} else if (categories.contains("Schild")) {
+					} else if (categories.contains("Schild") && !secondaryWeapon.containsKey("Schild")) {
 						isShield = true;
-					} else if (!categories.contains("Parierwaffe")) return null;
+					} else if (categories.contains("Parierwaffe") && !secondaryWeapon.containsKey("Parierwaffe")) {
+						isDefensiveWeapon = true;
+					}
 				}
 			}
 			if (isCloseCombatWeapon) {
@@ -1085,7 +1091,7 @@ public class HeroUtil {
 				}
 			} else if (isShield)
 				return getShieldPA(hero, secondaryBase, baseWeapon, includeManualMods);
-			else {
+			else if (isDefensiveWeapon) {
 				secondWeaponModifier = getDefensiveWeaponPA(hero, secondaryBase, null, includeManualMods);
 			}
 		}
