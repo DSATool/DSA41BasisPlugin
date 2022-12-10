@@ -35,9 +35,10 @@ import jsonant.value.JSONValue;
 
 public class HeroUtil {
 	public static final JSONObject infight = new JSONObject(null);
+	public static final JSONObject brawling;
+	public static final JSONObject wrestling;
 
 	static {
-		infight.put("Name", "Waffenlos");
 		final JSONObject TP = new JSONObject(infight);
 		TP.put("W6", 1);
 		TP.put("Trefferpunkte", 0);
@@ -52,11 +53,23 @@ public class HeroUtil {
 		final JSONArray distanceClasses = new JSONArray(infight);
 		distanceClasses.add("H");
 		infight.put("Distanzklassen", distanceClasses);
+		infight.put("Typ", "Waffenlos");
+		brawling = infight.clone(null);
+		wrestling = infight.clone(null);
+		infight.put("Zweihändig", true);
 		final JSONArray weaponTypes = new JSONArray(infight);
 		weaponTypes.add("Raufen");
 		weaponTypes.add("Ringen");
 		infight.put("Waffentypen", weaponTypes);
-		infight.put("Zweihändig", true);
+		infight.put("Name", "Waffenlos");
+		final JSONArray weaponTypesBrawling = new JSONArray(brawling);
+		weaponTypesBrawling.add("Raufen");
+		brawling.put("Waffentypen", weaponTypesBrawling);
+		brawling.put("Name", "Raufen");
+		final JSONArray weaponTypesWresting = new JSONArray(wrestling);
+		weaponTypesWresting.add("Ringen");
+		wrestling.put("Waffentypen", weaponTypesWresting);
+		wrestling.put("Name", "Ringen");
 	}
 
 	public static final Set<String> scaleColors = new HashSet<>();
