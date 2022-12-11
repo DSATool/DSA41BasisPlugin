@@ -28,6 +28,7 @@ public class InventoryItem {
 	private final StringProperty name = new SimpleStringProperty();
 	private final StringProperty notes = new SimpleStringProperty();
 	private final StringProperty itemType = new SimpleStringProperty();
+	private final DoubleProperty value = new SimpleDoubleProperty();
 	protected final DoubleProperty weight = new SimpleDoubleProperty();
 
 	private final JSONListener recomputeListener = o -> recompute();
@@ -59,6 +60,10 @@ public class InventoryItem {
 		return notes.get();
 	}
 
+	public final double getValue() {
+		return value.get();
+	}
+
 	public double getWeight() {
 		return weight.get();
 	}
@@ -82,6 +87,7 @@ public class InventoryItem {
 	private void recomputeBase() {
 		name.set(item.getStringOrDefault("Name", baseItem.getStringOrDefault("Name", "")));
 		notes.set(item.getStringOrDefault("Anmerkungen", baseItem.getStringOrDefault("Anmerkungen", "")));
+		value.set(item.getDoubleOrDefault("Wert", baseItem.getDoubleOrDefault("Wert", 0.0)));
 		weight.set(item.getDoubleOrDefault("Gewicht", baseItem.getDoubleOrDefault("Gewicht", 0.0)));
 		itemType.set(item.getStringOrDefault("Typ", baseItem.getStringOrDefault("Typ", "")));
 	}
@@ -105,6 +111,16 @@ public class InventoryItem {
 		item.notifyListeners(null);
 	}
 
+	public final void setValue(final double value) {
+		item.removeKey("Wert");
+		if (value != 0) {
+			baseItem.put("Wert", value);
+		} else {
+			baseItem.removeKey("Wert");
+		}
+		item.notifyListeners(null);
+	}
+
 	public void setWeight(final double weight) {
 		item.removeKey("Gewicht");
 		if (weight != 0) {
@@ -113,6 +129,10 @@ public class InventoryItem {
 			baseItem.removeKey("Gewicht");
 		}
 		item.notifyListeners(null);
+	}
+
+	public final DoubleProperty valueProperty() {
+		return value;
 	}
 
 	public final DoubleProperty weightProperty() {
