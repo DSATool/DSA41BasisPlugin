@@ -228,7 +228,10 @@ public class ProOrCon {
 			}
 		}
 
-		final int max = proOrCon.getIntOrDefault("Stufe:Maximum", 9999);
+		int max = proOrCon.getIntOrDefault("Stufe:Maximum", 9999);
+		if ("Flink".equals(name.get()) && "Goblin".equals(hero.getObj("Biografie").getString("Rasse"))) {
+			max = 2;
+		}
 
 		return new Tuple3<>(min, max, step);
 	}

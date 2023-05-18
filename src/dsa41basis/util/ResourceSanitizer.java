@@ -29,6 +29,16 @@ import jsonant.value.JSONObject;
 
 public class ResourceSanitizer {
 
+	public static final Function<JSONObject, JSONObject> deftSanitizer = object -> {
+		if (object.containsKey("Spieler")) {
+			final JSONObject deft = object.getObj("Vorteile").getObjOrDefault("Flink", null);
+			if (deft != null) {
+				deft.put("Stufe", deft.getIntOrDefault("Stufe", 1));
+			}
+		}
+		return object;
+	};
+
 	public static final Function<JSONObject, JSONObject> artifactSanitizer = object -> {
 		if (object.containsKey("Besitz")) {
 			final JSONArray equipment = object.getObj("Besitz").getArr("Ausrüstung");
