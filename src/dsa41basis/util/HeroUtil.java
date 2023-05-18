@@ -926,6 +926,46 @@ public class HeroUtil {
 		return talent.getIntOrDefault("BEMultiplikativ", 0) * BE + Math.max(BE + talent.getIntOrDefault("BEAdditiv", Integer.MIN_VALUE), 0);
 	}
 
+	public static int getEvasion(final JSONObject hero) {
+		int result = 0;
+
+		final int PABase = HeroUtil.deriveValue(ResourceManager.getResource("data/Basiswerte").getObj("Parade-Basis"), hero,
+				hero.getObj("Basiswerte").getObj("Parade-Basis"), true);
+		result = PABase;
+
+		final int BE = HeroUtil.getBE(hero);
+		result -= BE;
+
+		final JSONObject specialSkills = hero.getObj("Sonderfertigkeiten");
+		if (specialSkills.containsKey("Ausweichen I")) {
+			result += 3;
+		}
+		if (specialSkills.containsKey("Ausweichen II")) {
+			result += 3;
+		}
+		if (specialSkills.containsKey("Ausweichen III")) {
+			result += 3;
+		}
+
+		final JSONObject acrobaticsTalent = hero.getObj("Talente").getObj("Körperliche Talente").getObjOrDefault("Akrobatik", null);
+		if (acrobaticsTalent != null) {
+			final int acrobaticsValue = acrobaticsTalent.getIntOrDefault("TaW", 0);
+			if (acrobaticsValue > 11) {
+				result += (acrobaticsValue - 9) / 3;
+			}
+		}
+
+		if (hero.getObj("Vorteile").containsKey("Flink")) {
+			result += hero.getObj("Vorteile").getObj("Flink").getIntOrDefault("Stufe", 1);
+		}
+
+		if (hero.getObj("Nachteile").containsKey("Behäbig")) {
+			result -= 1;
+		}
+
+		return result;
+	}
+
 	private static int getInfightSpecialisationCount(final JSONObject actualSkills, final String talent) {
 		final JSONObject skills = ResourceManager.getResource("data/Sonderfertigkeiten").getObj("Waffenlose Kampftechniken");
 		int result = 0;
