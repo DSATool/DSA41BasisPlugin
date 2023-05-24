@@ -642,7 +642,7 @@ public class HeroUtil {
 			}
 			if (choiceData.containsKey("Pfade")) {
 				final JSONArray paths = choiceData.getArr("Pfade");
-				for (int i = 0; i < paths.size(); ++i) {
+				paths: for (int i = 0; i < paths.size(); ++i) {
 					final JSONArray path = paths.getArr(i);
 					List<JSONObject> data = new ArrayList<>();
 					data.add(ResourceManager.getResource("data/" + path.getString(0)));
@@ -652,6 +652,7 @@ public class HeroUtil {
 							data = data.stream().flatMap(element -> element.keySet().stream().map(key -> element.getObj(key))).collect(Collectors.toList());
 						} else if (pathElement.startsWith("/")) {
 							choices.addAll(data.stream().map(element -> element.getString(pathElement.substring(1))).collect(Collectors.toList()));
+							continue paths;
 						} else {
 							data.replaceAll(element -> element.getObj(pathElement));
 						}
