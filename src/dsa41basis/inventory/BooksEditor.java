@@ -75,7 +75,7 @@ public class BooksEditor {
 
 		final Stage stage = new Stage();
 		stage.setTitle("Buchreferenzen");
-		stage.setScene(new Scene(root, 290, 85));
+		stage.setScene(new Scene(root, 310, 85));
 		stage.initModality(Modality.WINDOW_MODAL);
 		stage.setResizable(false);
 		stage.initOwner(window);
