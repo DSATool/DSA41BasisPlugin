@@ -163,7 +163,8 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 		item.notifyListeners(null);
 	}
 
-	public final void setTp(final int diceType, final int numDice, final int tp, final boolean reducedWoundThreshold, final boolean staminaDamage) {
+	public final void setTp(final int diceType, final int numDice, final int tp, final boolean reducedWoundThreshold, final boolean staminaDamage,
+			final boolean magicalDamage, final boolean clericalDamage, final boolean coldDamage) {
 		final JSONObject tpValues = item.getObj("Trefferpunkte");
 
 		tpValues.put("Würfel:Typ", diceType);
@@ -178,6 +179,21 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 			tpValues.put("Ausdauerschaden", true);
 		} else {
 			tpValues.removeKey("Ausdauerschaden");
+		}
+		if (magicalDamage) {
+			tpValues.put("Magischer Schaden", true);
+		} else {
+			tpValues.removeKey("Magischer Schaden");
+		}
+		if (clericalDamage) {
+			tpValues.put("Geweihter Schaden", true);
+		} else {
+			tpValues.removeKey("Geweihter Schaden");
+		}
+		if (coldDamage) {
+			tpValues.put("Kälteschaden", true);
+		} else {
+			tpValues.removeKey("Kälteschaden");
 		}
 		tpValues.notifyListeners(null);
 	}

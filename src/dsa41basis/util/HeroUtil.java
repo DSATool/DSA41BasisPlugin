@@ -1744,6 +1744,15 @@ public class HeroUtil {
 			TPString.append(TPAdditive);
 		}
 
+		if (TPValues.getBoolOrDefault("Geweihter Schaden", false)) {
+			TPString.append("g");
+		}
+		if (TPValues.getBoolOrDefault("Magischer Schaden", false)) {
+			TPString.append("m");
+		}
+		if (TPValues.getBoolOrDefault("Kälteschaden", false)) {
+			TPString.append("k");
+		}
 		if (TPValues.getBoolOrDefault("Ausdauerschaden", false)) {
 			TPString.append("(A)");
 		}
