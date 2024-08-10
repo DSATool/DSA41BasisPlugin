@@ -630,6 +630,33 @@ public class HeroUtil {
 		return BE[0];
 	}
 
+	public static String getChallengeValuesString(final JSONObject hero, final JSONArray challenge, final boolean includeValues) {
+		if (challenge == null || challenge.size() < 3) return "—";
+
+		final StringBuilder attributesString = new StringBuilder(8);
+
+		if (hero != null && includeValues) {
+			final JSONObject attributes = hero.getObj("Eigenschaften");
+			attributesString.append(Integer.toString(getCurrentValue(attributes.getObj(challenge.getString(0)), false)));
+			attributesString.append('/');
+			attributesString.append(Integer.toString(getCurrentValue(attributes.getObj(challenge.getString(1)), false)));
+			attributesString.append('/');
+			attributesString.append(Integer.toString(getCurrentValue(attributes.getObj(challenge.getString(2)), false)));
+		} else {
+			attributesString.append("      /      /      ");
+		}
+
+		for (int i = 3; i < challenge.size(); ++i) {
+			final String mod = challenge.getUnsafe(i).toString();
+			if ('-' != mod.charAt(0)) {
+				attributesString.append('+');
+			}
+			attributesString.append(mod);
+		}
+
+		return attributesString.toString();
+	}
+
 	public static Set<String> getChoices(final JSONObject hero, final String choice, final String other) {
 		final Set<String> choices = new LinkedHashSet<>();
 		if (choice == null) return choices;

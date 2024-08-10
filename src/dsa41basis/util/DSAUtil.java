@@ -176,12 +176,15 @@ public class DSAUtil {
 
 	public static String getChallengeString(final JSONArray challenge) {
 		if (challenge == null || challenge.size() < 3) return "—";
+
 		final StringBuilder attributesString = new StringBuilder(8);
+
 		attributesString.append(challenge.getString(0));
 		attributesString.append('/');
 		attributesString.append(challenge.getString(1));
 		attributesString.append('/');
 		attributesString.append(challenge.getString(2));
+
 		for (int i = 3; i < challenge.size(); ++i) {
 			final String mod = challenge.getUnsafe(i).toString();
 			if ('-' != mod.charAt(0)) {
@@ -189,6 +192,7 @@ public class DSAUtil {
 			}
 			attributesString.append(mod);
 		}
+
 		return attributesString.toString();
 	}
 
