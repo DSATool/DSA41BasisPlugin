@@ -284,7 +284,7 @@ public class DSAUtil {
 					}
 				}
 			}
-			if ("Sprachen und Schriften".equals(talentGroup) && (talent.getActual() == null || !talent.getActual().getBoolOrDefault("Muttersprache", false)
+			if ("Sprachen und Schriften".equals(talentGroup) && (!talent.exists() || !talent.getActual().getBoolOrDefault("Muttersprache", false)
 					&& !talent.getActual().getBoolOrDefault("Zweitsprache", false) && !talent.getActual().getBoolOrDefault("Lehrsprache", false))) {
 				modifier -= 1;
 			}

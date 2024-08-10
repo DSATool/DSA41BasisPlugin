@@ -100,6 +100,10 @@ public class Talent implements Enhanceable {
 		return attributes;
 	}
 
+	public boolean exists() {
+		return actual != null;
+	}
+
 	@Override
 	public JSONObject getActual() {
 		if (actual == null) {
