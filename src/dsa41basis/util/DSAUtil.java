@@ -702,6 +702,35 @@ public class DSAUtil {
 		return result.toString();
 	}
 
+	public static int randomRoll(final int diceType, final int diceCount, final int additive) {
+		return randomRoll(diceType, diceCount, additive, 1, 1);
+	}
+
+	public static int randomRoll(final int diceType, final int diceCount, final int additive, final int multiplicative) {
+		return randomRoll(diceType, diceCount, additive, multiplicative, 1);
+	}
+
+	public static int randomRoll(final int diceType, final int diceCount, final int additive, final int multiplicative, final int repetitions) {
+		int result = 0;
+		for (int i = 0; i < repetitions; ++i) {
+			int current = additive;
+			for (int j = 0; j < diceCount; ++j) {
+				current += diceRoll(diceType);
+			}
+			result += current * multiplicative;
+		}
+		return result;
+	}
+
+	public static int randomRoll(final JSONObject roll) {
+		return randomRoll(roll, 1);
+	}
+
+	public static int randomRoll(final JSONObject roll, final int repetitions) {
+		return randomRoll(roll.getIntOrDefault("Würfel:Typ", 6), roll.getIntOrDefault("Würfel:Anzahl", 0), roll.getIntOrDefault("Additiv", 0),
+				roll.getIntOrDefault("Multiplikativ", 1), repetitions);
+	}
+
 	public static String replaceProfessionGender(final String professionName) {
 		if (professionGenderMap == null) {
 			mapProfessionGenderNames();
