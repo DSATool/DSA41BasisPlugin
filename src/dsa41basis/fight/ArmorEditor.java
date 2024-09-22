@@ -262,7 +262,7 @@ public class ArmorEditor {
 	private Stage show(final Window window, final int height) {
 		final Stage stage = new Stage();
 		stage.setTitle("Bearbeiten");
-		stage.setScene(new Scene(root, 290, height));
+		stage.setScene(new Scene(root, 310, height));
 		stage.initModality(Modality.WINDOW_MODAL);
 		stage.setResizable(false);
 		stage.initOwner(window);
