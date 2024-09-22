@@ -75,6 +75,24 @@ public class DSAUtil {
 	public static final String[] months = { "Praios", "Rondra", "Efferd", "Travia", "Boron", "Hesinde", "Firun", "Tsa", "Phex", "Peraine", "Ingerimm", "Rahja",
 			"Namenloser" };
 
+	public static final Map<String, String> monthColors = new HashMap<>();
+
+	static {
+		monthColors.put("Praios", "goldenrod");
+		monthColors.put("Rondra", "silver");
+		monthColors.put("Efferd", "mediumaquamarine");
+		monthColors.put("Travia", "orange");
+		monthColors.put("Boron", "black");
+		monthColors.put("Hesinde", "yellowgreen");
+		monthColors.put("Firun", "lightcyan");
+		monthColors.put("Tsa", "yellow");
+		monthColors.put("Phex", "gray");
+		monthColors.put("Peraine", "green");
+		monthColors.put("Ingerimm", "red");
+		monthColors.put("Rahja", "hotpink");
+		monthColors.put("Namenloser", "darkorchid");
+	}
+
 	public static final String[] weekdays = { "Erdtag", "Markttag", "Praiostag", "Rohalstag", "Feuertag", "Wassertag", "Windstag" };
 
 	private static Map<String, Tuple<String, String>> timeUnits = new HashMap<>();
