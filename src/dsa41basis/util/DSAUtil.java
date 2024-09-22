@@ -118,6 +118,27 @@ public class DSAUtil {
 
 	private static Map<String, String> professionGenderMap = null;
 
+	public static void appendUnit(final StringBuilder string, final JSONObject roll, final boolean singleUnit, final Units units) {
+		if (units != Units.NONE) {
+			final Map<String, Tuple<String, String>> unitMap = switch (units) {
+				case TIME -> timeUnits;
+				case RANGE -> rangeUnits;
+				default -> new HashMap<>();
+			};
+
+			final String unit = roll.getString("Einheit");
+			final Tuple<String, String> suffixes = unitMap.getOrDefault(unit, new Tuple<>(unit, unit));
+
+			string.append(' ');
+
+			if (singleUnit) {
+				string.append(suffixes._1);
+			} else {
+				string.append(suffixes._2);
+			}
+		}
+	}
+
 	public static int diceRoll(final int dice) {
 		return random.nextInt(dice) + 1;
 	}
@@ -330,7 +351,7 @@ public class DSAUtil {
 		return Character.toString((char) ('@' + enhancement));
 	}
 
-	private static String getModificationString(final JSONObject modification, final Map<String, Tuple<String, String>> units, final boolean signed) {
+	public static String getModificationString(final JSONObject modification, final Units units, final boolean signed) {
 		if (modification == null) return "—";
 		if (modification.containsKey("Text")) return modification.getString("Text");
 
@@ -451,17 +472,7 @@ public class DSAUtil {
 		}
 
 		if (modification.containsKey("Einheit")) {
-			result.append(' ');
-
-			final String unit = modification.getString("Einheit");
-
-			final Tuple<String, String> suffixes = units.getOrDefault(unit, new Tuple<>(unit, unit));
-
-			if (singleUnit) {
-				result.append(suffixes._1);
-			} else {
-				result.append(suffixes._2);
-			}
+			appendUnit(result, modification, singleUnit, units);
 		}
 
 		if (modification.getBoolOrDefault("Aufrechterhalten", false)) {
@@ -481,15 +492,6 @@ public class DSAUtil {
 		}
 
 		return result.toString();
-	}
-
-	public static String getModificationString(final JSONObject modification, final Units units, final boolean signed) {
-		final Map<String, Tuple<String, String>> unitMap = switch (units) {
-			case TIME -> timeUnits;
-			case RANGE -> rangeUnits;
-			default -> new HashMap<>();
-		};
-		return getModificationString(modification, unitMap, signed);
 	}
 
 	public static String getMoneyString(final double silver) {
@@ -583,6 +585,40 @@ public class DSAUtil {
 		}
 		ErrorLogger.log("Unbekannte Repräsentation " + representation);
 		return null;
+	}
+
+	public static StringBuilder getRollString(final JSONObject roll, final int modifier) {
+		return getRollString(roll, modifier, 1, Units.NONE);
+	}
+
+	private static StringBuilder getRollString(final JSONObject roll, final int modifier, final int multiplier, final Units units) {
+		final StringBuilder result = new StringBuilder();
+
+		final int diceCount = roll.getIntOrDefault("Würfel:Anzahl", 0);
+		if (diceCount > 0) {
+			result.append(diceCount * multiplier);
+			result.append('W');
+			result.append(roll.getIntOrDefault("Würfel:Typ", 6));
+		}
+
+		if (modifier != 0) {
+			if (modifier > 0 && diceCount > 0) {
+				result.append('+');
+			}
+			result.append(modifier * multiplier);
+		}
+
+		appendUnit(result, roll, false, units);
+
+		return result;
+	}
+
+	public static StringBuilder getRollString(final JSONObject roll, final int multiplier, final Units units) {
+		return getRollString(roll, roll.getIntOrDefault("Additiv", 0), multiplier, units);
+	}
+
+	public static Object getRollString(final JSONObject roll, final Units units) {
+		return getRollString(roll, 1, units);
 	}
 
 	private static void mapProfessionGenderNames() {

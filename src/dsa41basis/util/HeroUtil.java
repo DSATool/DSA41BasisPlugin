@@ -1771,18 +1771,7 @@ public class HeroUtil {
 		final JSONObject TPValues = weapon.getObjOrDefault("Trefferpunkte", baseWeapon.getObjOrDefault("Trefferpunkte", null));
 		if (TPValues == null) return defaultTP;
 
-		final StringBuilder TPString = new StringBuilder();
-		TPString.append(TPValues.getIntOrDefault("Würfel:Anzahl", 1));
-		TPString.append('W');
-		TPString.append(TPValues.getIntOrDefault("Würfel:Typ", 6));
-		final int TPAdditive = TPValues.getIntOrDefault("Trefferpunkte", 0) + TPKKModifier;
-
-		if (TPAdditive != 0) {
-			if (TPAdditive > 0) {
-				TPString.append('+');
-			}
-			TPString.append(TPAdditive);
-		}
+		final StringBuilder TPString = DSAUtil.getRollString(TPValues, TPValues.getIntOrDefault("Trefferpunkte", 0) + TPKKModifier);
 
 		if (TPValues.getBoolOrDefault("Geweihter Schaden", false)) {
 			TPString.append("g");
