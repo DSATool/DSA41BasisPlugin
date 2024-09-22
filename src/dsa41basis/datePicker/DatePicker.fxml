@@ -13,9 +13,9 @@
    <ReactiveComboBox fx:id="month" />
    <ReactiveSpinner fx:id="year" imin="0" imax="2000" initialValue="1000" prefWidth="85" />
    <Button prefWidth="25" prefHeight="25" text="&#xE923;" onAction="#setToCurrentDate" >
-      <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+      <padding><Insets top="1" right="0" bottom="-1" left="0"/></padding>
       <font>
-         <Font name="Material Icons" size="15.0" />
+         <Font name="Material Symbols Outlined" size="15.0" />
       </font>
       <tooltip>
           <Tooltip text="An irdisches Datum anpassen" />

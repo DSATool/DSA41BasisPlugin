@@ -15,36 +15,36 @@
          <HBox fx:id="buttons" alignment="CENTER" minWidth="108" maxWidth="108" spacing="2" >
             <padding><Insets top="0" right="1" bottom="0" left="1"/></padding>
             <Button maxWidth="Infinity" HBox.hgrow="ALWAYS" onAction="#addNewHero" prefWidth="25" prefHeight="25" text="&#xE145;" >
-               <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+               <padding><Insets top="0" right="0" bottom="-5" left="0"/></padding>
                <font>
-                  <Font name="Material Icons" size="20.0" />
+                  <Font name="Material Symbols Outlined" size="20.0" />
                </font>
                <tooltip>
                   <Tooltip text="Neuer Held" />
                </tooltip>
             </Button>
             <Button maxWidth="Infinity" HBox.hgrow="ALWAYS" onAction="#removeHero" prefWidth="25" prefHeight="25" text="&#xE15B;" >
-               <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+               <padding><Insets top="0" right="0" bottom="-5" left="0"/></padding>
                <font>
-                  <Font name="Material Icons" size="20.0" />
+                  <Font name="Material Symbols Outlined" size="20.0" />
                </font>
                <tooltip>
                   <Tooltip text="Held löschen" />
                </tooltip>
             </Button>
             <Button maxWidth="Infinity" HBox.hgrow="ALWAYS" onAction="#loadHero" prefWidth="25" prefHeight="25" text="&#xE2C8;" >
-               <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+               <padding><Insets top="0" right="0" bottom="-5" left="0"/></padding>
                <font>
-                  <Font name="Material Icons" size="20.0" />
+                  <Font name="Material Symbols Outlined" size="20.0" />
                </font>
                <tooltip>
                   <Tooltip text="Held importieren" />
                </tooltip>
             </Button>
             <Button maxWidth="Infinity" HBox.hgrow="ALWAYS" onAction="#saveHero" prefWidth="25" prefHeight="25" text="&#xE161;" >
-               <padding><Insets top="0" right="0" bottom="0" left="0"/></padding>
+               <padding><Insets top="0" right="0" bottom="-5" left="0"/></padding>
                <font>
-                  <Font name="Material Icons" size="20.0" />
+                  <Font name="Material Symbols Outlined" size="20.0" />
                </font>
                <tooltip>
                   <Tooltip text="Held exportieren" />
