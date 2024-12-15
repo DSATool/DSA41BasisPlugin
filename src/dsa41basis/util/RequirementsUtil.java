@@ -177,6 +177,14 @@ public class RequirementsUtil {
 		return false;
 	}
 
+	public static boolean isLiturgyGradeRequirementFulfilled(final JSONObject hero, final int grade, final JSONObject deities) {
+		final JSONObject liturgyKnowledges = hero.getObj("Talente").getObj("Liturgiekenntnis");
+		for (final String deity : deities.keySet()) {
+			if (liturgyKnowledges.containsKey(deity) && liturgyKnowledges.getObj(deity).getIntOrDefault("TaW", -1) >= grade * 3) return true;
+		}
+		return false;
+	}
+
 	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String text,
 			final boolean includeManualMods) {
 		if (requirements == null) return true;

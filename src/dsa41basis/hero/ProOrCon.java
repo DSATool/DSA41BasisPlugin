@@ -236,6 +236,16 @@ public class ProOrCon {
 		return new Tuple3<>(min, max, step);
 	}
 
+	private boolean calculateValid(final boolean includeManualMods) {
+		if (hero == null || !proOrCon.containsKey("Voraussetzungen")) return true;
+		if (proOrCon.containsKey("Grad") && !RequirementsUtil.isLiturgyGradeRequirementFulfilled(hero, proOrCon.getInt("Grad"), proOrCon.getObj("Gottheiten")))
+			return false;
+		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : null;
+		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null;
+		return RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice == null || choice.isEmpty() ? null : choice,
+				text == null || text.isEmpty() ? null : text, includeManualMods);
+	}
+
 	public final IntegerProperty costProperty() {
 		return cost;
 	}
@@ -477,6 +487,13 @@ public class ProOrCon {
 		return valid.get();
 	}
 
+	public final boolean getValid(final boolean includeManualMods) {
+		if (includeManualMods)
+			return getValid();
+		else
+			return calculateValid(false);
+	}
+
 	public final int getValue() {
 		return value.get();
 	}
@@ -672,11 +689,7 @@ public class ProOrCon {
 	}
 
 	protected void updateValid() {
-		if (hero == null || !proOrCon.containsKey("Voraussetzungen")) return;
-		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : "";
-		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : "";
-		valid.set(RequirementsUtil.isRequirementFulfilled(hero, proOrCon.getObj("Voraussetzungen"), choice == null || choice.isEmpty() ? null : choice,
-				text == null || text.isEmpty() ? null : text, true));
+		valid.set(calculateValid(true));
 	}
 
 	public final ReadOnlyBooleanProperty validProperty() {
