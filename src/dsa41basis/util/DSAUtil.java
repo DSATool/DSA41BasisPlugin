@@ -33,6 +33,7 @@ import dsa41basis.hero.Spell;
 import dsa41basis.hero.Talent;
 import dsatool.resources.ResourceManager;
 import dsatool.util.ErrorLogger;
+import dsatool.util.StringUtil;
 import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
 import dsatool.util.Util;
@@ -718,15 +719,7 @@ public class DSAUtil {
 
 		Collections.sort(variants);
 
-		boolean first = true;
-		for (final String variant : variants) {
-			if (first) {
-				first = false;
-			} else {
-				result.append(", ");
-			}
-			result.append(variant);
-		}
+		result.append(StringUtil.mkString(variants, ", "));
 
 		result.append(')');
 
