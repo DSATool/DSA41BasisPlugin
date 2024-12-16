@@ -15,7 +15,11 @@
  */
 package dsa41basis.util;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import dsatool.resources.ResourceManager;
+import dsatool.util.StringUtil;
 import dsatool.util.Tuple;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
@@ -232,7 +236,11 @@ public class RequirementsUtil {
 		if (requirements.containsKey("Eigenschaften")) {
 			final JSONObject requiredAttributes = requirements.getObj("Eigenschaften");
 			for (final String attribute : requiredAttributes.keySet()) {
-				if (HeroUtil.getCurrentValue(attributes.getObj(attribute), includeManualMods) < requiredAttributes.getInt(attribute)) return false;
+				final int requiredValue = requiredAttributes.getInt(attribute);
+				if (requiredValue < 0) {
+					if (HeroUtil.getCurrentValue(attributes.getObj(attribute), includeManualMods) > -requiredValue)
+						return false;
+				} else if (HeroUtil.getCurrentValue(attributes.getObj(attribute), includeManualMods) < requiredAttributes.getInt(attribute)) return false;
 			}
 		}
 
@@ -431,8 +439,8 @@ public class RequirementsUtil {
 				final JSONObject actual = languages.getObj(language);
 				if (value < 0) {
 					if (actual == null || actual.getIntOrDefault("TaW", 0) > -value) return false;
-				} else if (actual != null && actual.getIntOrDefault("TaW", 0) >= value && actual.getBoolOrDefault("aktiviert", true)) {}
-				return true;
+				} else if (actual != null && actual.getIntOrDefault("TaW", 0) >= value && actual.getBoolOrDefault("aktiviert", true))
+					return true;
 			}
 			return value < 0;
 		} else {
@@ -464,8 +472,8 @@ public class RequirementsUtil {
 				if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
 					for (int i = 0; i < actual.size(); ++i) {
 						if (value < 0) {
-							if (((JSONArray) actual).getObj(i).getIntOrDefault("ZfW", 0) > -value) return false;
-						} else if (((JSONArray) actual).getObj(i).getIntOrDefault("ZfW", 0) >= value
+							if (((JSONArray) actual).getObj(i).getIntOrDefault("TaW", 0) > -value) return false;
+						} else if (((JSONArray) actual).getObj(i).getIntOrDefault("TaW", 0) >= value
 								&& ((JSONArray) actual).getObj(i).getBoolOrDefault("aktiviert", true))
 							return true;
 					}
@@ -477,6 +485,407 @@ public class RequirementsUtil {
 						return ((JSONObject) actual).getIntOrDefault("TaW", 0) >= value && ((JSONObject) actual).getBoolOrDefault("aktiviert", true);
 				}
 			}
+		}
+	}
+
+	private static List<String> unfulfilledProConSkills(final JSONObject hero, final String name, final JSONObject requiredSkill, final String choice,
+			final String text, final boolean strictMatching) {
+		final List<String> unfulfilled = new LinkedList<>();
+
+		final JSONObject pros = ResourceManager.getResource("data/Vorteile");
+		final JSONObject cons = ResourceManager.getResource("data/Nachteile");
+
+		final JSONObject actualPros = hero.getObj("Vorteile");
+		final JSONObject actualCons = hero.getObj("Nachteile");
+		final JSONObject actualSkills = hero.getObj("Sonderfertigkeiten");
+
+		final JSONValue skill;
+		String type;
+		if (actualPros.containsKey(name)) {
+			skill = (JSONValue) pros.getUnsafe(name);
+			type = "Vorteil ";
+		} else if (actualCons.containsKey(name)) {
+			skill = (JSONValue) cons.getUnsafe(name);
+			type = "Nachteil ";
+		} else if (actualSkills.containsKey(name)) {
+			skill = (JSONValue) actualSkills.getUnsafe(name);
+			type = "Sonderfertigkeit ";
+		} else {
+			unfulfilled.add(actualPros.containsKey(name) ? "Vorteil " : (actualCons.containsKey(name) ? "Nachteil " : "Sonderfertigkeit ") + name);
+			return unfulfilled;
+		}
+
+		final int requiredLevel = requiredSkill.getIntOrDefault("Stufe", 0);
+		final String needsLevel = requiredSkill.containsKey("Stufe") ? "≥" + requiredLevel : "";
+
+		for (int kind = 0; kind < 2; ++kind) {
+			if (requiredSkill.containsKey(kind == 0 ? "Auswahl" : "Freitext")) {
+				final JSONArray arr = (JSONArray) skill;
+
+				final JSONObject skillChoice = requiredSkill.getObj(kind == 0 ? "Auswahl" : "Freitext");
+				if (skillChoice.containsKey("Muss")) {
+					if (!hasChoice(arr, requiredLevel, skillChoice.getString("Muss"), choice, text, kind != 0, false, strictMatching)) {
+						unfulfilled.add(type + name + " (" + skillChoice.getString("Muss") + ')' + needsLevel);
+					}
+				}
+				if (skillChoice.containsKey("Wahl")) {
+					final JSONArray choiceChoice = skillChoice.getArr("Wahl");
+					boolean found = false;
+					for (int i = 0; i < choiceChoice.size() && !found; ++i) {
+						if (hasChoice(arr, requiredLevel, choiceChoice.getString(i), choice, text, kind != 0, false, strictMatching)) {
+							found = true;
+						}
+					}
+					if (!found) {
+						unfulfilled.add(type + name + StringUtil.mkStringString(choiceChoice, " (", " o. ", ")") + needsLevel);
+					}
+				}
+				if (skillChoice.containsKey("Nicht")) {
+					if (!hasChoice(arr, requiredLevel, skillChoice.getString("Nicht"), choice, text, kind != 0, true, strictMatching)) {
+						unfulfilled.add("Nicht " + type + name + " (" + skillChoice.getString("Nicht") + ')' + needsLevel);
+					}
+				}
+			}
+		}
+
+		if (!requiredSkill.containsKey("Auswahl") && !requiredSkill.containsKey("Freitext")) {
+			if (skill instanceof final JSONObject obj) {
+				if (obj.getIntOrDefault("Stufe", 0) < requiredLevel) {
+					unfulfilled.add(type + name + needsLevel);
+				}
+			} else {
+				if (!hasChoice((JSONArray) skill, requiredLevel, "Auswahl", null, null, false, false, false)) {
+					unfulfilled.add(type + name + needsLevel);
+				}
+			}
+		}
+
+		return unfulfilled;
+	}
+
+	public static String unfulfilledRequirements(final JSONObject hero, final JSONObject requirements, final String choice, final String text,
+			final boolean includeManualMods) {
+
+		final List<String> unfulfilled = new LinkedList<>();
+
+		if (requirements.containsKey("Wahl")) {
+			final JSONArray choices = requirements.getArr("Wahl");
+			for (int i = 0; i < choices.size(); ++i) {
+				boolean fulfilled = false;
+				final JSONArray currentChoices = choices.getArr(i);
+				for (int j = 0; j < currentChoices.size(); ++j) {
+					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, text, includeManualMods)) {
+						fulfilled = true;
+						break;
+					}
+				}
+				if (!fulfilled) {
+					StringUtil.mkStringObj(choices, "\n\nODER\n\n",
+							currentChoice -> unfulfilledRequirements(hero, currentChoice, choice, text, includeManualMods));
+				}
+			}
+		}
+
+		if (requirements.containsKey("Auswahl")) {
+			final JSONArray choices = requirements.getArr("Auswahl");
+			boolean found = false;
+			for (int i = 0; i < choices.size(); ++i) {
+				if (choices.getString(i).equals(choice)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				unfulfilled.add("Beschreibung " + StringUtil.mkStringString(choices, " o. "));
+			}
+		}
+
+		if (requirements.containsKey("Freitext")) {
+			final JSONArray choices = requirements.getArr("Freitext");
+			boolean found = false;
+			for (int i = 0; i < choices.size(); ++i) {
+				if (choices.getString(i).equals(text)) {
+					found = true;
+					break;
+				}
+			}
+			if (!found) {
+				unfulfilled.add((requirements.containsKey("Auswahl") ? "Variante " : "Beschreibung ") + StringUtil.mkStringString(choices, " o. "));
+			}
+		}
+
+		final JSONObject attributes = hero.getObj("Eigenschaften");
+		if (requirements.containsKey("Eigenschaften")) {
+			final JSONObject requiredAttributes = requirements.getObj("Eigenschaften");
+			for (final String attribute : requiredAttributes.keySet()) {
+				final int requiredValue = requiredAttributes.getInt(attribute);
+				if (requiredValue < 0) {
+					if (HeroUtil.getCurrentValue(attributes.getObj(attribute), includeManualMods) > -requiredValue) {
+						unfulfilled.add("Basiswert " + attribute + "<" + -requiredValue);
+					}
+				} else if (HeroUtil.getCurrentValue(attributes.getObj(attribute), includeManualMods) < requiredAttributes.getInt(attribute)) {
+					unfulfilled.add("Eigenschaft " + attribute + "≥" + requiredValue);
+				}
+			}
+		}
+
+		if (requirements.containsKey("Basiswerte")) {
+			final JSONObject basicValues = ResourceManager.getResource("data/Basiswerte");
+			final JSONObject actualValues = hero.getObj("Basiswerte");
+			final JSONObject requiredValues = requirements.getObj("Basiswerte");
+			for (final String basicValue : requiredValues.keySet()) {
+				final int requiredValue = requiredValues.getInt(basicValue);
+				if (requiredValue < 0) {
+					if (HeroUtil.deriveValue(basicValues.getObj(basicValue), hero, actualValues.getObj(basicValue), includeManualMods) > -requiredValue) {
+						unfulfilled.add("Basiswert " + basicValue + "<" + -requiredValue);
+					}
+				} else if (HeroUtil.deriveValue(basicValues.getObj(basicValue), hero, actualValues.getObj(basicValue), includeManualMods) < requiredValue) {
+					unfulfilled.add("Basiswert " + basicValue + "≥" + requiredValue);
+				}
+			}
+		}
+
+		final JSONObject biography = hero.getObj("Biografie");
+
+		if (requirements.containsKey("Geschlecht")) {
+			if (!requirements.getString("Geschlecht").equals(biography.getString("Geschlecht"))) {
+				unfulfilled.add("Geschlecht " + requirements.getString("Geschlecht"));
+			}
+		}
+
+		if (requirements.containsKey("Rassen")) {
+			if (!fulfillsRKPRequirement(hero, "Rasse", requirements.getObj("Rassen"), false)) {
+				unfulfilledRKPRequirements(unfulfilled, hero, "Rasse", requirements.getObj("Rassen"), false);
+			}
+		}
+
+		if (requirements.containsKey("Kulturen")) {
+			if (!fulfillsRKPRequirement(hero, "Kultur", requirements.getObj("Kulturen"), false)) {
+				unfulfilledRKPRequirements(unfulfilled, hero, "Kultur", requirements.getObj("Kulturen"), false);
+			}
+		}
+
+		if (requirements.containsKey("Professionen")) {
+			if (!fulfillsRKPRequirement(hero, "Profession", requirements.getObj("Professionen"), true)) {
+				unfulfilledRKPRequirements(unfulfilled, hero, "Profession", requirements.getObj("Professionen"), true);
+			}
+		}
+
+		if (requirements.containsKey("Talente")) {
+			final JSONObject talents = requirements.getObj("Talente");
+			if (talents.containsKey("Muss")) {
+				final JSONObject must = talents.getObj("Muss");
+				for (String talent : must.keySet()) {
+					final int value = must.getInt(talent);
+					if ("Auswahl".equals(talent)) {
+						talent = choice;
+					} else if ("Freitext".equals(talent)) {
+						talent = text;
+					}
+					if (!isTalentRequirementFulfilled(hero, talent, value)) {
+						unfulfilled.add(unfulfilledTalentRequirement(talent, value));
+					}
+				}
+			}
+			if (talents.containsKey("Wahl")) {
+				final JSONArray choices = talents.getArr("Wahl");
+				for (int i = 0; i < choices.size(); ++i) {
+					final JSONObject curChoice = choices.getObj(i);
+					boolean match = false;
+					for (String talent : curChoice.keySet()) {
+						final int value = curChoice.getInt(talent);
+						if ("Auswahl".equals(talent)) {
+							talent = choice;
+						} else if ("Freitext".equals(talent)) {
+							talent = text;
+						}
+						if (isTalentRequirementFulfilled(hero, talent, value)) {
+							match = true;
+						}
+					}
+					if (!match) {
+						unfulfilled.add("Talente/Zauber " + StringUtil.mkString(curChoice, " o. ", talent -> {
+							final int value = curChoice.getInt(talent);
+							if ("Auswahl".equals(talent)) {
+								talent = choice;
+							} else if ("Freitext".equals(talent)) {
+								talent = text;
+							}
+							return unfulfilledTalentRequirement(talent, value);
+						}));
+					}
+				}
+			}
+		}
+
+		final JSONObject actualSkills = hero.getObj("Sonderfertigkeiten");
+
+		if (requirements.containsKey("Sonderfertigkeiten AP")) {
+			final JSONObject skills = ResourceManager.getResource("data/Sonderfertigkeiten");
+			final JSONObject rituals = ResourceManager.getResource("data/Rituale");
+			final JSONObject ap = requirements.getObj("Sonderfertigkeiten AP");
+			if (ap.containsKey("Muss")) {
+				final JSONObject must = ap.getObj("Muss");
+				for (final String groupName : must.keySet()) {
+					int requiredAP = must.getInt(groupName);
+					final JSONObject group;
+					if (skills.containsKey(groupName)) {
+						group = skills.getObj(groupName);
+					} else if (rituals.containsKey(groupName)) {
+						group = rituals.getObj(groupName);
+					} else if ("Liturgien".equals(groupName)) {
+						group = ResourceManager.getResource("data/Liturgien");
+					} else if ("Schamenenrituale".equals(groupName)) {
+						group = ResourceManager.getResource("data/Schamanenrituale");
+					} else {
+						group = new JSONObject(null);
+					}
+					for (final String skillName : group.keySet()) {
+						if (actualSkills.containsKey(skillName)) {
+							final JSONObject skill = group.getObj(skillName);
+							if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
+								requiredAP -= skill.getIntOrDefault("Kosten", 0) * actualSkills.getArr(skillName).size();
+							} else {
+								requiredAP -= skill.getIntOrDefault("Kosten", 0);
+							}
+						}
+					}
+					if (requiredAP > 0) {
+						unfulfilled.add(must.getInt(groupName) + " AP in " + groupName);
+					}
+				}
+			}
+			if (ap.containsKey("Wahl")) {
+				final JSONArray choices = ap.getArr("Wahl");
+				for (int i = 0; i < choices.size(); ++i) {
+					final JSONObject curChoice = choices.getObj(i);
+					boolean match = false;
+					for (final String groupName : curChoice.keySet()) {
+						int requiredAP = curChoice.getInt(groupName);
+						final JSONObject group;
+						if (skills.containsKey(groupName)) {
+							group = skills.getObj(groupName);
+						} else if (rituals.containsKey(groupName)) {
+							group = rituals.getObj(groupName);
+						} else if ("Liturgien".equals(groupName)) {
+							group = ResourceManager.getResource("data/Liturgien");
+						} else if ("Schamenenrituale".equals(groupName)) {
+							group = ResourceManager.getResource("data/Schamanenrituale");
+						} else {
+							continue;
+						}
+						for (final String skillName : group.keySet()) {
+							if (actualSkills.containsKey(skillName)) {
+								final JSONObject skill = group.getObj(skillName);
+								if (skill.containsKey("Auswahl") || skill.containsKey("Freitext")) {
+									requiredAP -= skill.getIntOrDefault("Kosten", 0) * actualSkills.getArr(skillName).size();
+								} else {
+									requiredAP -= skill.getIntOrDefault("Kosten", 0);
+								}
+							}
+						}
+						if (requiredAP <= 0) {
+							match = true;
+							break;
+						}
+					}
+					if (!match) {
+						unfulfilled.add(StringUtil.mkString(curChoice, " o. ", groupName -> curChoice.getInt(groupName) + " AP in " + groupName));
+					}
+				}
+			}
+		}
+
+		if (requirements.containsKey("Vorteile/Nachteile/Sonderfertigkeiten")) {
+			final JSONObject skills = requirements.getObj("Vorteile/Nachteile/Sonderfertigkeiten");
+			if (skills.containsKey("Muss")) {
+				final JSONObject must = skills.getObj("Muss");
+				for (final String name : must.keySet()) {
+					final JSONObject skill = must.getObj(name);
+					if (!"Waffenspezialisierung".equals(name) || !"Auswahl".equals(skill.getObj("Auswahl").getStringOrDefault("Muss", null))) {
+						if (!hasProConSkill(hero, name, skill, choice, text, false)) {
+							unfulfilled.addAll(unfulfilledProConSkills(hero, name, skill, choice, text, false));
+						}
+					} else {
+						final JSONObject talent = HeroUtil.findTalent(choice)._1;
+						if (talent != null && talent.getArrOrDefault("Spezialisierungen", new JSONArray(null)).size() != 0)
+							if (!hasProConSkill(hero, name, skill, choice, text, false)) {
+								unfulfilled.addAll(unfulfilledProConSkills(hero, name, skill, choice, text, false));
+							}
+					}
+				}
+			}
+			if (skills.containsKey("Wahl")) {
+				final JSONArray choices = skills.getArr("Wahl");
+				for (int i = 0; i < choices.size(); ++i) {
+					final JSONObject curChoice = choices.getObj(i);
+					boolean found = false;
+					for (final String name : curChoice.keySet()) {
+						final JSONObject skill = curChoice.getObj(name);
+						if (hasProConSkill(hero, name, skill, choice, text, false)) {
+							found = true;
+							break;
+						}
+					}
+					if (!found) {
+						unfulfilled.add(StringUtil.mkString(curChoice, "\noder\n",
+								name -> StringUtil.mkString(unfulfilledProConSkills(hero, name, curChoice.getObj(name), choice, text, false), "\n")));
+					}
+				}
+			}
+			if (skills.containsKey("Nicht")) {
+				final JSONObject must = skills.getObj("Nicht");
+				for (final String name : must.keySet()) {
+					final JSONObject skill = must.getObj(name);
+					if (hasProConSkill(hero, name, skill, choice, text, true)) {
+						unfulfilled.addAll(
+								unfulfilledProConSkills(hero, name, skill, choice, text, false).stream().map(skillText -> "Nicht " + skillText).toList());
+					}
+				}
+			}
+		}
+
+		return StringUtil.mkString(unfulfilled, "\n");
+	}
+
+	private static void unfulfilledRKPRequirements(final List<String> unfulfilled, final JSONObject hero, final String category, final JSONObject rkps,
+			final boolean isProfession) {
+		if (rkps.containsKey("Muss")) {
+			final JSONObject must = rkps.getObj("Muss");
+			for (final String rkp : must.keySet()) {
+				if (!hasRKP(hero, category, rkp, must.getObj(rkp), isProfession)) {
+					unfulfilled.add(category + ' ' + rkp);
+				}
+			}
+		}
+		if (rkps.containsKey("Wahl")) {
+			final JSONObject choices = rkps.getObj("Wahl");
+			boolean match = false;
+			for (final String rkp : choices.keySet()) {
+				if (hasRKP(hero, category, rkp, choices.getObj(rkp), isProfession)) {
+					match = true;
+				}
+			}
+			if (!match) {
+				unfulfilled.add(category + " " + StringUtil.mkString(choices.keySet(), " oder "));
+			}
+		}
+		if (rkps.containsKey("Nicht")) {
+			final JSONObject not = rkps.getObj("Nicht");
+			for (final String rkp : not.keySet()) {
+				if (hasRKP(hero, category, rkp, not.getObj(rkp), isProfession)) {
+					unfulfilled.add(category + " nicht " + rkp);
+				}
+			}
+		}
+	}
+
+	private static String unfulfilledTalentRequirement(final String talentName, final int value) {
+		if ("Lesen/Schreiben".equals(talentName))
+			return "Lesen/Schreiben" + (value < 0 ? "<" : "≥") + value;
+		else {
+			final String talentGroup = HeroUtil.findTalent(talentName)._2;
+			return ("Zauber".equals(talentGroup) ? "Zauber " : "Talent ") + talentName + (value < 0 ? "<" + -value : "≥" + value);
 		}
 	}
 

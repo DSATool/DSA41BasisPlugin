@@ -414,6 +414,18 @@ public class ProOrCon {
 		return choices;
 	}
 
+	public String getInvalidReason(final boolean includeManualMods) {
+		if (hero == null || !proOrCon.containsKey("Voraussetzungen")) return "";
+		final String choice = first == ChoiceOrTextEnum.CHOICE ? description.get() : null;
+		final String text = first == ChoiceOrTextEnum.TEXT ? description.get() : second == ChoiceOrTextEnum.TEXT ? variant.get() : null;
+		final String reason = RequirementsUtil.unfulfilledRequirements(hero, proOrCon.getObj("Voraussetzungen"),
+				choice == null || choice.isEmpty() ? null : choice,
+				text == null || text.isEmpty() ? null : text, includeManualMods);
+		final boolean missingLiturgyLevel = proOrCon.containsKey("Grad")
+				&& !RequirementsUtil.isLiturgyGradeRequirementFulfilled(hero, proOrCon.getInt("Grad"), proOrCon.getObj("Gottheiten"));
+		return reason + (missingLiturgyLevel ? (reason.isEmpty() ? "" : "\n") + "Liturgiekenntnis " + proOrCon.getInt("Grad") * 3 : "");
+	}
+
 	public int getMaxValue() {
 		return max;
 	}
