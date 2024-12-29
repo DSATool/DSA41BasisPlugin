@@ -311,6 +311,11 @@ public class ProOrCon {
 				}
 				final JSONObject levels = ResourceManager.getResource("data/Liturgiegrade");
 				baseCost = levels.getObj("Grad " + level).getDoubleOrDefault("Kosten", level * 50.0);
+				if (hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")) {
+					baseCost *= 0.5;
+				} else if (hero.getObj("Vorteile").containsKey("Gutes Gedächtnis")) {
+					baseCost *= 0.75;
+				}
 			}
 		}
 

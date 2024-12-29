@@ -331,9 +331,11 @@ public class DSAUtil {
 		}
 		modifier += charGenModifier;
 		final double multiplier = hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
-				&& (talent instanceof Spell || Set.of("Wissenstalente", "Sprachen und Schriften").contains(talentGroup)) ? 0.5
-						: hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
-								&& (talent instanceof Spell || "Sprachen und Schriften".equals(talentGroup)) ? 0.75 : 1.0;
+				&& (talent instanceof Spell || Set.of("Wissenstalente", "Sprachen und Schriften", "Ritualkenntnis", "Liturgiekenntnis").contains(talentGroup))
+						? 0.5
+						: hero.getObj("Vorteile").containsKey("Gutes Gedächtnis")
+								&& (talent instanceof Spell || Set.of("Sprachen und Schriften", "Ritualkenntnis", "Liturgiekenntnis").contains(talentGroup))
+										? 0.75 : 1.0;
 		int result = 0;
 		for (int i = startLevel + 1; i <= targetLevel; ++i) {
 			if (charGen && i == maxLevel + 1) {
