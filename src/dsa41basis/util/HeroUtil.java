@@ -1414,19 +1414,9 @@ public class HeroUtil {
 			if (!hasRepresentation) {
 				if (hasGuildMagic && ("Srl".equals(representation) || "Bor".equals(representation))) {
 					++complexity;
-					hasRepresentation = true;
-				} else if (hasCharlatan) {
-					if ("Mag".equals(representation)) {
-						++complexity;
-						hasRepresentation = true;
-					} else if ("Sch".equals(representation)) {
-						complexity += 2;
-						hasRepresentation = true;
-					}
-				}
-
-				if ("Sch".equals(representation)
-						|| actualRepresentations.size() == 1 && "Schelm".equals(actualRepresentations.getObj(0).getString("Auswahl"))) {
+				} else if (hasCharlatan && "Mag".equals(representation)) {
+					++complexity;
+				} else if ("Sch".equals(representation) && !hasCharlatan) {
 					complexity += 3;
 				} else {
 					complexity += 2;
