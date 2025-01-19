@@ -29,6 +29,33 @@ import jsonant.value.JSONObject;
 
 public class ResourceSanitizer {
 
+	public static final Function<JSONObject, JSONObject> liturgyRitualsSanitizer = object -> {
+		if (object.containsKey("Spieler")) {
+			final boolean isMagical = object.getObj("Basiswerte").containsKey("Astralenergie");
+			final boolean isCleric = object.getObj("Basiswerte").containsKey("Karmaenergie");
+			final JSONObject skills = object.getObj("Sonderfertigkeiten");
+			if (isMagical && !isCleric) {
+				if (skills.containsKey("Exorzismus (Ritual)")) {
+					final Object skill = skills.getUnsafe("Exorzismus (Ritual)");
+					skills.removeKey("Exorzismus (Ritual)");
+					skills.putUnsafe("Exorzismus", skill);
+				}
+			} else if (isCleric && !isMagical) {
+				if (skills.containsKey("Auge des Mondes")) {
+					final Object skill = skills.getUnsafe("Auge des Mondes");
+					skills.removeKey("Auge des Mondes");
+					skills.putUnsafe("Auge des Mondes (Liturgie)", skill);
+				}
+				if (skills.containsKey("Exorzismus")) {
+					final Object skill = skills.getUnsafe("Exorzismus");
+					skills.removeKey("Exorzismus");
+					skills.putUnsafe("Exorzismus (Liturgie)", skill);
+				}
+			}
+		}
+		return object;
+	};
+
 	public static final Function<JSONObject, JSONObject> deftSanitizer = object -> {
 		if (object.containsKey("Spieler")) {
 			final JSONObject deft = object.getObj("Vorteile").getObjOrDefault("Flink", null);
