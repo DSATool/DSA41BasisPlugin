@@ -140,7 +140,13 @@ public class ResourceSanitizer {
 			}
 			result.put("Besitz", sortInventory(result, object.getObj("Besitz")));
 			result.put("Historie", object.getArr("Historie").clone(result));
+			if (object.containsKey("Vorgemerkte Steigerungen")) {
+				result.put("Vorgemerkte Steigerungen", object.getArr("Vorgemerkte Steigerungen").clone(result));
+			}
 			result.addAll(object, false);
+			if (result.containsKey("Vorgemerkte Steigerungen") && result.getArr("Vorgemerkte Steigerungen").size() == 0) {
+				result.removeKey("Vorgemerkte Steigerungen");
+			}
 		}
 
 		return result;
