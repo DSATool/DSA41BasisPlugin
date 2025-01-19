@@ -265,8 +265,8 @@ public class DSAUtil {
 		final String talentGroup = HeroUtil.findTalent(talent.getName())._2;
 		int charGenModifier = 0;
 		int maxLevel = 10;
+		final JSONObject pros = hero.getObj("Vorteile");
 		if (charGen) {
-			final JSONObject pros = hero.getObj("Vorteile");
 			if (pros.containsKey("Breitgefächerte Bildung") || pros.containsKey("Veteran")) {
 				maxLevel = 15;
 			}
@@ -330,12 +330,54 @@ public class DSAUtil {
 			}
 		}
 		modifier += charGenModifier;
-		final double multiplier = hero.getObj("Vorteile").containsKey("Eidetisches Gedächtnis")
-				&& (talent instanceof Spell || Set.of("Wissenstalente", "Sprachen und Schriften", "Ritualkenntnis", "Liturgiekenntnis").contains(talentGroup))
-						? 0.5
-						: hero.getObj("Vorteile").containsKey("Gutes Gedächtnis")
-								&& (talent instanceof Spell || Set.of("Sprachen und Schriften", "Ritualkenntnis", "Liturgiekenntnis").contains(talentGroup))
-										? 0.75 : 1.0;
+		double multiplier = 1;
+		if (pros.containsKey("Eidetisches Gedächtnis")) {
+			if (talent instanceof Spell) {
+				if ("Dru".equals(((Spell) talent).getRepresentation())) {
+					final JSONArray representations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", new JSONArray(null));
+					boolean hasDruid = false;
+					for (int i = 0; i < representations.size(); ++i) {
+						final String actualRepresentation = representations.getObj(i).getString("Auswahl");
+						if ("Druidisch".equals(actualRepresentation)) {
+							hasDruid = true;
+							break;
+						}
+					}
+					if (hasDruid) {
+						multiplier = 1 / 3;
+					} else {
+						multiplier = 0.5;
+					}
+				} else {
+					multiplier = 0.5;
+				}
+			} else if (Set.of("Wissenstalente", "Sprachen und Schriften", "Ritualkenntnis", "Liturgiekenntnis").contains(talentGroup)) {
+				multiplier = 0.5;
+			}
+		} else if (pros.containsKey("Gutes Gedächtnis")) {
+			if (talent instanceof Spell) {
+				if ("Dru".equals(((Spell) talent).getRepresentation())) {
+					final JSONArray representations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", new JSONArray(null));
+					boolean hasDruid = false;
+					for (int i = 0; i < representations.size(); ++i) {
+						final String actualRepresentation = representations.getObj(i).getString("Auswahl");
+						if ("Druidisch".equals(actualRepresentation)) {
+							hasDruid = true;
+							break;
+						}
+					}
+					if (hasDruid) {
+						multiplier = 2 / 3;
+					} else {
+						multiplier = 0.75;
+					}
+				} else {
+					multiplier = 0.75;
+				}
+			} else if (Set.of("Sprachen und Schriften", "Ritualkenntnis", "Liturgiekenntnis").contains(talentGroup)) {
+				multiplier = 0.75;
+			}
+		}
 		int result = 0;
 		for (int i = startLevel + 1; i <= targetLevel; ++i) {
 			if (charGen && i == maxLevel + 1) {
