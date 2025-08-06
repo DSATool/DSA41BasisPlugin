@@ -174,8 +174,13 @@ public class ResourceSanitizer {
 					}
 					final String text1 = o1.getString("Freitext");
 					final String text2 = o2.getString("Freitext");
-					if (text1 != null && text2 != null) return comparator.compare(text1, text2);
-					return 0;
+					if (text1 != null && text2 != null) {
+						final int text = comparator.compare(text1, text2);
+						if (text != 0) return text;
+					}
+					final int fallback = comparator.compare(o1.toString(), o2.toString());
+					if (fallback != 0) return fallback;
+					return -1;
 				});
 				choices.addAll(arr.getObjs());
 				for (final JSONObject choice : choices) {
