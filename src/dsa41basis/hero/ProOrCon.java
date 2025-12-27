@@ -277,10 +277,15 @@ public class ProOrCon {
 				int complexity = Integer.MAX_VALUE;
 				if ("Zauber".equals(talentAndGroup._2)) {
 					final JSONArray representations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", null);
+					// TODO All of this is wrong because specializations are for each individual actual spell, including per representation and per
+					// Adlerschwinge animal
 					if (representations != null) {
 						for (final JSONObject representation : representations.getObjs()) {
 							final String abbreviation = DSAUtil.getRepresentationAbbreviation(representation.getString("Auswahl"));
-							complexity = Math.min(HeroUtil.getSpellComplexity(hero, talentName, abbreviation, Integer.MAX_VALUE), complexity);
+							complexity = Math.min(
+									HeroUtil.getSpellComplexity(hero, new JSONObject(null) /* actualSpell.getObj(abbreviation) TODO wrong for Adlerschwinge */,
+											talentName, abbreviation, Integer.MAX_VALUE),
+									complexity);
 						}
 					}
 				} else {

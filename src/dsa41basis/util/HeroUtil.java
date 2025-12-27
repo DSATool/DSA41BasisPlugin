@@ -16,6 +16,7 @@
 package dsa41basis.util;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -1380,7 +1381,8 @@ public class HeroUtil {
 		return spell.getIntOrDefault("Komplexität", baseSpell.getIntOrDefault("Komplexität", 1));
 	}
 
-	public static int getSpellComplexity(final JSONObject hero, final String spellName, final String representation, final int targetZfW) {
+	public static int getSpellComplexity(final JSONObject hero, final JSONObject actual, final String spellName, final String representation,
+			final int targetZfW) {
 		final JSONObject baseSpell = ResourceManager.getResource("data/Zauber").getObj(spellName);
 		final JSONObject spell = baseSpell.getObj("Repräsentationen").getObjOrDefault(representation, baseSpell);
 
@@ -1534,31 +1536,53 @@ public class HeroUtil {
 
 		final JSONObject actualSpell = hero.getObj("Zauber").getObjOrDefault(spellName, null);
 		if (actualSpell != null) {
-			final JSONObject actualRepresentation = actualSpell.getObj(representation);
-			if (actualRepresentation != null && actualRepresentation.getBoolOrDefault("Hauszauber", false)) {
+			if (actual.getBoolOrDefault("Hauszauber", false)) {
 				--complexity;
 			}
-			for (final String currentRep : actualSpell.keySet()) {
+			differentRep: for (final String currentRep : actualSpell.keySet()) {
 				if (currentRep.equals(representation)) {
 					continue;
 				}
-				if (!"Temporär".equals(currentRep) && actualSpell.getObj(currentRep).getIntOrDefault("ZfW", 0) >= targetZfW) {
-					--complexity;
-					hasDifferentRepBonus = true;
-					break;
+				if (!"Temporär".equals(currentRep)) {
+					final Object otherRep = actualSpell.getUnsafe(currentRep);
+					if (otherRep instanceof final JSONObject o && o.getIntOrDefault("ZfW", 0) >= targetZfW) {
+						--complexity;
+						hasDifferentRepBonus = true;
+						break;
+					} else if (otherRep instanceof final JSONArray a) {
+						for (final JSONObject o : a.getObjs()) {
+							if (o.getIntOrDefault("ZfW", 0) >= targetZfW) {
+								--complexity;
+								hasDifferentRepBonus = true;
+								break differentRep;
+							}
+						}
+					}
 				}
 			}
 		}
 
-		if ((spell.containsKey("Verwandte Sprüche") || baseSpell.containsKey("Verwandte Sprüche")) && !hasDifferentRepBonus && !isAntiElement) {
-			final JSONArray similarSpells = spell.getArrOrDefault("Verwandte Sprüche", baseSpell.getArr("Verwandte Sprüche"));
-			similarSpells: for (int i = 0; i < similarSpells.size(); ++i) {
-				final JSONObject similar = hero.getObj("Zauber").getObjOrDefault(similarSpells.getString(i), null);
+		if (!hasDifferentRepBonus && !isAntiElement) {
+			final Collection<String> similarSpells = spell
+					.getArrOrDefault("Verwandte Sprüche", baseSpell.getArrOrDefault("Verwandte Sprüche", new JSONArray(null))).getStrings();
+			similarSpells.add(spellName);
+			similarSpells: for (final String similarSpellName : similarSpells) {
+				final JSONObject similar = hero.getObj("Zauber").getObjOrDefault(similarSpellName, null);
 				if (similar != null) {
 					for (final String currentRep : similar.keySet()) {
-						if (!"Temporär".equals(currentRep) && similar.getObj(currentRep).getIntOrDefault("ZfW", 0) >= targetZfW) {
-							--complexity;
-							break similarSpells;
+						if (!"Temporär".equals(currentRep)) {
+							final Object actualSimilar = similar.getUnsafe(currentRep);
+							if (actualSimilar instanceof final JSONObject o && o.getIntOrDefault("ZfW", 0) >= targetZfW) {
+								--complexity;
+								break similarSpells;
+							} else if (actualSimilar instanceof final JSONArray a) {
+								for (final JSONObject o : a.getObjs()) {
+									if (o.getIntOrDefault("ZfW", 0) >= targetZfW) {
+										--complexity;
+										break similarSpells;
+									}
+								}
+							}
 						}
 					}
 				}

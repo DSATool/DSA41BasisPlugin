@@ -81,7 +81,7 @@ public class Spell extends Talent {
 
 	@Override
 	public int getEnhancementComplexity(final JSONObject hero, final int targetZfW) {
-		return HeroUtil.getSpellComplexity(hero, name.get(), representation.get(), targetZfW);
+		return HeroUtil.getSpellComplexity(hero, actual, name.get(), representation.get(), targetZfW);
 	}
 
 	@Override
