@@ -1397,7 +1397,7 @@ public class HeroUtil {
 		boolean hasGuildMagic = false;
 		boolean hasCharlatan = false;
 		if ("ÜNB".equals(representation)) {
-			complexity = 6;
+			complexity = baseSpell.getObj("Repräsentationen").getObj("ÜNB").getIntOrDefault("Komplexität", 6);
 		} else {
 			boolean hasRepresentation = false;
 			final String representationName = ResourceManager.getResource("data/Repraesentationen").getObj(representation).getStringOrDefault("Name", "");
