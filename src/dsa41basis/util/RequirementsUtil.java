@@ -444,12 +444,17 @@ public class RequirementsUtil {
 			}
 			return value < 0;
 		} else {
-			final JSONObject talent = HeroUtil.findTalent(talentName)._1;
-			final Tuple<JSONValue, JSONObject> res = HeroUtil.findActualTalent(hero, talentName);
+			final String actualTalentName = talentName.contains(":") ? talentName.substring(0, talentName.indexOf(':')) : talentName;
+			final JSONObject talent = HeroUtil.findTalent(actualTalentName)._1;
+			final Tuple<JSONValue, JSONObject> res = HeroUtil.findActualTalent(hero, actualTalentName);
 			final JSONValue actual = res._1;
 			if (actual == null) return value < 0;
 			if (res._2 != null && res._2 == hero.getObjOrDefault("Zauber", null)) {
+				final String requiredRep = talentName.contains(":") ? talentName.substring(talentName.indexOf(':') + 1) : null;
 				for (final String rep : ((JSONObject) actual).keySet()) {
+					if (requiredRep != null && !rep.equals(requiredRep)) {
+						continue;
+					}
 					if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
 						final JSONArray actualRep = ((JSONObject) actual).getArr(rep);
 						for (int i = 0; i < actualRep.size(); ++i) {
@@ -884,7 +889,7 @@ public class RequirementsUtil {
 		if ("Lesen/Schreiben".equals(talentName))
 			return "Lesen/Schreiben" + (value < 0 ? "<" : "≥") + value;
 		else {
-			final String talentGroup = HeroUtil.findTalent(talentName)._2;
+			final String talentGroup = HeroUtil.findTalent(talentName.contains(":") ? talentName.substring(0, talentName.indexOf(':')) : talentName)._2;
 			return ("Zauber".equals(talentGroup) ? "Zauber " : "Talent ") + talentName + (value < 0 ? "<" + -value : "≥" + value);
 		}
 	}

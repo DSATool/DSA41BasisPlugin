@@ -76,6 +76,8 @@ public class DSA41Basis extends Plugin {
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.artifactSanitizer);
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.heroSanitizer);
 		ResourceManager.addResourceSanitizer(ResourceSanitizer.deftSanitizer);
+		ResourceManager.addResourceSanitizer(ResourceSanitizer.liturgyRitualsSanitizer);
+		ResourceManager.addResourceSanitizer(ResourceSanitizer.spellSpecializationSanitzer);
 
 		Settings.addSetting(new StringChoiceSetting("Jahreswechsel", "Jahreswechsel", List.of("Jahreswechsel", "Jahreszeiten", "Astronomisch"),
 				"Allgemein", "Jahreswechsel"));

@@ -775,15 +775,19 @@ public class HeroUtil {
 					}
 					break;
 				case "Spezialisierung":
-					final JSONObject talent = HeroUtil.findTalent(other)._1;
+					final String talentName = other.contains(":") ? other.substring(0, other.indexOf(':')) : other;
+					final JSONObject talent = HeroUtil.findTalent(talentName)._1;
 					if (talent != null && talent.containsKey("Spezialisierungen")) {
 						final JSONArray specializations = talent.getArr("Spezialisierungen");
 						for (int i = 0; i < specializations.size(); ++i) {
 							choices.add(specializations.getString(i));
 						}
 					}
-					final JSONObject spell = ResourceManager.getResource("data/Zauber").getObjOrDefault(other, null);
+					JSONObject spell = ResourceManager.getResource("data/Zauber").getObjOrDefault(talentName, null);
 					if (spell != null) {
+						if (other.contains(":")) {
+							spell = spell.getObjOrDefault(other.substring(talentName.length() + 1), spell);
+						}
 						if (spell.containsKey("Spontane Modifikationen")) {
 							final JSONArray spoMos = spell.getArr("Spontane Modifikationen");
 							for (int i = 0; i < spoMos.size(); ++i) {

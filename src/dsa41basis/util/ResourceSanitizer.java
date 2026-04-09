@@ -29,6 +29,26 @@ import jsonant.value.JSONObject;
 
 public class ResourceSanitizer {
 
+	public static final Function<JSONObject, JSONObject> spellSpecializationSanitzer = object -> {
+		if (object.containsKey("Spieler")) {
+			final JSONObject skills = object.getObj("Sonderfertigkeiten");
+			final JSONArray spellSpecializations = skills.getArrOrDefault("Zauberspezialisierung", null);
+			if (spellSpecializations != null) {
+				for (final JSONObject specialization : spellSpecializations.getObjs()) {
+					final String choice = specialization.getString("Auswahl");
+					if (choice.contains(":")) {
+						continue;
+					}
+					final Object spell = object.getObj("Zauber").getUnsafe(choice);
+					final JSONObject actualSpell = spell instanceof final JSONObject spellObj ? spellObj : ((JSONArray) spell).getObj(0);
+					final String representation = actualSpell.keySet().iterator().next();
+					specialization.put("Auswahl", choice + ":" + representation);
+				}
+			}
+		}
+		return object;
+	};
+
 	public static final Function<JSONObject, JSONObject> liturgyRitualsSanitizer = object -> {
 		if (object.containsKey("Spieler")) {
 			final boolean isMagical = object.getObj("Basiswerte").containsKey("Astralenergie");

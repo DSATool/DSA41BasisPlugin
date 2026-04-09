@@ -15,6 +15,7 @@
  */
 package dsa41basis.hero;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import dsa41basis.util.DSAUtil;
@@ -33,6 +34,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
+import jsonant.value.JSONValue;
 
 public class ProOrCon {
 
@@ -272,21 +274,22 @@ public class ProOrCon {
 			baseCost = proOrCon.getDouble("Kosten");
 		} else if (hero != null) {
 			if (name.get().endsWith("spezialisierung") && description.get() != null && !"".equals(description.get())) {
-				final String talentName = description.get();
+				final String talentName = description.get().contains(":") ? description.get().substring(0, description.get().indexOf(':')) : description.get();
 				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(talentName);
 				int complexity = Integer.MAX_VALUE;
 				if ("Zauber".equals(talentAndGroup._2)) {
-					final JSONArray representations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", null);
-					// TODO All of this is wrong because specializations are for each individual actual spell, including per representation and per
-					// Adlerschwinge animal
-					if (representations != null) {
-						for (final JSONObject representation : representations.getObjs()) {
-							final String abbreviation = DSAUtil.getRepresentationAbbreviation(representation.getString("Auswahl"));
+					// TODO This is wrong for Adlerschwinge, because there it should be per animal
+					final JSONValue actualSpell = HeroUtil.findActualTalent(hero, talentName)._1;
+					final String representation = description.get().substring(description.get().indexOf(':') + 1);
+					if (actualSpell instanceof final JSONArray spellArray) {
+						for (final JSONObject spell : spellArray.getObjs()) {
 							complexity = Math.min(
-									HeroUtil.getSpellComplexity(hero, new JSONObject(null) /* actualSpell.getObj(abbreviation) TODO wrong for Adlerschwinge */,
-											talentName, abbreviation, Integer.MAX_VALUE),
+									HeroUtil.getSpellComplexity(hero, spell.getObj(representation), talentName, representation, Integer.MAX_VALUE),
 									complexity);
 						}
+					} else if (actualSpell instanceof final JSONObject spell) {
+						complexity = Math.min(
+								HeroUtil.getSpellComplexity(hero, spell.getObj(representation), talentName, representation, Integer.MAX_VALUE), complexity);
 					}
 				} else {
 					complexity = HeroUtil.getTalentComplexity(hero, talentName);
@@ -358,26 +361,53 @@ public class ProOrCon {
 						: proOrCon.getStringOrDefault("Auswahl", proOrCon.getString("Freitext"));
 		final Set<String> choices = HeroUtil.getChoices(hero, choice, null);
 
-		if ("Talentspezialisierung".equals(name.get())) {
-			final JSONObject talents = ResourceManager.getResource("data/Talente");
-			choices.removeAll(talents.getObj("Nahkampftalente").keySet());
-			choices.removeAll(talents.getObj("Fernkampftalente").keySet());
-			DSAUtil.foreach(group -> true, (groupName, group) -> {
+		switch (name.get()) {
+			case "Talentspezialisierung" -> {
+				final JSONObject talents = ResourceManager.getResource("data/Talente");
+				choices.removeAll(talents.getObj("Nahkampftalente").keySet());
+				choices.removeAll(talents.getObj("Fernkampftalente").keySet());
+				DSAUtil.foreach(group -> true, (groupName, group) -> {
+					DSAUtil.foreach(talent -> {
+						final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
+						return specializations != null && specializations.size() == 0;
+					}, (talentName, talent) -> {
+						choices.remove(talentName);
+					}, group);
+				}, talents);
+			}
+			case "Waffenspezialisierung" -> {
+				final JSONObject talents = ResourceManager.getResource("data/Talente");
 				DSAUtil.foreach(talent -> {
 					final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
 					return specializations != null && specializations.size() == 0;
 				}, (talentName, talent) -> {
 					choices.remove(talentName);
-				}, group);
-			}, talents);
-		} else if ("Waffenspezialisierung".equals(name.get())) {
-			final JSONObject talents = ResourceManager.getResource("data/Talente");
-			DSAUtil.foreach(talent -> {
-				final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
-				return specializations != null && specializations.size() == 0;
-			}, (talentName, talent) -> {
-				choices.remove(talentName);
-			}, talents.getObj("Nahkampftalente"), talents.getObj("Fernkampftalente"));
+				}, talents.getObj("Nahkampftalente"), talents.getObj("Fernkampftalente"));
+			}
+			case "Zauberspezialisierung" -> {
+				Set<String> representations;
+				if (hero != null) {
+					representations = new LinkedHashSet<>();
+					final JSONArray actualRepresentations = hero.getObj("Sonderfertigkeiten").getArrOrDefault("Repräsentation", null);
+					if (actualRepresentations != null) {
+						for (final JSONObject representation : actualRepresentations.getObjs()) {
+							representations.add(DSAUtil.getRepresentationAbbreviation(representation.getString("Auswahl")));
+						}
+					}
+				} else {
+					representations = ResourceManager.getResource("data/Repraesentationen").keySet();
+				}
+				choices.clear();
+				final JSONObject spells = ResourceManager.getResource("data/Zauber");
+				final JSONObject actualSpells = hero != null ? hero.getObj("Zauber") : null;
+				for (final String spellName : spells.keySet()) {
+					for (final String representation : spells.getObj(spellName).getObj("Repräsentationen").keySet()) {
+						if (representations.contains(representation) && (actualSpells == null || actualSpells.containsKey(spellName))) {
+							choices.add(spellName + ":" + representation);
+						}
+					}
+				}
+			}
 		}
 
 		if (proOrCon.containsKey("Voraussetzungen")) {
