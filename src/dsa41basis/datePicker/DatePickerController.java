@@ -79,7 +79,7 @@ public class DatePickerController implements JSONListener {
 			time.removeListener(this);
 		}
 
-		final JSONObject general = ResourceManager.getResource("data/Allgemein");
+		final JSONObject general = ResourceManager.getResource("settings/Allgemein");
 		if (!general.containsKey("Zeit")) {
 			time = new JSONObject(general);
 			general.put("Zeit", time);
@@ -109,7 +109,7 @@ public class DatePickerController implements JSONListener {
 
 	@Override
 	public void notifyChanged(final JSONValue changed) {
-		time = ResourceManager.getResource("data/Allgemein").getObj("Zeit");
+		time = ResourceManager.getResource("settings/Allgemein").getObj("Zeit");
 
 		day.getValueFactory().setValue(time.getIntOrDefault("Tag", 1));
 		month.setItems(FXCollections.observableArrayList(DSAUtil.months));
