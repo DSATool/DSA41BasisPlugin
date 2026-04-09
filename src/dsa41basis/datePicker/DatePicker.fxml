@@ -9,9 +9,9 @@
 <?import dsatool.ui.ReactiveSpinner?>
 
 <HBox fx:id="box" spacing="2" xmlns:fx="http://javafx.com/fxml" >
-   <ReactiveSpinner fx:id="day" imin="1" imax="30" initialValue="1" prefWidth="65" />
+   <ReactiveSpinner fx:id="day" imin="1" imax="30" initialValue="1" prefWidth="65" editable="true" />
    <ReactiveComboBox fx:id="month" />
-   <ReactiveSpinner fx:id="year" imin="0" imax="2000" initialValue="1000" prefWidth="85" />
+   <ReactiveSpinner fx:id="year" imin="0" imax="2000" initialValue="1000" prefWidth="85" editable="true" />
    <Button prefWidth="25" prefHeight="25" text="&#xE923;" onAction="#setToCurrentDate" >
       <padding><Insets top="1" right="0" bottom="-1" left="0"/></padding>
       <font>
