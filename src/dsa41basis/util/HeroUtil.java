@@ -176,13 +176,12 @@ public class HeroUtil {
 			final JSONObject basicValueChanges = effect.getObj("Basiswerte");
 			for (final String basicValueName : basicValueChanges.keySet()) {
 				final JSONObject basicValue = actualBasicValues.getObj(basicValueName);
-				if ("Karmaenergie".equals(basicValueName)) {
-					basicValue.put("Permanent",
-							basicValue.getIntOrDefault("Permanent", 0) + basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
-				} else {
-					basicValue.put("Modifikator",
-							basicValue.getIntOrDefault("Modifikator", 0) + basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
-				}
+				final String key = switch (basicValueName) {
+					case "Karmaenergie" -> "Permanent";
+					case "Sozialstatus" -> "Wert";
+					default -> "Modifikator";
+				};
+				basicValue.put(key, basicValue.getIntOrDefault(key, 0) + basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
 				basicValue.notifyListeners(null);
 			}
 		}
@@ -2195,13 +2194,12 @@ public class HeroUtil {
 			final JSONObject basicValueChanges = effect.getObj("Basiswerte");
 			for (final String basicValueName : basicValueChanges.keySet()) {
 				final JSONObject basicValue = actualBasicValues.getObj(basicValueName);
-				if ("Karmaenergie".equals(basicValueName)) {
-					basicValue.put("Permanent",
-							basicValue.getIntOrDefault("Permanent", 0) - basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
-				} else {
-					basicValue.put("Modifikator",
-							basicValue.getIntOrDefault("Modifikator", 0) - basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
-				}
+				final String key = switch (basicValueName) {
+					case "Karmaenergie" -> "Permanent";
+					case "Sozialstatus" -> "Wert";
+					default -> "Modifikator";
+				};
+				basicValue.put(key, basicValue.getIntOrDefault(key, 0) - basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
 				basicValue.notifyListeners(null);
 			}
 		}
