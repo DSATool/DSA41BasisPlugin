@@ -39,6 +39,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
 import dsa41basis.util.HeroUtil;
+import dsatool.gui.ThemedAlert;
 import dsatool.resources.ResourceManager;
 import dsatool.util.ErrorLogger;
 import dsatool.util.Tuple;
@@ -110,7 +111,7 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 	}
 
 	private String ask(final String title, final String text, final String... choices) {
-		final Alert alert = new Alert(AlertType.CONFIRMATION);
+		final Alert alert = new ThemedAlert(AlertType.CONFIRMATION);
 		alert.setTitle(title);
 		alert.setHeaderText(text);
 
@@ -1368,8 +1369,8 @@ public class HeldenSoftwareXMLHeroLoader implements FileLoader {
 						prefix = "Resistenz gegen ";
 					}
 					name = switch (text) {
-						case "tierische Gifte", "mineralische Gifte", "pflanzliche Gifte", "alchimistische Gifte", "Atemgifte", "Einnahmegifte", "Kontaktgifte", "Blut-/Waffengifte" -> prefix
-								+ text;
+						case "tierische Gifte", "mineralische Gifte", "pflanzliche Gifte", "alchimistische Gifte", "Atemgifte", "Einnahmegifte", "Kontaktgifte",
+								"Blut-/Waffengifte" -> prefix + text;
 						case "alle Gifte" -> "Allgemeine " + prefix + "Gifte";
 						default -> prefix + "Gift";
 					};

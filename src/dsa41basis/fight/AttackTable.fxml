@@ -32,8 +32,7 @@
    </TableView>
    <HBox spacing="2" >
       <TextField fx:id="newAttackField" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
-      <Button fx:id="attackAddButton" onAction="#addAttack" prefHeight="25" prefWidth="25" text="&#xE145;" >
-         <padding><Insets top="0" right="0" bottom="-5" left="0"/></padding>
+      <Button fx:id="attackAddButton" onAction="#addAttack" prefHeight="25" prefWidth="25" text="&#xE145;" style="-fx-padding: 0 0 -5 0;" >
          <font>
             <Font name="Material Symbols Outlined" size="20.0" />
          </font>

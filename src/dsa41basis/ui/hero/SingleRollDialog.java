@@ -22,6 +22,7 @@ import dsa41basis.fight.WithDefense;
 import dsa41basis.hero.Attribute;
 import dsa41basis.util.DSAUtil;
 import dsa41basis.util.HeroUtil;
+import dsatool.gui.ThemedScene;
 import dsatool.resources.ResourceManager;
 import dsatool.resources.Settings;
 import dsatool.ui.ReactiveSpinner;
@@ -31,7 +32,6 @@ import dsatool.util.Tuple3;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -39,6 +39,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import jsonant.value.JSONObject;
 
@@ -117,9 +118,9 @@ public class SingleRollDialog {
 		}
 
 		final Stage stage = new Stage();
-		stage.setTitle(type.title);
 		stage.initModality(Modality.WINDOW_MODAL);
 		stage.setResizable(false);
+		stage.initStyle(StageStyle.EXTENDED);
 		stage.initOwner(window);
 
 		dice1.getValueFactory().setValue(10); // Won't get an update of the listener for newV == 1 otherwise
@@ -152,8 +153,9 @@ public class SingleRollDialog {
 		zoneBox.setVisible(needsZones);
 		zoneBox.setManaged(needsZones);
 
+		ThemedScene scene = null;
 		if (type == Type.ATTRIBUTE) {
-			stage.setScene(new Scene(root, 210, 103));
+			scene = new ThemedScene(root, 210, 150);
 
 			tpBox.setVisible(false);
 			tpBox.setManaged(false);
@@ -162,11 +164,11 @@ public class SingleRollDialog {
 
 			tpBox.setVisible(true);
 			if (type == Type.DEFENSE) {
-				stage.setScene(new Scene(root, 400, 191 - (needsZones ? 0 : 19)));
+				scene = new ThemedScene(root, 400, 235 - (needsZones ? 0 : 28));
 
 				tpModLabel.setText("-");
 			} else {
-				stage.setScene(new Scene(root, 245, 164 - (needsZones ? 0 : 19)));
+				scene = new ThemedScene(root, 245, 210 - (needsZones ? 0 : 28));
 
 				final WithAttack weapon = (WithAttack) target;
 				final Tuple3<Integer, Integer, Integer> tpRaw = weapon.getTpRaw();
@@ -188,6 +190,9 @@ public class SingleRollDialog {
 				tpMod.setText(tpModString);
 			}
 		}
+		scene.titleProperty.set(type.title);
+		stage.titleProperty().bind(scene.titleProperty);
+		stage.setScene(scene);
 
 		if (type != Type.DEFENSE) {
 			tpModifiersBox.setVisible(false);

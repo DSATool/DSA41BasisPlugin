@@ -12,7 +12,7 @@
 <?import javafx.scene.text.Font?>
 <?import dsatool.ui.ReactiveComboBox?>
 
-<VBox fx:id="root" style="-fx-padding: 2, 2, 2, 2;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
+<VBox fx:id="root" style="-fx-padding: 4;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
    <TableView fx:id="booksTable" editable="true" fixedCellSize="25" >
       <styleClass>
          <String fx:value="remove-vertical-scrollbar" />
@@ -28,8 +28,7 @@
    </TableView>
    <HBox spacing="2" alignment="CENTER_LEFT" >
       <ReactiveComboBox fx:id="bookList" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
-      <Button fx:id="addBook" onAction="#addBook" prefHeight="25" minWidth="25" maxWidth="25" text="&#xE145;" >
-         <padding><Insets top="0" right="0" bottom="-5" left="0"/></padding>
+      <Button fx:id="addBook" onAction="#addBook" prefHeight="25" minWidth="25" maxWidth="25" text="&#xE145;" style="-fx-padding: 0 0 -5 0;" >
          <font>
             <Font name="Material Symbols Outlined" size="20.0" />
          </font>

@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import dsatool.ui.ReactiveSpinner?>
 
-<VBox fx:id="root" style="-fx-padding: 2, 2, 2, 2;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
+<VBox fx:id="root" style="-fx-padding: 4;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
    <HBox fx:id="nameBox" spacing="2" alignment="CENTER_LEFT" >
       <Label text="Name: " maxWidth="Infinity" HBox.hgrow="ALWAYS" />
       <TextField fx:id="name" prefWidth="200" />

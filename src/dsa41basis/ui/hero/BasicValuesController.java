@@ -19,6 +19,7 @@ import java.util.Optional;
 
 import dsa41basis.fight.ArmorEditor;
 import dsa41basis.util.HeroUtil;
+import dsatool.gui.ThemedAlert;
 import dsatool.resources.Settings;
 import dsatool.ui.ReactiveSpinner;
 import dsatool.util.ErrorLogger;
@@ -339,7 +340,7 @@ public class BasicValuesController implements JSONListener {
 			if (type == CharacterType.NORMAL) {
 				final JSONObject armor = getArmorItem();
 				if (armor.containsKey("Rüstungsschutz")) {
-					final Alert deleteConfirmation = new Alert(AlertType.CONFIRMATION);
+					final Alert deleteConfirmation = new ThemedAlert(AlertType.CONFIRMATION);
 					deleteConfirmation.setTitle("Zonenrüstungswerte löschen?");
 					deleteConfirmation.setHeaderText("Zonenrüstungswerte löschen?");
 					deleteConfirmation.setContentText("Die Werte können danach nicht wiederhergestellt werden!");

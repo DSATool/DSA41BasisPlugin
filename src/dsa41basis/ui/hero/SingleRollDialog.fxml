@@ -8,7 +8,7 @@
 <?import dsatool.ui.ReactiveComboBox?>
 <?import dsatool.ui.ReactiveSpinner?>
 
-<VBox fx:id="root" style="-fx-padding: 2, 2, 2, 2;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
+<VBox fx:id="root" style="-fx-padding: 4;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
    <HBox spacing="2" >
       <Label text="Wurf:" alignment="CENTER_LEFT" maxHeight="Infinity" prefWidth="70" />
       <ReactiveSpinner fx:id="dice1" imin="1" imax="20" editable="true" prefWidth="65" />

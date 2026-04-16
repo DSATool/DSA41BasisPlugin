@@ -24,6 +24,7 @@ import java.util.Optional;
 
 import dsa41basis.serialization.FileLoader;
 import dsa41basis.serialization.Loaders;
+import dsatool.gui.ThemedAlert;
 import dsatool.resources.ResourceManager;
 import dsatool.util.ErrorLogger;
 import javafx.beans.binding.BooleanBinding;
@@ -90,7 +91,16 @@ public class HeroSelector {
 		}
 
 		list.setCellFactory(list -> {
-			final ListCell<String> cell = new TextFieldListCell<>();
+			final ListCell<String> cell = new TextFieldListCell<>() {
+				@Override
+				public void updateItem(final String item, final boolean empty) {
+					super.updateItem(item, empty);
+					getStyleClass().remove("empty-row");
+					if (empty || item == null) {
+						getStyleClass().add("empty-row");
+					}
+				}
+			};
 			final ContextMenu cellMenu = new ContextMenu();
 
 			final MenuItem create = new MenuItem("Neuer Held");
@@ -268,7 +278,7 @@ public class HeroSelector {
 		if (index > -1) {
 			final JSONObject hero = heroes.get(index);
 
-			final Alert deleteConfirmation = new Alert(AlertType.CONFIRMATION);
+			final Alert deleteConfirmation = new ThemedAlert(AlertType.CONFIRMATION);
 			deleteConfirmation.setTitle("Held löschen?");
 			deleteConfirmation.setHeaderText("Held " + hero.getObj("Biografie").getString("Vorname") + " löschen?");
 			deleteConfirmation.setContentText("Der Held kann danach nicht wiederhergestellt werden!");

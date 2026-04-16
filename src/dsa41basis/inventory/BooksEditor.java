@@ -28,7 +28,6 @@ import dsatool.util.Tuple;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
@@ -37,7 +36,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import jsonant.value.JSONObject;
@@ -73,12 +71,7 @@ public class BooksEditor {
 			ErrorLogger.logError(e);
 		}
 
-		final Stage stage = new Stage();
-		stage.setTitle("Buchreferenzen");
-		stage.setScene(new Scene(root, 310, 85));
-		stage.initModality(Modality.WINDOW_MODAL);
-		stage.setResizable(false);
-		stage.initOwner(window);
+		final Stage stage = GUIUtil.setupStage(root, 310, 125, "Buchreferenzen", window, true);
 
 		booksTable.heightProperty().addListener((o, oldV, newV) -> stage.setHeight(stage.getHeight() + newV.doubleValue() - oldV.doubleValue()));
 
@@ -153,6 +146,7 @@ public class BooksEditor {
 		final String selected = bookList.getSelectionModel().getSelectedItem();
 		chosen.add(selected);
 		bookList.getItems().remove(selected);
+		bookList.getSelectionModel().select(0);
 		booksTable.getItems().add(new Tuple<>(selected, 1));
 		isDefault = false;
 	}

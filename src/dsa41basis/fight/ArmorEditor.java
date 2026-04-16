@@ -16,19 +16,18 @@
 package dsa41basis.fight;
 
 import dsa41basis.inventory.BooksEditor;
+import dsatool.gui.GUIUtil;
 import dsatool.resources.Settings;
 import dsatool.ui.ReactiveSpinner;
 import dsatool.util.ErrorLogger;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import jsonant.value.JSONObject;
@@ -157,7 +156,7 @@ public class ArmorEditor {
 
 		final String armorSetting = Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart");
 
-		int height = 170;
+		int height = 195;
 
 		switch (armorSetting) {
 			case "Gesamtrüstung":
@@ -178,7 +177,7 @@ public class ArmorEditor {
 				llegBox.setVisible(true);
 				rlegBox.setVisible(true);
 				zonebeBox.setVisible(true);
-				height = 375;
+				height = 390;
 				break;
 		}
 
@@ -243,7 +242,7 @@ public class ArmorEditor {
 		notesBox.setVisible(false);
 		notesBox.setManaged(false);
 
-		final Stage stage = show(window, 245);
+		final Stage stage = show(window, 260);
 
 		okButton.setOnAction(event -> {
 			item.put("Kopf", head.getValue());
@@ -260,12 +259,7 @@ public class ArmorEditor {
 	}
 
 	private Stage show(final Window window, final int height) {
-		final Stage stage = new Stage();
-		stage.setTitle("Bearbeiten");
-		stage.setScene(new Scene(root, 310, height));
-		stage.initModality(Modality.WINDOW_MODAL);
-		stage.setResizable(false);
-		stage.initOwner(window);
+		final Stage stage = GUIUtil.setupStage(root, 310, height, "Bearbeiten", window, true);
 
 		cancelButton.setOnAction(event -> stage.close());
 
