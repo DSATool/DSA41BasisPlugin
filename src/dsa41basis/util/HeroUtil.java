@@ -175,8 +175,9 @@ public class HeroUtil {
 			final JSONObject actualBasicValues = hero.getObj("Basiswerte");
 			final JSONObject basicValueChanges = effect.getObj("Basiswerte");
 			for (final String basicValueName : basicValueChanges.keySet()) {
-				final JSONObject basicValue = actualBasicValues.getObj(basicValueName);
-				final String key = switch (basicValueName) {
+				final String[] toModify = basicValueName.split(":");
+				final JSONObject basicValue = actualBasicValues.getObj(toModify[0]);
+				final String key = toModify.length > 1 ? toModify[1] : switch (basicValueName) {
 					case "Karmaenergie" -> "Permanent";
 					case "Sozialstatus" -> "Wert";
 					default -> "Modifikator";
@@ -2193,8 +2194,9 @@ public class HeroUtil {
 			final JSONObject actualBasicValues = hero.getObj("Basiswerte");
 			final JSONObject basicValueChanges = effect.getObj("Basiswerte");
 			for (final String basicValueName : basicValueChanges.keySet()) {
-				final JSONObject basicValue = actualBasicValues.getObj(basicValueName);
-				final String key = switch (basicValueName) {
+				final String[] toModify = basicValueName.split(":");
+				final JSONObject basicValue = actualBasicValues.getObj(toModify[0]);
+				final String key = toModify.length > 1 ? toModify[1] : switch (basicValueName) {
 					case "Karmaenergie" -> "Permanent";
 					case "Sozialstatus" -> "Wert";
 					default -> "Modifikator";
