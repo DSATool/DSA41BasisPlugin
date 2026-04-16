@@ -35,7 +35,7 @@ import jsonant.value.JSONObject;
 public class Talent implements Enhanceable {
 	private static Map<JSONObject, Talent> talentCache = new IdentityHashMap<>();
 
-	public static Talent getTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject actual,
+	public static Talent getTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject hero, final JSONObject actual,
 			final JSONObject actualGroup) {
 		if (talentCache.containsKey(actual))
 			return talentCache.get(actual);
@@ -44,6 +44,7 @@ public class Talent implements Enhanceable {
 			case "Nahkampftalente", "Fernkampftalente" -> new FightTalent(name, talentGroup, talent, actual, actualGroup);
 			case "Körperliche Talente" -> new PhysicalTalent(name, talentGroup, talent, actual, actualGroup);
 			case "Sprachen", "Schriften" -> new LanguageTalent(name, talentGroup, talent, actual, actualGroup);
+			case "Meta-Talente" -> new MetaTalent(name, talentGroup, talent, hero);
 			default -> new Talent(name, talentGroup, talent, actual, actualGroup);
 		};
 		if (actual != null) {
@@ -147,6 +148,10 @@ public class Talent implements Enhanceable {
 
 	public final String getName() {
 		return name.get();
+	}
+
+	public double getPreciseValue() {
+		return getValue();
 	}
 
 	public JSONObject getTalent() {

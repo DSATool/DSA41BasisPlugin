@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import dsa41basis.hero.Talent;
 import dsatool.resources.ResourceManager;
 import dsatool.resources.Settings;
 import dsatool.util.ErrorLogger;
@@ -1751,6 +1752,42 @@ public class HeroUtil {
 		return complexity;
 	}
 
+	public static double getTaW(final JSONObject hero, final String talentName, final String specialization) {
+		final Tuple<JSONValue, JSONObject> actual = findActualTalent(hero, talentName);
+		final JSONValue actualTalent = actual._1;
+		final Tuple<JSONObject, String> talentAndGroup = findTalent(talentName);
+		final JSONObject talent = talentAndGroup._1;
+		final JSONObject talentGroup = ResourceManager.getResource("data/Talente").getObj(talentAndGroup._2);
+		double taw = 0;
+		if (actualTalent instanceof final JSONArray arr) {
+			for (int i = 0; i < actualTalent.size(); ++i) {
+				taw = Math.max(taw, Talent.getTalent(talentName, talentGroup, talent, hero, arr.getObj(i), actual._2).getPreciseValue());
+			}
+		} else {
+			taw = Talent.getTalent(talentName, talentGroup, talent, hero, (JSONObject) actualTalent, actual._2).getPreciseValue();
+		}
+
+		if ((int) taw == Integer.MIN_VALUE) {
+			taw = Double.NEGATIVE_INFINITY;
+		}
+
+		if (specialization != null && actualTalent != null) {
+			final JSONObject specialSkills = hero.getObj("Sonderfertigkeiten");
+			if (specialSkills.containsKey("Talentspezialisierung")) {
+				final JSONArray talentSpecializations = specialSkills.getArr("Talentspezialisierung");
+				for (int i = 0; i < talentSpecializations.size(); ++i) {
+					final JSONObject talentSpecialization = talentSpecializations.getObj(i);
+					if (talentName.equals(talentSpecialization.getString("Auswahl")) && specialization.equals(talentSpecialization.getString("Freitext"))) {
+						taw += 2;
+						break;
+					}
+				}
+			}
+		}
+
+		return taw;
+	}
+
 	private static int getTPKKModifier(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon) {
 		if (hero == null || !(weapon.containsKey("Trefferpunkte/Körperkraft") || baseWeapon.containsKey("Trefferpunkte/Körperkraft")))
 			return 0;
@@ -1976,6 +2013,32 @@ public class HeroUtil {
 		return notes.toString();
 	}
 
+	public static int getZfW(final JSONObject hero, final String spellName, final String representation, final String specialization) {
+		final JSONObject spells = ResourceManager.getResource("data/Zauber");
+		final JSONObject actualSpells = hero.getObjOrDefault("Zauber", null);
+		if (actualSpells == null) return Integer.MIN_VALUE;
+		final JSONObject actualSpell = actualSpells.getObjOrDefault(spellName, null);
+		if (actualSpell == null) return Integer.MIN_VALUE;
+		final JSONObject actualRepresentation = actualSpell.getObjOrDefault(representation, null);
+		final JSONObject talent = spells.getObjOrDefault(spellName, null);
+		if (talent == null || actualRepresentation == null) return Integer.MIN_VALUE;
+		int zfw = actualRepresentation.getIntOrDefault("ZfW", 0);
+		if (specialization != null) {
+			final JSONObject specialSkills = hero.getObj("Sonderfertigkeiten");
+			if (specialSkills.containsKey("Zauberspezialisierung")) {
+				final JSONArray talentSpecializations = specialSkills.getArr("Zauberspezialisierung");
+				for (int i = 0; i < talentSpecializations.size(); ++i) {
+					final JSONObject talentSpecialization = talentSpecializations.getObj(i);
+					if (spellName.equals(talentSpecialization.getString("Auswahl")) && specialization.equals(talentSpecialization.getString("Freitext"))) {
+						zfw += 2;
+						break;
+					}
+				}
+			}
+		}
+		return zfw;
+	}
+
 	public static int getZoneRS(final JSONObject hero, final String zone) {
 		return getZoneRS(hero, zone, getDefaultArmor(hero));
 	}
@@ -2037,36 +2100,9 @@ public class HeroUtil {
 		return BEReduced[0];
 	}
 
-	public static Integer interpretSpellRoll(final JSONObject hero, final String talentName, final String representation, final String specialization,
-			final String[] challenge,
-			final Tuple3<Integer, Integer, Integer> roll, final int modification) {
-		final JSONObject spells = ResourceManager.getResource("data/Zauber");
-		final JSONObject actualSpells = hero.getObjOrDefault("Zauber", null);
-		if (actualSpells == null) return null;
-		final JSONObject actualSpell = actualSpells.getObjOrDefault(talentName, null);
-		if (actualSpell == null) return null;
-		final JSONObject actualRepresentation = actualSpell.getObjOrDefault(representation, null);
-		final JSONObject talent = spells.getObjOrDefault(talentName, null);
-		if (talent == null || actualRepresentation == null) return null;
-		int taw = actualRepresentation.getIntOrDefault("ZfW", 0);
-		if (specialization != null) {
-			final JSONObject specialSkills = hero.getObj("Sonderfertigkeiten");
-			if (specialSkills.containsKey("Zauberspezialisierung")) {
-				final JSONArray talentSpecializations = specialSkills.getArr("Zauberspezialisierung");
-				for (int i = 0; i < talentSpecializations.size(); ++i) {
-					final JSONObject talentSpecialization = talentSpecializations.getObj(i);
-					if (talentName.equals(talentSpecialization.getString("Auswahl")) && specialization.equals(talentSpecialization.getString("Freitext"))) {
-						taw += 2;
-						break;
-					}
-				}
-			}
-		}
-		return interpretTalentRoll(hero, talent, spells, challenge, taw, roll, modification);
-	}
-
-	private static Integer interpretTalentRoll(final JSONObject hero, final JSONObject talent, final JSONObject talentGroup, final String[] challenge,
-			final int taw, final Tuple3<Integer, Integer, Integer> roll, final int modification) {
+	public static Integer interpretTalentRoll(final JSONObject hero, final String[] challenge, final int taw, final Tuple3<Integer, Integer, Integer> roll,
+			final int modification) {
+		if (taw == Integer.MIN_VALUE) return null;
 		final int modifiedTaw = taw + modification;
 		int result = modifiedTaw;
 		final JSONObject attributes = hero.getObj("Eigenschaften");
@@ -2085,37 +2121,6 @@ public class HeroUtil {
 		}
 		if (ones >= 2) return Math.max(1, taw);
 		return Math.min(result, Math.max(0, taw));
-	}
-
-	public static Integer interpretTalentRoll(final JSONObject hero, final String talentName, final String specialization, final String[] challenge,
-			final Tuple3<Integer, Integer, Integer> roll, final int modification) {
-		final JSONValue actualTalent = findActualTalent(hero, talentName)._1;
-		final Tuple<JSONObject, String> talentAndGroup = findTalent(talentName);
-		final JSONObject talent = talentAndGroup._1;
-		final JSONObject talentGroup = ResourceManager.getResource("data/Talente").getObj(talentAndGroup._2);
-		if (talent == null || actualTalent == null && !talent.getBoolOrDefault("Basis", false)) return null;
-		int taw = 0;
-		if (actualTalent instanceof final JSONArray arr) {
-			for (int i = 0; i < actualTalent.size(); ++i) {
-				taw = Math.max(taw, arr.getObj(i).getIntOrDefault("TaW", 0));
-			}
-		} else {
-			taw = ((JSONObject) actualTalent).getIntOrDefault("TaW", 0);
-		}
-		if (specialization != null && actualTalent != null) {
-			final JSONObject specialSkills = hero.getObj("Sonderfertigkeiten");
-			if (specialSkills.containsKey("Talentspezialisierung")) {
-				final JSONArray talentSpecializations = specialSkills.getArr("Talentspezialisierung");
-				for (int i = 0; i < talentSpecializations.size(); ++i) {
-					final JSONObject talentSpecialization = talentSpecializations.getObj(i);
-					if (talentName.equals(talentSpecialization.getString("Auswahl")) && specialization.equals(talentSpecialization.getString("Freitext"))) {
-						taw += 2;
-						break;
-					}
-				}
-			}
-		}
-		return interpretTalentRoll(hero, talent, talentGroup, challenge, taw, roll, modification);
 	}
 
 	public static boolean isClerical(final JSONObject hero, final boolean includeAcolytes) {
