@@ -183,7 +183,7 @@ public class ArmorEditor {
 
 		final Stage stage = show(window, height);
 
-		okButton.setOnAction(event -> {
+		okButton.setOnAction(_ -> {
 			item.setName(name.getText());
 			item.setWeight(weight.getValue());
 			item.setNotes(notes.getText());
@@ -209,7 +209,7 @@ public class ArmorEditor {
 		});
 
 		books.setVisible(true);
-		books.setOnAction(event -> new BooksEditor(stage, item));
+		books.setOnAction(_ -> new BooksEditor(stage, item));
 	}
 
 	public ArmorEditor(final Window window, final JSONObject item) {
@@ -244,7 +244,7 @@ public class ArmorEditor {
 
 		final Stage stage = show(window, 260);
 
-		okButton.setOnAction(event -> {
+		okButton.setOnAction(_ -> {
 			item.put("Kopf", head.getValue());
 			item.put("Brust", breast.getValue());
 			item.put("Rücken", back.getValue());
@@ -261,7 +261,7 @@ public class ArmorEditor {
 	private Stage show(final Window window, final int height) {
 		final Stage stage = GUIUtil.setupStage(root, 310, height, "Bearbeiten", window, true);
 
-		cancelButton.setOnAction(event -> stage.close());
+		cancelButton.setOnAction(_ -> stage.close());
 
 		stage.show();
 

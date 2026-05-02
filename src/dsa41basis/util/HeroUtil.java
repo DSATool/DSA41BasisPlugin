@@ -82,7 +82,7 @@ public class HeroUtil {
 	static {
 		final JSONObject races = ResourceManager.getResource("data/Rassen");
 
-		DSAUtil.foreach(o -> true, (name, race) -> {
+		DSAUtil.foreach(_ -> true, (_, race) -> {
 			if (race.containsKey("Schuppenfarbe")) {
 				scaleColors.addAll(race.getObj("Schuppenfarbe").keySet());
 			}
@@ -623,7 +623,7 @@ public class HeroUtil {
 
 		final double[] BE = { 0 };
 
-		foreachInventoryItem(hero, item -> item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"), (item, extraInventory) -> {
+		foreachInventoryItem(hero, item -> item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"), (item, _) -> {
 			JSONObject armor = item;
 			if (item.containsKey("Rüstung")) {
 				armor = item.getObj("Rüstung");
@@ -1042,7 +1042,7 @@ public class HeroUtil {
 		final JSONObject[] mainWeapon = { null };
 
 		foreachInventoryItem(hero, item -> mainWeapon[0] == null && item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Nahkampfwaffe"),
-				(item, extraInventory) -> {
+				(item, _) -> {
 					final JSONObject baseWeapon = item;
 					if (item != null && item.containsKey("Nahkampfwaffe")) {
 						item = item.getObj("Nahkampfwaffe");
@@ -1224,7 +1224,7 @@ public class HeroUtil {
 		final JSONObject[] secondaryWeapon = { null };
 
 		foreachInventoryItem(hero, item -> secondaryWeapon[0] == null && item.containsKey("Kategorien"),
-				(item, extraInventory) -> {
+				(item, _) -> {
 					if (item.getArr("Kategorien").contains("Nahkampfwaffe")) {
 						final JSONObject baseWeapon = item;
 						if (item != null && item.containsKey("Nahkampfwaffe")) {
@@ -1663,7 +1663,7 @@ public class HeroUtil {
 				final JSONArray languageGroups = talent.getArrOrDefault("Sprachfamilien", null);
 				if (languageGroups != null) {
 					final boolean[] found = { false };
-					DSAUtil.foreach(language -> language.getBoolOrDefault("Muttersprache", false), (name, language) -> {
+					DSAUtil.foreach(language -> language.getBoolOrDefault("Muttersprache", false), (name, _) -> {
 						final JSONArray groups = HeroUtil.findTalent(name)._1.getArrOrDefault("Sprachfamilien", null);
 						if (groups != null) {
 							for (int i = 0; i < groups.size(); ++i) {
@@ -2049,7 +2049,7 @@ public class HeroUtil {
 
 		final double[] RS = { 0 };
 
-		foreachInventoryItem(hero, item -> item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"), (item, extraInventory) -> {
+		foreachInventoryItem(hero, item -> item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"), (item, _) -> {
 			JSONObject armor = item;
 			if (item.containsKey("Rüstung")) {
 				armor = item.getObj("Rüstung");
@@ -2083,7 +2083,7 @@ public class HeroUtil {
 		for (int i = 0; i < armorAdaption.size() && !BEReduced[0]; ++i) {
 			final String adaptation = armorAdaption.getObj(i).getString("Freitext");
 			foreachInventoryItem(hero, item -> !BEReduced[0] && item.containsKey("Kategorien") && item.getArr("Kategorien").contains("Rüstung"),
-					(item, extraInventory) -> {
+					(item, _) -> {
 						JSONObject armor = item;
 						if (item.containsKey("Rüstung")) {
 							armor = item.getObj("Rüstung");

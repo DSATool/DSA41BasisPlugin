@@ -62,7 +62,7 @@ public class AttackTable {
 	@FXML
 	private Button attackAddButton;
 
-	private final JSONListener updateListener = o -> updateAttacks();
+	private final JSONListener updateListener = _ -> updateAttacks();
 
 	private JSONObject character;
 
@@ -112,20 +112,20 @@ public class AttackTable {
 		GUIUtil.autosizeTable(attacksTable);
 		GUIUtil.cellValueFactories(attacksTable, "name", "tp", "at", "pa", "dk", "notes");
 
-		attackATColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99));
+		attackATColumn.setCellFactory(_ -> new IntegerSpinnerTableCell<>(0, 99));
 		attackATColumn.setOnEditCommit(t -> {
 			if (t.getRowValue() != null) {
 				t.getRowValue().setAt(t.getNewValue());
 			}
 		});
-		attackPAColumn.setCellFactory(o -> new IntegerSpinnerTableCell<>(0, 99));
+		attackPAColumn.setCellFactory(_ -> new IntegerSpinnerTableCell<>(0, 99));
 		attackPAColumn.setOnEditCommit(t -> {
 			if (t.getRowValue() != null) {
 				t.getRowValue().setPa(t.getNewValue());
 			}
 		});
 
-		attackNameColumn.setCellFactory(o -> {
+		attackNameColumn.setCellFactory(_ -> {
 			final TableCell<Attack, String> cell = new GraphicTableCell<>(false) {
 				@Override
 				protected void createGraphic() {
@@ -140,7 +140,7 @@ public class AttackTable {
 			attack.setName(event.getNewValue());
 		});
 
-		attackNotesColumn.setCellFactory(o -> {
+		attackNotesColumn.setCellFactory(_ -> {
 			final TableCell<Attack, String> cell = new GraphicTableCell<>(false) {
 				@Override
 				protected void createGraphic() {
@@ -156,12 +156,12 @@ public class AttackTable {
 			attack.setNotes(note);
 		});
 
-		attacksTable.setRowFactory(tableView -> {
+		attacksTable.setRowFactory(_ -> {
 			final TableRow<Attack> row = new TableRow<>();
 
 			final ContextMenu contextMenu = new ContextMenu();
 
-			final Consumer<Object> edit = obj -> {
+			final Consumer<Object> edit = _ -> {
 				final Attack attack = row.getItem();
 				final Window window = box.getScene().getWindow();
 				if (attack != null && !"".equals(attack.getName())) {
@@ -177,11 +177,11 @@ public class AttackTable {
 
 			final MenuItem editItem = new MenuItem("Bearbeiten");
 			contextMenu.getItems().add(editItem);
-			editItem.setOnAction(event -> edit.accept(null));
+			editItem.setOnAction(_ -> edit.accept(null));
 
 			final MenuItem deleteItem = new MenuItem("Löschen");
 			contextMenu.getItems().add(deleteItem);
-			deleteItem.setOnAction(o -> {
+			deleteItem.setOnAction(_ -> {
 				final Attack attack = row.getItem();
 				if (!"".equals(attack.getName())) {
 					final String name = attack.getName();

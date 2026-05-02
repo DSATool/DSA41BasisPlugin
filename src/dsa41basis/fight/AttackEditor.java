@@ -119,7 +119,7 @@ public class AttackEditor {
 		dkP.setSelected(dk.contains("P"));
 		notes.setText(attack.getNotes());
 
-		okButton.setOnAction(event -> {
+		okButton.setOnAction(_ -> {
 			attack.setName(name.getText());
 			attack.setTp(tpTypeDice.getValue(), tpNumDice.getValue(), tpAdditional.getValue(), tpWound.isSelected(), tpStamina.isSelected(), tpMod.getValue());
 			attack.setAt(atValue.getValue());
@@ -133,7 +133,7 @@ public class AttackEditor {
 			stage.close();
 		});
 
-		cancelButton.setOnAction(event -> stage.close());
+		cancelButton.setOnAction(_ -> stage.close());
 
 		stage.show();
 	}

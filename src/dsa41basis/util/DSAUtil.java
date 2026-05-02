@@ -742,7 +742,7 @@ public class DSAUtil {
 		final boolean multiple = actual.size() > 1;
 
 		final List<String> variants = new ArrayList<>(actual.size());
-		DSAUtil.foreach(o -> true, current -> {
+		DSAUtil.foreach(_ -> true, current -> {
 			final StringBuilder currentString = new StringBuilder();
 			if (proOrCon.containsKey("Auswahl")) {
 				currentString.append(current.getString("Auswahl"));

@@ -42,7 +42,7 @@ public class DerivedValue {
 
 		actual = basicValues.getObj(name);
 
-		recalculateListener = o -> recalculate(derivation, hero);
+		recalculateListener = _ -> recalculate(derivation, hero);
 
 		attributes.addListener(recalculateListener);
 		actual.addListener(recalculateListener);

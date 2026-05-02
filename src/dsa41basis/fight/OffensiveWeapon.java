@@ -48,8 +48,8 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 
 	private final JSONObject combatTalents;
 
-	private final JSONListener recomputeListener = o -> recomputeAtPa();
-	private final JSONListener recomputeTPListener = o -> recomputeTP();
+	private final JSONListener recomputeListener = _ -> recomputeAtPa();
+	private final JSONListener recomputeTPListener = _ -> recomputeTP();
 
 	public OffensiveWeapon(final JSONObject hero, final JSONObject weapon, final JSONObject baseWeapon, final JSONObject combatTalents,
 			final JSONObject actualTalents) {
@@ -79,7 +79,7 @@ public abstract class OffensiveWeapon extends InventoryItem implements WithAttac
 			type = new SimpleStringProperty(primaryType);
 		}
 
-		type.addListener(o -> recomputeAtPa());
+		type.addListener(_ -> recomputeAtPa());
 	}
 
 	public final ReadOnlyIntegerProperty atProperty() {

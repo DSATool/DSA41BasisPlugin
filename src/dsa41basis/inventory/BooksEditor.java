@@ -73,12 +73,12 @@ public class BooksEditor {
 
 		final Stage stage = GUIUtil.setupStage(root, 310, 125, "Buchreferenzen", window, true);
 
-		booksTable.heightProperty().addListener((o, oldV, newV) -> stage.setHeight(stage.getHeight() + newV.doubleValue() - oldV.doubleValue()));
+		booksTable.heightProperty().addListener((_, oldV, newV) -> stage.setHeight(stage.getHeight() + newV.doubleValue() - oldV.doubleValue()));
 
 		GUIUtil.autosizeTable(booksTable);
 		GUIUtil.cellValueFactories(booksTable, "_1", "_2");
 
-		pageColumn.setCellFactory(c -> new IntegerSpinnerTableCell<>(1, 999));
+		pageColumn.setCellFactory(_ -> new IntegerSpinnerTableCell<>(1, 999));
 		pageColumn.setOnEditCommit(e -> {
 			isDefault = false;
 			booksTable.getItems().set(e.getTablePosition().getRow(), new Tuple<>(e.getRowValue()._1, e.getNewValue()));
@@ -86,11 +86,11 @@ public class BooksEditor {
 
 		booksTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-		booksTable.setRowFactory(table -> {
+		booksTable.setRowFactory(_ -> {
 			final TableRow<Tuple<String, Integer>> row = new TableRow<>();
 			final ContextMenu contextMenu = new ContextMenu();
 			final MenuItem deleteItem = new MenuItem("Entfernen");
-			deleteItem.setOnAction(event -> {
+			deleteItem.setOnAction(_ -> {
 				final Tuple<String, Integer> book = row.getItem();
 				final String name = book._1;
 				chosen.remove(name);
@@ -100,14 +100,14 @@ public class BooksEditor {
 			contextMenu.getItems().add(deleteItem);
 			row.contextMenuProperty().bind(Bindings.when(row.itemProperty().isNotNull()).then(contextMenu).otherwise((ContextMenu) null));
 
-			GUIUtil.dragDropReorder(row, moved -> isDefault = false, booksTable);
+			GUIUtil.dragDropReorder(row, _ -> isDefault = false, booksTable);
 
 			return row;
 		});
 
 		addBook.disableProperty().bind(Bindings.isEmpty(bookList.getItems()));
 
-		okButton.setOnAction(event -> {
+		okButton.setOnAction(_ -> {
 			final JSONObject actual = item.getItem();
 			if (isDefault) {
 				if (actual.containsKey("Regelwerke")) {
@@ -125,7 +125,7 @@ public class BooksEditor {
 			stage.close();
 		});
 
-		cancelButton.setOnAction(event -> stage.close());
+		cancelButton.setOnAction(_ -> stage.close());
 
 		okButton.setDefaultButton(true);
 		cancelButton.setCancelButton(true);

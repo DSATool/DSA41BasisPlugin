@@ -90,7 +90,7 @@ public class HeroSelector {
 			buttons.getChildren().remove(0);
 		}
 
-		list.setCellFactory(list -> {
+		list.setCellFactory(_ -> {
 			final ListCell<String> cell = new TextFieldListCell<>() {
 				@Override
 				public void updateItem(final String item, final boolean empty) {
@@ -104,16 +104,16 @@ public class HeroSelector {
 			final ContextMenu cellMenu = new ContextMenu();
 
 			final MenuItem create = new MenuItem("Neuer Held");
-			create.setOnAction(event -> addNewHero());
+			create.setOnAction(_ -> addNewHero());
 
 			final MenuItem remove = new MenuItem("Löschen");
-			remove.setOnAction(event -> removeHero(cell.getIndex()));
+			remove.setOnAction(_ -> removeHero(cell.getIndex()));
 
 			final MenuItem load = new MenuItem("Importieren");
-			load.setOnAction(event -> loadHero());
+			load.setOnAction(_ -> loadHero());
 
 			final MenuItem save = new MenuItem("Exportieren");
-			save.setOnAction(event -> saveHero(cell.getIndex()));
+			save.setOnAction(_ -> saveHero(cell.getIndex()));
 
 			if (allowCreate) {
 				cellMenu.getItems().add(create);
@@ -207,7 +207,7 @@ public class HeroSelector {
 
 	public void load() {
 		final MultipleSelectionModel<String> listModel = list.getSelectionModel();
-		listModel.selectedIndexProperty().addListener((o, oldV, newV) -> {
+		listModel.selectedIndexProperty().addListener((_, oldV, newV) -> {
 			if (oldV.intValue() != newV.intValue() && newV.intValue() > -1) {
 				setHero(newV.intValue());
 			}

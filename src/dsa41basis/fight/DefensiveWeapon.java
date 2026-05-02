@@ -51,7 +51,7 @@ public class DefensiveWeapon extends InventoryItem implements WithDefense {
 
 		final JSONObject weaponModifiers = weapon.getObjOrDefault("Waffenmodifikatoren", baseWeapon.getObj("Waffenmodifikatoren"));
 
-		recomputeListener = o -> recomputePa(hero, shield, weaponModifiers);
+		recomputeListener = _ -> recomputePa(hero, shield, weaponModifiers);
 		if (hero != null) {
 			hero.getObj("Eigenschaften").addLocalListener(recomputeListener);
 		}

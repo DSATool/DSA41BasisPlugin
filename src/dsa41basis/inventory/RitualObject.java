@@ -34,7 +34,7 @@ public class RitualObject extends InventoryItem {
 
 	static {
 		final JSONObject ritualGroups = ResourceManager.getResource("data/Ritualgruppen");
-		DSAUtil.foreach(group -> group.getString("Ritualobjekt") != null, (name, group) -> {
+		DSAUtil.foreach(group -> group.getString("Ritualobjekt") != null, (_, group) -> {
 			types.add(group.getString("Ritualobjekt"));
 		}, ritualGroups);
 	}
@@ -93,7 +93,7 @@ public class RitualObject extends InventoryItem {
 		final List<String> result = new ArrayList<>();
 		final JSONArray categories = baseItem.getArr("Kategorien");
 		final JSONObject ritualGroups = ResourceManager.getResource("data/Ritualgruppen");
-		DSAUtil.foreach(group -> group.getString("Ritualobjekt") != null, (name, group) -> {
+		DSAUtil.foreach(group -> group.getString("Ritualobjekt") != null, (_, group) -> {
 			final String ritualObject = group.getString("Ritualobjekt");
 			if (categories.contains(ritualObject)) {
 				result.add(ritualObject);

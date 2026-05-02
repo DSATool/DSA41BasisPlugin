@@ -35,7 +35,7 @@ public class Attribute implements Enhanceable {
 	private final IntegerProperty value;
 	protected IntegerProperty ses;
 
-	private final JSONListener refreshListener = o -> refreshValue();
+	private final JSONListener refreshListener = _ -> refreshValue();
 
 	public Attribute(final String name, final JSONObject actual) {
 		this.actual = actual;

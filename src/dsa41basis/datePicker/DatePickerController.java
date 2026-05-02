@@ -88,18 +88,18 @@ public class DatePickerController implements JSONListener {
 		notifyChanged(null);
 		day.setEditable(true);
 
-		day.valueProperty().addListener((ChangeListener<Integer>) (observable, oldValue, newValue) -> {
-			time.put("Tag", newValue);
+		day.valueProperty().addListener((ChangeListener<Integer>) (_, _, newV) -> {
+			time.put("Tag", newV);
 			updateTooltip();
 			time.notifyListeners(this);
 		});
-		month.getSelectionModel().selectedIndexProperty().addListener((ChangeListener<Number>) (observable, oldValue, newValue) -> {
-			time.put("Monat", newValue.intValue() + 1);
+		month.getSelectionModel().selectedIndexProperty().addListener((ChangeListener<Number>) (_, _, newV) -> {
+			time.put("Monat", newV.intValue() + 1);
 			updateTooltip();
 			time.notifyListeners(this);
 		});
-		year.valueProperty().addListener((ChangeListener<Integer>) (observable, oldValue, newValue) -> {
-			time.put("Jahr", newValue);
+		year.valueProperty().addListener((ChangeListener<Integer>) (_, _, newV) -> {
+			time.put("Jahr", newV);
 			updateTooltip();
 			time.notifyListeners(this);
 		});

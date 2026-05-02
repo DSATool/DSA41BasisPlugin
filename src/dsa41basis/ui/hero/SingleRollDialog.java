@@ -125,7 +125,7 @@ public class SingleRollDialog {
 
 		dice1.getValueFactory().setValue(10); // Won't get an update of the listener for newV == 1 otherwise
 
-		dice1.valueProperty().addListener((o, oldV, newV) -> {
+		dice1.valueProperty().addListener((_, _, newV) -> {
 			final boolean isSpecial = newV == 1 || newV == 20;
 			if (isSpecial) {
 				dice2.getValueFactory().setValue(DSAUtil.diceRoll(20));
@@ -136,16 +136,16 @@ public class SingleRollDialog {
 
 		dice1.getValueFactory().setValue(DSAUtil.diceRoll(20));
 
-		dice2.valueProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		mod.valueProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		zoneDice.valueProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		back.selectedProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		tp.valueProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		staminaDamage.selectedProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		reducedWoundThreshold.selectedProperty().addListener((o, oldV, newV) -> updateInterpretation());
-		unarmed.selectedProperty().addListener((o, oldV, newV) -> updateInterpretation());
+		dice2.valueProperty().addListener((_, _, _) -> updateInterpretation());
+		mod.valueProperty().addListener((_, _, _) -> updateInterpretation());
+		zoneDice.valueProperty().addListener((_, _, _) -> updateInterpretation());
+		back.selectedProperty().addListener((_, _, _) -> updateInterpretation());
+		tp.valueProperty().addListener((_, _, _) -> updateInterpretation());
+		staminaDamage.selectedProperty().addListener((_, _, _) -> updateInterpretation());
+		reducedWoundThreshold.selectedProperty().addListener((_, _, _) -> updateInterpretation());
+		unarmed.selectedProperty().addListener((_, _, _) -> updateInterpretation());
 
-		okButton.setOnAction(e -> stage.close());
+		okButton.setOnAction(_ -> stage.close());
 		okButton.setDefaultButton(true);
 
 		final boolean needsZones = type != Type.ATTRIBUTE

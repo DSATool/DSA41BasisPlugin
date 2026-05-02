@@ -300,7 +300,7 @@ public class BasicValuesController implements JSONListener {
 	}
 
 	private ChangeListener<Double> doubleListener(final String value, final String key) {
-		return (o, oldV, newV) -> {
+		return (_, _, newV) -> {
 			final JSONObject actualValue = character.getObj("Basiswerte").getObj(value);
 			actualValue.put(key, newV);
 			actualValue.notifyListeners(this);
@@ -336,7 +336,7 @@ public class BasicValuesController implements JSONListener {
 		iniDiceType.valueProperty().addListener(listener("Initiative", "Würfel:Typ"));
 		iniMod.valueProperty().addListener(listener("Initiative-Basis", "Modifikator"));
 
-		rsListener = (o, oldV, newV) -> {
+		rsListener = (_, _, newV) -> {
 			if (type == CharacterType.NORMAL) {
 				final JSONObject armor = getArmorItem();
 				if (armor.containsKey("Rüstungsschutz")) {
@@ -359,7 +359,7 @@ public class BasicValuesController implements JSONListener {
 		};
 
 		rs.valueProperty().addListener(rsListener);
-		zoneRS.setOnAction(e -> new ArmorEditor(grid.getScene().getWindow(), getArmorItem()));
+		zoneRS.setOnAction(_ -> new ArmorEditor(grid.getScene().getWindow(), getArmorItem()));
 
 		mrChoice.setItems(FXCollections.observableArrayList("Magieresistenz", "MR (Geist/Körper)"));
 
@@ -381,7 +381,7 @@ public class BasicValuesController implements JSONListener {
 			mrBoughtBox.visibleProperty().bind(isSingleMR.not());
 		}
 
-		isSingleMR.addListener((o, oldV, newV) -> {
+		isSingleMR.addListener((_, _, newV) -> {
 			final JSONObject actualMr = character.getObj("Basiswerte").getObj("Magieresistenz");
 			if (newV) {
 				actualMr.removeKey("Geist");
@@ -401,13 +401,13 @@ public class BasicValuesController implements JSONListener {
 			mrMindBought.valueProperty().addListener(listener("Magieresistenz", "Geist:Kauf"));
 			mrBodyBought.valueProperty().addListener(listener("Magieresistenz", "Körper:Kauf"));
 
-			ap.valueProperty().addListener((o, oldV, newV) -> freeAp.getValueFactory().setValue(freeAp.getValue() + newV - oldV));
-			freeAp.valueProperty().addListener((o, oldV, newV) -> {
+			ap.valueProperty().addListener((_, oldV, newV) -> freeAp.getValueFactory().setValue(freeAp.getValue() + newV - oldV));
+			freeAp.valueProperty().addListener((_, _, _) -> {
 				final JSONObject biography = character.getObj("Biografie");
 				biography.put("Abenteuerpunkte", ap.getValue());
 				biography.put("Abenteuerpunkte-Guthaben", freeAp.getValue());
 			});
-			rkw.valueProperty().addListener((o, oldV, newV) -> {
+			rkw.valueProperty().addListener((_, oldV, newV) -> {
 				if (oldV == null || newV == null || oldV.equals(newV)) return;
 				final JSONObject ritualKnowledge = character.getObj("Basiswerte").getObj("Ritualkenntnis (Vertrautenmagie)");
 				ritualKnowledge.put("TaW", newV);
@@ -437,10 +437,10 @@ public class BasicValuesController implements JSONListener {
 			feedHeavy.valueProperty().addListener(listener("Futterbedarf", "Schwer"));
 
 			tkFactor.valueProperty().addListener(listenerDouble("Tragkraft", "Wert"));
-			tkFactor.valueProperty().addListener((o, oldV, newV) -> updateTkZk());
+			tkFactor.valueProperty().addListener((_, _, _) -> updateTkZk());
 			tkMod.valueProperty().addListener(listenerDouble("Tragkraft", "Modifikator"));
 			zkFactor.valueProperty().addListener(listenerDouble("Zugkraft", "Wert"));
-			zkFactor.valueProperty().addListener((o, oldV, newV) -> updateTkZk());
+			zkFactor.valueProperty().addListener((_, _, _) -> updateTkZk());
 			zkMod.valueProperty().addListener(listenerDouble("Zugkraft", "Modifikator"));
 		} else {
 			speedChoice.setItems(FXCollections.observableArrayList("Geschwindigkeit", "GS (Boden/Luft)"));
@@ -459,7 +459,7 @@ public class BasicValuesController implements JSONListener {
 			speedBoughtBox.managedProperty().bind(isSingleSpeed.not());
 			speedBoughtBox.visibleProperty().bind(isSingleSpeed.not());
 
-			isSingleSpeed.addListener((o, oldV, newV) -> {
+			isSingleSpeed.addListener((_, _, newV) -> {
 				final JSONObject actualSpeed = character.getObj("Basiswerte").getObj("Geschwindigkeit");
 				if (newV) {
 					actualSpeed.removeKey("Boden");
@@ -484,7 +484,7 @@ public class BasicValuesController implements JSONListener {
 	}
 
 	private ChangeListener<Integer> listener(final String value, final String key) {
-		return (o, oldV, newV) -> {
+		return (_, _, newV) -> {
 			final JSONObject actualValue = character.getObj("Basiswerte").getObj(value);
 			actualValue.put(key, newV);
 			actualValue.notifyListeners(this);
@@ -492,7 +492,7 @@ public class BasicValuesController implements JSONListener {
 	}
 
 	private ChangeListener<Double> listenerDouble(final String value, final String key) {
-		return (o, oldV, newV) -> {
+		return (_, _, newV) -> {
 			final JSONObject actualValue = character.getObj("Basiswerte").getObj(value);
 			final int intV = (int) (double) newV;
 			if (intV == newV) {

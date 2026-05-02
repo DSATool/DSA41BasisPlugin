@@ -141,7 +141,7 @@ public class ProOrCon {
 		} else {
 			first = ChoiceOrTextEnum.NONE;
 		}
-		description.addListener((o, oldV, newV) -> updateValid());
+		description.addListener((_, _, _) -> updateValid());
 
 		if (hasBGBVariant) {
 			second = ChoiceOrTextEnum.TEXT;
@@ -176,7 +176,7 @@ public class ProOrCon {
 		} else {
 			second = ChoiceOrTextEnum.NONE;
 		}
-		variant.addListener((o, oldV, newV) -> updateValid());
+		variant.addListener((_, _, _) -> updateValid());
 
 		final Tuple3<Integer, Integer, Integer> bounds = calculateBounds(proOrCon);
 		min = bounds._1;
@@ -204,7 +204,7 @@ public class ProOrCon {
 
 		updateValid();
 		if (hero != null) {
-			hero.addListener(o -> updateValid());
+			hero.addListener(_ -> updateValid());
 		}
 	}
 
@@ -366,11 +366,11 @@ public class ProOrCon {
 				final JSONObject talents = ResourceManager.getResource("data/Talente");
 				choices.removeAll(talents.getObj("Nahkampftalente").keySet());
 				choices.removeAll(talents.getObj("Fernkampftalente").keySet());
-				DSAUtil.foreach(group -> true, (groupName, group) -> {
+				DSAUtil.foreach(_ -> true, (_, group) -> {
 					DSAUtil.foreach(talent -> {
 						final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
 						return specializations != null && specializations.size() == 0;
-					}, (talentName, talent) -> {
+					}, (talentName, _) -> {
 						choices.remove(talentName);
 					}, group);
 				}, talents);
@@ -380,7 +380,7 @@ public class ProOrCon {
 				DSAUtil.foreach(talent -> {
 					final JSONArray specializations = talent.getArrOrDefault("Spezialisierungen", null);
 					return specializations != null && specializations.size() == 0;
-				}, (talentName, talent) -> {
+				}, (talentName, _) -> {
 					choices.remove(talentName);
 				}, talents.getObj("Nahkampftalente"), talents.getObj("Fernkampftalente"));
 			}

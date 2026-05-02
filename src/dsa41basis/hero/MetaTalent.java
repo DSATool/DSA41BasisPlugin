@@ -33,13 +33,14 @@ public class MetaTalent extends Talent {
 	protected MetaTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject hero) {
 		super(name, talentGroup, talent, null, null);
 		preciseValue = new SimpleDoubleProperty(0);
-		recalculateListener = o -> recalculate(hero);
+		recalculateListener = _ -> recalculate(hero);
 		hero.getObj("Eigenschaften").addListener(recalculateListener);
 		hero.getObj("Talente").addListener(recalculateListener);
 		recalculate(hero);
 		value.bind(preciseValue.add(0.5));
 	}
 
+	@Override
 	public double getPreciseValue() {
 		return preciseValue.get();
 	}

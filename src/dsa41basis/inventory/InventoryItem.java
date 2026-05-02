@@ -31,7 +31,7 @@ public class InventoryItem {
 	private final DoubleProperty value = new SimpleDoubleProperty();
 	protected final DoubleProperty weight = new SimpleDoubleProperty();
 
-	private final JSONListener recomputeListener = o -> recompute();
+	private final JSONListener recomputeListener = _ -> recompute();
 
 	public InventoryItem(final JSONObject item, final JSONObject baseItem) {
 		this.item = item;
