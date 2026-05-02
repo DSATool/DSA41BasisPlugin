@@ -811,6 +811,20 @@ public class DSAUtil {
 		return professionGenderMap.getOrDefault(professionName, professionName);
 	}
 
+	public static String romanNumeral(final int value) {
+		return switch (value) {
+			case 1 -> "I";
+			case 2 -> "II";
+			case 3 -> "III";
+			case 4 -> "IV";
+			case 5 -> "V";
+			case 6 -> "VI";
+			case 7 -> "VII";
+			case 8 -> "VIII";
+			default -> Integer.toString(value);
+		};
+	}
+
 	public static Tuple3<Integer, Integer, Integer> talentRoll() {
 		return new Tuple3<>(diceRoll(20), diceRoll(20), diceRoll(20));
 	}

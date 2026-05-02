@@ -24,6 +24,7 @@ import dsatool.gui.Main;
 import dsatool.plugins.Plugin;
 import dsatool.resources.ResourceManager;
 import dsatool.resources.Settings;
+import dsatool.settings.BooleanSetting;
 import dsatool.settings.StringChoiceSetting;
 import dsatool.util.ErrorLogger;
 import dsatool.util.Util;
@@ -83,6 +84,8 @@ public class DSA41Basis extends Plugin {
 				"Allgemein", "Jahreswechsel"));
 		Settings.addSetting(new StringChoiceSetting("Rüstungsart", "Zonenrüstung", List.of("Zonenrüstung", "Gesamtrüstung", "Zonengesamtrüstung"),
 				"Kampf", "Rüstungsart"));
+
+		Settings.addSetting(new BooleanSetting("Primäre Segnungen (Liturgiegrad 0)", true, "Geweihte", "Primäre Segnungen"));
 
 		Credits.credits.add(0,
 				new Credits(
