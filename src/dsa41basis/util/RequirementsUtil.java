@@ -199,7 +199,7 @@ public class RequirementsUtil {
 				boolean fulfilled = false;
 				final JSONArray currentChoices = choices.getArr(i);
 				for (int j = 0; j < currentChoices.size(); ++j) {
-					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, text, includeManualMods)) {
+					if (isRequirementFulfilled(hero, currentChoices.getObj(j), choice, text, includeManualMods)) {
 						fulfilled = true;
 						break;
 					}
@@ -579,7 +579,7 @@ public class RequirementsUtil {
 				boolean fulfilled = false;
 				final JSONArray currentChoices = choices.getArr(i);
 				for (int j = 0; j < currentChoices.size(); ++j) {
-					if (isRequirementFulfilled(hero, currentChoices.getObj(i), choice, text, includeManualMods)) {
+					if (isRequirementFulfilled(hero, currentChoices.getObj(j), choice, text, includeManualMods)) {
 						fulfilled = true;
 						break;
 					}
