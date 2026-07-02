@@ -189,6 +189,47 @@ public class RequirementsUtil {
 		return false;
 	}
 
+	public static boolean isProConSkillRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String text) {
+		if (requirements.containsKey("Muss")) {
+			final JSONObject must = requirements.getObj("Muss");
+			for (final String name : must.keySet()) {
+				final JSONObject skill = must.getObj(name);
+				if (!"Waffenspezialisierung".equals(name) || !"Auswahl".equals(skill.getObj("Auswahl").getStringOrDefault("Muss", null))) {
+					if (!hasProConSkill(hero, name, skill, choice, text, false))
+						return false;
+				} else {
+					final JSONObject talent = HeroUtil.findTalent(choice)._1;
+					if (talent != null && talent.getArrOrDefault("Spezialisierungen", new JSONArray(null)).size() != 0)
+						if (!hasProConSkill(hero, name, skill, choice, text, false)) return false;
+				}
+			}
+		}
+		if (requirements.containsKey("Wahl")) {
+			final JSONArray choices = requirements.getArr("Wahl");
+			for (int i = 0; i < choices.size(); ++i) {
+				final JSONObject curChoice = choices.getObj(i);
+				boolean found = false;
+				for (final String name : curChoice.keySet()) {
+					final JSONObject skill = curChoice.getObj(name);
+					if (hasProConSkill(hero, name, skill, choice, text, false)) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) return false;
+			}
+		}
+		if (requirements.containsKey("Nicht")) {
+			final JSONObject must = requirements.getObj("Nicht");
+			for (final String name : must.keySet()) {
+				final JSONObject skill = must.getObj(name);
+				if (hasProConSkill(hero, name, skill, choice, text, true)) return false;
+			}
+		}
+
+		return true;
+	}
+
 	public static boolean isRequirementFulfilled(final JSONObject hero, final JSONObject requirements, final String choice, final String text,
 			final boolean includeManualMods) {
 		if (requirements == null) return true;
@@ -390,43 +431,8 @@ public class RequirementsUtil {
 		}
 
 		if (requirements.containsKey("Vorteile/Nachteile/Sonderfertigkeiten")) {
-			final JSONObject skills = requirements.getObj("Vorteile/Nachteile/Sonderfertigkeiten");
-			if (skills.containsKey("Muss")) {
-				final JSONObject must = skills.getObj("Muss");
-				for (final String name : must.keySet()) {
-					final JSONObject skill = must.getObj(name);
-					if (!"Waffenspezialisierung".equals(name) || !"Auswahl".equals(skill.getObj("Auswahl").getStringOrDefault("Muss", null))) {
-						if (!hasProConSkill(hero, name, skill, choice, text, false))
-							return false;
-					} else {
-						final JSONObject talent = HeroUtil.findTalent(choice)._1;
-						if (talent != null && talent.getArrOrDefault("Spezialisierungen", new JSONArray(null)).size() != 0)
-							if (!hasProConSkill(hero, name, skill, choice, text, false)) return false;
-					}
-				}
-			}
-			if (skills.containsKey("Wahl")) {
-				final JSONArray choices = skills.getArr("Wahl");
-				for (int i = 0; i < choices.size(); ++i) {
-					final JSONObject curChoice = choices.getObj(i);
-					boolean found = false;
-					for (final String name : curChoice.keySet()) {
-						final JSONObject skill = curChoice.getObj(name);
-						if (hasProConSkill(hero, name, skill, choice, text, false)) {
-							found = true;
-							break;
-						}
-					}
-					if (!found) return false;
-				}
-			}
-			if (skills.containsKey("Nicht")) {
-				final JSONObject must = skills.getObj("Nicht");
-				for (final String name : must.keySet()) {
-					final JSONObject skill = must.getObj(name);
-					if (hasProConSkill(hero, name, skill, choice, text, true)) return false;
-				}
-			}
+			if (!isProConSkillRequirementFulfilled(hero, requirements.getObj("Vorteile/Nachteile/Sonderfertigkeiten"), choice, text))
+				return false;
 		}
 
 		return true;
@@ -496,6 +502,58 @@ public class RequirementsUtil {
 				}
 			}
 		}
+	}
+
+	public static String unfulfilledProConSkillRequirements(final JSONObject hero, final JSONObject requirements, final String choice, final String text) {
+
+		final List<String> unfulfilled = new LinkedList<>();
+
+		if (requirements.containsKey("Muss")) {
+			final JSONObject must = requirements.getObj("Muss");
+			for (final String name : must.keySet()) {
+				final JSONObject skill = must.getObj(name);
+				if (!"Waffenspezialisierung".equals(name) || !"Auswahl".equals(skill.getObj("Auswahl").getStringOrDefault("Muss", null))) {
+					if (!hasProConSkill(hero, name, skill, choice, text, false)) {
+						unfulfilled.addAll(unfulfilledProConSkills(hero, name, skill, choice, text, false));
+					}
+				} else {
+					final JSONObject talent = HeroUtil.findTalent(choice)._1;
+					if (talent != null && talent.getArrOrDefault("Spezialisierungen", new JSONArray(null)).size() != 0)
+						if (!hasProConSkill(hero, name, skill, choice, text, false)) {
+							unfulfilled.addAll(unfulfilledProConSkills(hero, name, skill, choice, text, false));
+						}
+				}
+			}
+		}
+		if (requirements.containsKey("Wahl")) {
+			final JSONArray choices = requirements.getArr("Wahl");
+			for (int i = 0; i < choices.size(); ++i) {
+				final JSONObject curChoice = choices.getObj(i);
+				boolean found = false;
+				for (final String name : curChoice.keySet()) {
+					final JSONObject skill = curChoice.getObj(name);
+					if (hasProConSkill(hero, name, skill, choice, text, false)) {
+						found = true;
+						break;
+					}
+				}
+				if (!found) {
+					unfulfilled.add(StringUtil.mkString(curChoice, "\noder\n",
+							name -> StringUtil.mkString(unfulfilledProConSkills(hero, name, curChoice.getObj(name), choice, text, false), "\n")));
+				}
+			}
+		}
+		if (requirements.containsKey("Nicht")) {
+			final JSONObject not = requirements.getObj("Nicht");
+			for (final String name : not.keySet()) {
+				final JSONObject skill = not.getObj(name);
+				if (hasProConSkill(hero, name, skill, choice, text, true)) {
+					unfulfilled.add("Nicht " + name);
+				}
+			}
+		}
+
+		return StringUtil.mkString(unfulfilled, "\n");
 	}
 
 	private static List<String> unfulfilledProConSkills(final JSONObject hero, final String name, final JSONObject requiredSkill, final String choice,
@@ -812,51 +870,10 @@ public class RequirementsUtil {
 		}
 
 		if (requirements.containsKey("Vorteile/Nachteile/Sonderfertigkeiten")) {
-			final JSONObject skills = requirements.getObj("Vorteile/Nachteile/Sonderfertigkeiten");
-			if (skills.containsKey("Muss")) {
-				final JSONObject must = skills.getObj("Muss");
-				for (final String name : must.keySet()) {
-					final JSONObject skill = must.getObj(name);
-					if (!"Waffenspezialisierung".equals(name) || !"Auswahl".equals(skill.getObj("Auswahl").getStringOrDefault("Muss", null))) {
-						if (!hasProConSkill(hero, name, skill, choice, text, false)) {
-							unfulfilled.addAll(unfulfilledProConSkills(hero, name, skill, choice, text, false));
-						}
-					} else {
-						final JSONObject talent = HeroUtil.findTalent(choice)._1;
-						if (talent != null && talent.getArrOrDefault("Spezialisierungen", new JSONArray(null)).size() != 0)
-							if (!hasProConSkill(hero, name, skill, choice, text, false)) {
-								unfulfilled.addAll(unfulfilledProConSkills(hero, name, skill, choice, text, false));
-							}
-					}
-				}
-			}
-			if (skills.containsKey("Wahl")) {
-				final JSONArray choices = skills.getArr("Wahl");
-				for (int i = 0; i < choices.size(); ++i) {
-					final JSONObject curChoice = choices.getObj(i);
-					boolean found = false;
-					for (final String name : curChoice.keySet()) {
-						final JSONObject skill = curChoice.getObj(name);
-						if (hasProConSkill(hero, name, skill, choice, text, false)) {
-							found = true;
-							break;
-						}
-					}
-					if (!found) {
-						unfulfilled.add(StringUtil.mkString(curChoice, "\noder\n",
-								name -> StringUtil.mkString(unfulfilledProConSkills(hero, name, curChoice.getObj(name), choice, text, false), "\n")));
-					}
-				}
-			}
-			if (skills.containsKey("Nicht")) {
-				final JSONObject must = skills.getObj("Nicht");
-				for (final String name : must.keySet()) {
-					final JSONObject skill = must.getObj(name);
-					if (hasProConSkill(hero, name, skill, choice, text, true)) {
-						unfulfilled.addAll(
-								unfulfilledProConSkills(hero, name, skill, choice, text, false).stream().map(skillText -> "Nicht " + skillText).toList());
-					}
-				}
+			final String unfulfilledProConSkillRequirements = unfulfilledProConSkillRequirements(hero,
+					requirements.getObj("Vorteile/Nachteile/Sonderfertigkeiten"), choice, text);
+			if (!unfulfilledProConSkillRequirements.isBlank()) {
+				unfulfilled.add(unfulfilledProConSkillRequirements);
 			}
 		}
 
