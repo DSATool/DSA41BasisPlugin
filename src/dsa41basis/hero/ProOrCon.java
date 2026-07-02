@@ -594,7 +594,7 @@ public class ProOrCon {
 	}
 
 	public void setDescription(final String description, final boolean applyEffect) {
-		if (!this.description.get().equals(description)) {
+		if (description != null && !description.equals(this.description.get())) {
 			if (applyEffect) {
 				HeroUtil.unapplyEffect(hero, name.get(), proOrCon, actual);
 			}
