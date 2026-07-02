@@ -586,7 +586,7 @@ public class RequirementsUtil {
 			skill = (JSONValue) actualSkills.getUnsafe(name);
 			type = "Sonderfertigkeit ";
 		} else {
-			unfulfilled.add(actualPros.containsKey(name) ? "Vorteil " : (actualCons.containsKey(name) ? "Nachteil " : "Sonderfertigkeit ") + name);
+			unfulfilled.add((pros.containsKey(name) ? "Vorteil " : cons.containsKey(name) ? "Nachteil " : "Sonderfertigkeit ") + name);
 			return unfulfilled;
 		}
 
