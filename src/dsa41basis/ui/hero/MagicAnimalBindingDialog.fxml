@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import dsatool.ui.ReactiveSpinner?>
+
+<VBox fx:id="root" style="-fx-padding: 4;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
+   <HBox spacing="2" alignment="CENTER" >
+      <Label text="Name: " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <TextField fx:id="name" prefWidth="150" />
+   </HBox>
+   <HBox spacing="2" alignment="CENTER_LEFT" >
+      <Label text="Tierart: " maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <ComboBox fx:id="species" prefWidth="150" />
+   </HBox>
+   <HBox spacing="2" alignment="CENTER_LEFT" >
+      <Label text="Machtvoller Vertrauter: " maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <CheckBox fx:id="mighty" />
+   </HBox>
+   <HBox alignment="CENTER_LEFT" >
+      <Label text="Eigenschaften: (max. noch " alignment="CENTER_LEFT" />
+      <Label fx:id="attributePointsLabel" alignment="CENTER_LEFT" />
+      <Label text=")" alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Label text="Max." alignment="CENTER_LEFT" minWidth="80" />
+   </HBox>
+   <VBox fx:id="attributesBox" spacing="2" />
+   <HBox spacing="10" alignment="CENTER" >
+      <Label text="Lebensenergie " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Label fx:id="lepMax" alignment="CENTER_RIGHT" />
+      <ReactiveSpinner fx:id="lep" imin="0" imax="999" editable="true" prefWidth="50" />
+   </HBox>
+   <HBox spacing="10" alignment="CENTER" >
+      <Label text="Astralenergie " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Label fx:id="aspMax" alignment="CENTER_RIGHT" />
+      <ReactiveSpinner fx:id="asp" imin="0" imax="999" editable="true" prefWidth="50" />
+   </HBox>
+   <HBox spacing="10" alignment="CENTER" >
+      <Label text="Ausdauer " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Label fx:id="aupMax" alignment="CENTER_RIGHT" />
+      <ReactiveSpinner fx:id="aup" imin="0" imax="999" editable="true" prefWidth="50" />
+   </HBox>   
+   <HBox alignment="CENTER" >
+      <Label text="AP " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <ReactiveSpinner fx:id="ap" imin="0" imax="9999" editable="true" prefWidth="70" />
+   </HBox>
+   <HBox spacing="2" alignment="CENTER_LEFT" >
+      <Label maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Button fx:id="okButton" text="Ok" prefWidth="90" />
+      <Button fx:id="cancelButton" text="Abbrechen" prefWidth="90" />
+   </HBox>
+</VBox>
