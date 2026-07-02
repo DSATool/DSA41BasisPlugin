@@ -445,7 +445,7 @@ public class RequirementsUtil {
 		return true;
 	}
 
-	private static boolean isTalentRequirementFulfilled(final JSONObject hero, final String talentName, final int value) {
+	public static boolean isTalentRequirementFulfilled(final JSONObject hero, final String talentName, final int value) {
 		if (talentName == null)
 			return true;
 		else if ("Lesen/Schreiben".equals(talentName)) {
