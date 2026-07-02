@@ -142,6 +142,52 @@ public class ResourceSanitizer {
 		return object;
 	};
 
+	public static final Function<JSONObject, JSONObject> animalAttributeStartSanitizer = object -> {
+		if (object.containsKey("Tiere")) {
+			final JSONArray animals = object.getArr("Tiere");
+			for (final JSONObject animal : animals.getObjs()) {
+				final JSONObject basicValues = animal.getObj("Basiswerte");
+				if (basicValues.containsKey("Magieresistenz")) {
+					final JSONObject mr = basicValues.getObj("Magieresistenz");
+					if (mr.containsKey("Kauf")) {
+						final int bought = mr.getInt("Kauf");
+						mr.removeKey("Kauf");
+						mr.put("Start", mr.getInt("Wert") - bought);
+					}
+					if (mr.containsKey("Geist:Kauf")) {
+						final int bought = mr.getInt("Geist:Kauf");
+						mr.removeKey("Geist:Kauf");
+						mr.put("Geist:Start", mr.getInt("Geist") - bought);
+					}
+					if (mr.containsKey("Körper:Kauf")) {
+						final int bought = mr.getInt("Körper:Kauf");
+						mr.removeKey("Körper:Kauf");
+						mr.put("Körper:Start", mr.getInt("Körper") - bought);
+					}
+				}
+				if (basicValues.containsKey("Geschwindigkeit")) {
+					final JSONObject speed = basicValues.getObj("Geschwindigkeit");
+					if (speed.containsKey("Kauf")) {
+						final double bought = speed.getDouble("Kauf");
+						speed.removeKey("Kauf");
+						speed.put("Start", speed.getDouble("Wert") - bought);
+					}
+					if (speed.containsKey("Boden:Kauf")) {
+						final double bought = speed.getDouble("Boden:Kauf");
+						speed.removeKey("Boden:Kauf");
+						speed.put("Boden:Start", speed.getDouble("Boden") - bought);
+					}
+					if (speed.containsKey("Luft:Kauf")) {
+						final double bought = speed.getDouble("Luft:Kauf");
+						speed.removeKey("Luft:Kauf");
+						speed.put("Luft:Start", speed.getDouble("Luft") - bought);
+					}
+				}
+			}
+		}
+		return object;
+	};
+
 	public static final Function<JSONObject, JSONObject> heroSanitizer = object -> {
 		JSONObject result = object;
 		if (object.containsKey("Spieler")) {

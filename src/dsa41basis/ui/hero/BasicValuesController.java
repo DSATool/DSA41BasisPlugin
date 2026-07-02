@@ -53,7 +53,7 @@ public class BasicValuesController implements JSONListener {
 	@FXML
 	private GridPane grid;
 	@FXML
-	private Node boughtLabel;
+	private Node startLabel;
 	@FXML
 	private ReactiveSpinner<Integer> iniBase;
 	@FXML
@@ -85,13 +85,13 @@ public class BasicValuesController implements JSONListener {
 	@FXML
 	private ReactiveSpinner<Integer> mrBodyMod;
 	@FXML
-	private ReactiveSpinner<Integer> mrBought;
+	private ReactiveSpinner<Integer> mrStart;
 	@FXML
-	private Node mrBoughtBox;
+	private Node mrStartBox;
 	@FXML
-	private ReactiveSpinner<Integer> mrMindBought;
+	private ReactiveSpinner<Integer> mrMindStart;
 	@FXML
-	private ReactiveSpinner<Integer> mrBodyBought;
+	private ReactiveSpinner<Integer> mrBodyStart;
 	@FXML
 	private ComboBox<String> speedChoice;
 	@FXML
@@ -111,13 +111,13 @@ public class BasicValuesController implements JSONListener {
 	@FXML
 	private ReactiveSpinner<Double> speedAirMod;
 	@FXML
-	private ReactiveSpinner<Double> speedBought;
+	private ReactiveSpinner<Double> speedStart;
 	@FXML
-	private Node speedBoughtBox;
+	private Node speedStartBox;
 	@FXML
-	private ReactiveSpinner<Double> speedGroundBought;
+	private ReactiveSpinner<Double> speedGroundStart;
 	@FXML
-	private ReactiveSpinner<Double> speedAirBought;
+	private ReactiveSpinner<Double> speedAirStart;
 	@FXML
 	private Node horseSpeedBox;
 	@FXML
@@ -229,13 +229,13 @@ public class BasicValuesController implements JSONListener {
 		}
 
 		if (type != CharacterType.MAGIC_ANIMAL) {
-			controls.remove(boughtLabel);
-			controls.remove(speedBought);
-			controls.remove(speedBoughtBox);
+			controls.remove(startLabel);
+			controls.remove(speedStart);
+			controls.remove(speedStartBox);
 			controls.remove(mrMod);
 			controls.remove(mrModBox);
-			controls.remove(mrBought);
-			controls.remove(mrBoughtBox);
+			controls.remove(mrStart);
+			controls.remove(mrStartBox);
 			controls.remove(apBox);
 		}
 
@@ -259,9 +259,9 @@ public class BasicValuesController implements JSONListener {
 		mr.disableProperty().bind(disabled);
 		mrMind.disableProperty().bind(disabled);
 		mrBody.disableProperty().bind(disabled);
-		mrBought.disableProperty().bind(disabled);
-		mrMindBought.disableProperty().bind(disabled);
-		mrBodyBought.disableProperty().bind(disabled);
+		mrStart.disableProperty().bind(disabled);
+		mrMindStart.disableProperty().bind(disabled);
+		mrBodyStart.disableProperty().bind(disabled);
 		mrMod.disableProperty().bind(disabled);
 		mrMindMod.disableProperty().bind(disabled);
 		mrBodyMod.disableProperty().bind(disabled);
@@ -269,9 +269,9 @@ public class BasicValuesController implements JSONListener {
 		speed.disableProperty().bind(disabled);
 		speedGround.disableProperty().bind(disabled);
 		speedAir.disableProperty().bind(disabled);
-		speedBought.disableProperty().bind(disabled);
-		speedGroundBought.disableProperty().bind(disabled);
-		speedAirBought.disableProperty().bind(disabled);
+		speedStart.disableProperty().bind(disabled);
+		speedGroundStart.disableProperty().bind(disabled);
+		speedAirStart.disableProperty().bind(disabled);
 		speedMod.disableProperty().bind(disabled);
 		speedGroundMod.disableProperty().bind(disabled);
 		speedAirMod.disableProperty().bind(disabled);
@@ -375,10 +375,10 @@ public class BasicValuesController implements JSONListener {
 			mrMod.visibleProperty().bind(isSingleMR);
 			mrModBox.managedProperty().bind(isSingleMR.not());
 			mrModBox.visibleProperty().bind(isSingleMR.not());
-			mrBought.managedProperty().bind(isSingleMR);
-			mrBought.visibleProperty().bind(isSingleMR);
-			mrBoughtBox.managedProperty().bind(isSingleMR.not());
-			mrBoughtBox.visibleProperty().bind(isSingleMR.not());
+			mrStart.managedProperty().bind(isSingleMR);
+			mrStart.visibleProperty().bind(isSingleMR);
+			mrStartBox.managedProperty().bind(isSingleMR.not());
+			mrStartBox.visibleProperty().bind(isSingleMR.not());
 		}
 
 		isSingleMR.addListener((_, _, newV) -> {
@@ -397,9 +397,9 @@ public class BasicValuesController implements JSONListener {
 			mrMod.valueProperty().addListener(listener("Magieresistenz", "Modifikator"));
 			mrMindMod.valueProperty().addListener(listener("Magieresistenz", "Geist:Modifikator"));
 			mrBodyMod.valueProperty().addListener(listener("Magieresistenz", "Körper:Modifikator"));
-			mrBought.valueProperty().addListener(listener("Magieresistenz", "Kauf"));
-			mrMindBought.valueProperty().addListener(listener("Magieresistenz", "Geist:Kauf"));
-			mrBodyBought.valueProperty().addListener(listener("Magieresistenz", "Körper:Kauf"));
+			mrStart.valueProperty().addListener(listener("Magieresistenz", "Start"));
+			mrMindStart.valueProperty().addListener(listener("Magieresistenz", "Geist:Start"));
+			mrBodyStart.valueProperty().addListener(listener("Magieresistenz", "Körper:Start"));
 
 			ap.valueProperty().addListener((_, oldV, newV) -> freeAp.getValueFactory().setValue(freeAp.getValue() + newV - oldV));
 			freeAp.valueProperty().addListener((_, _, _) -> {
@@ -454,10 +454,10 @@ public class BasicValuesController implements JSONListener {
 			speedMod.visibleProperty().bind(isSingleSpeed);
 			speedModBox.managedProperty().bind(isSingleSpeed.not());
 			speedModBox.visibleProperty().bind(isSingleSpeed.not());
-			speedBought.managedProperty().bind(isSingleSpeed);
-			speedBought.visibleProperty().bind(isSingleSpeed);
-			speedBoughtBox.managedProperty().bind(isSingleSpeed.not());
-			speedBoughtBox.visibleProperty().bind(isSingleSpeed.not());
+			speedStart.managedProperty().bind(isSingleSpeed);
+			speedStart.visibleProperty().bind(isSingleSpeed);
+			speedStartBox.managedProperty().bind(isSingleSpeed.not());
+			speedStartBox.visibleProperty().bind(isSingleSpeed.not());
 
 			isSingleSpeed.addListener((_, _, newV) -> {
 				final JSONObject actualSpeed = character.getObj("Basiswerte").getObj("Geschwindigkeit");
@@ -476,9 +476,9 @@ public class BasicValuesController implements JSONListener {
 			speedAirMod.valueProperty().addListener(doubleListener("Geschwindigkeit", "Luft:Modifikator"));
 
 			if (type == CharacterType.MAGIC_ANIMAL) {
-				speedBought.valueProperty().addListener(doubleListener("Geschwindigkeit", "Kauf"));
-				speedGroundBought.valueProperty().addListener(doubleListener("Geschwindigkeit", "Boden:Kauf"));
-				speedAirBought.valueProperty().addListener(doubleListener("Geschwindigkeit", "Luft:Kauf"));
+				speedStart.valueProperty().addListener(doubleListener("Geschwindigkeit", "Start"));
+				speedGroundStart.valueProperty().addListener(doubleListener("Geschwindigkeit", "Boden:Start"));
+				speedAirStart.valueProperty().addListener(doubleListener("Geschwindigkeit", "Luft:Start"));
 			}
 		}
 	}
@@ -549,9 +549,9 @@ public class BasicValuesController implements JSONListener {
 			mrMod.getValueFactory().setValue(actualMr.getIntOrDefault("Modifikator", 0));
 			mrMindMod.getValueFactory().setValue(actualMr.getIntOrDefault("Geist:Modifikator", 0));
 			mrBodyMod.getValueFactory().setValue(actualMr.getIntOrDefault("Körper:Modifikator", 0));
-			mrBought.getValueFactory().setValue(actualMr.getIntOrDefault("Kauf", 0));
-			mrMindBought.getValueFactory().setValue(actualMr.getIntOrDefault("Geist:Kauf", 0));
-			mrBodyBought.getValueFactory().setValue(actualMr.getIntOrDefault("Körper:Kauf", 0));
+			mrStart.getValueFactory().setValue(actualMr.getIntOrDefault("Start", 0));
+			mrMindStart.getValueFactory().setValue(actualMr.getIntOrDefault("Geist:Start", 0));
+			mrBodyStart.getValueFactory().setValue(actualMr.getIntOrDefault("Körper:Start", 0));
 
 			final JSONObject biography = character.getObj("Biografie");
 			ap.getValueFactory().setValue(biography.getIntOrDefault("Abenteuerpunkte", 0));
@@ -605,9 +605,9 @@ public class BasicValuesController implements JSONListener {
 			speedAirMod.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Luft:Modifikator", 0.0));
 
 			if (type == CharacterType.MAGIC_ANIMAL) {
-				speedBought.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Kauf", 0.0));
-				speedGroundBought.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Boden:Kauf", 0.0));
-				speedAirBought.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Luft:Kauf", 0.0));
+				speedStart.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Start", 0.0));
+				speedGroundStart.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Boden:Start", 0.0));
+				speedAirStart.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Luft:Start", 0.0));
 			}
 		}
 	}
