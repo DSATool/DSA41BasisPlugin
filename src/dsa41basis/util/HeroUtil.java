@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -32,6 +33,7 @@ import dsatool.resources.Settings;
 import dsatool.util.ErrorLogger;
 import dsatool.util.Tuple;
 import dsatool.util.Tuple3;
+import dsatool.util.Tuple4;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 import jsonant.value.JSONValue;
@@ -208,34 +210,42 @@ public class HeroUtil {
 						if ("Freitext".equals(currentProConSkillChange.getString("Freitext"))) {
 							currentProConSkillChange.put("Freitext", actual.getString("Freitext"));
 						}
-						boolean match = false;
-						int j;
-						for (j = 0; j < actualProConSkills.size(); ++j) {
-							final JSONObject actualProConSkill = actualProConSkills.getObj(j);
-							if (proConSkill.containsKey("Auswahl")
-									&& !actualProConSkill.getStringOrDefault("Auswahl", "").equals(currentProConSkillChange.getString("Auswahl"))) {
-								continue;
-							}
-							if (proConSkill.containsKey("Freitext")
-									&& !actualProConSkill.getStringOrDefault("Freitext", "").equals(currentProConSkillChange.getString("Freitext"))) {
-								continue;
-							}
-							match = true;
-							if (proConSkill.getBoolOrDefault("Abgestuft", false)) {
-								actualProConSkill.put("Stufe",
-										actualProConSkill.getIntOrDefault("Stufe", 0) + currentProConSkillChange.getIntOrDefault("Stufe", 0));
+						final JSONObject actualVariant = getProConSkillVariant(proConSkill, actualProConSkills, currentProConSkillChange.getString("Auswahl"),
+								currentProConSkillChange.getString("Freitext"));
+						if (actualVariant == null) {
+							if (currentProConSkillChange.getBoolOrDefault("Verbilligung", false)) {
+								final JSONArray cheaper = hero.getObj("Verbilligte Sonderfertigkeiten").getArr(proConSkillName);
+								final JSONObject cheaperVariant = getProConSkillVariant(proConSkill, actualProConSkills,
+										currentProConSkillChange.getString("Auswahl"), currentProConSkillChange.getString("Freitext"));
+								if (cheaperVariant == null) {
+									final JSONObject newProConSkill = currentProConSkillChange.clone(cheaper);
+									cheaper.add(currentProConSkillChange);
+									newProConSkill.put("AutomatischDurch", effectorName);
+									newProConSkill.notifyListeners(null);
+								} else {
+									if (cheaperVariant.containsKey("Kosten")) {
+										cheaperVariant.put("Kosten", (cheaperVariant.getInt("Kosten") + 1) / 2);
+									} else {
+										cheaperVariant.put("Verbilligungen", cheaperVariant.getIntOrDefault("Verbilligungen", 1) + 1);
+									}
+									cheaperVariant.getArr("AutomatischDurch").add(effectorName);
+									cheaperVariant.notifyListeners(null);
+								}
+							} else {
+								final JSONObject newProConSkill = currentProConSkillChange.clone(actualProConSkills);
+								actualProConSkills.add(newProConSkill);
+								if (!proConSkill.getBoolOrDefault("Abgestuft", false)) {
+									newProConSkill.put("AutomatischDurch", effectorName);
+								}
 								applyEffect(hero, proConSkillName, proConSkill, currentProConSkillChange);
-								actualProConSkill.notifyListeners(null);
+								newProConSkill.notifyListeners(null);
 							}
-							break;
-						}
-						if (!match) {
-							actualProConSkills.add(currentProConSkillChange.clone(actualProConSkills));
-							if (!proConSkill.getBoolOrDefault("Abgestuft", false)) {
-								actualProConSkills.getObj(j).put("AutomatischDurch", effectorName);
+						} else {
+							if (proConSkill.getBoolOrDefault("Abgestuft", false)) {
+								actualVariant.put("Stufe", actualVariant.getIntOrDefault("Stufe", 0) + currentProConSkillChange.getIntOrDefault("Stufe", 0));
+								applyEffect(hero, proConSkillName, proConSkill, currentProConSkillChange);
+								actualVariant.notifyListeners(null);
 							}
-							applyEffect(hero, proConSkillName, proConSkill, currentProConSkillChange);
-							actualProConSkills.getObj(j).notifyListeners(null);
 						}
 					}
 				} else {
@@ -245,10 +255,26 @@ public class HeroUtil {
 						applyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
 						target.getObj(proConSkillName).notifyListeners(null);
 					} else if (!target.containsKey(proConSkillName)) {
-						target.put(proConSkillName, proConSkillChanges.getObj(proConSkillName).clone(target));
-						target.getObj(proConSkillName).put("AutomatischDurch", effectorName);
-						applyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
-						target.getObj(proConSkillName).notifyListeners(null);
+						if (proConSkillChanges.getObj(proConSkillName).getBoolOrDefault("Verbilligung", false)) {
+							final JSONObject cheaper = hero.getObj("Verbilligte Sonderfertigkeiten");
+							if (cheaper.containsKey(proConSkillName)) {
+								final JSONObject cheaperSkill = cheaper.getObj(proConSkillName);
+								if (cheaperSkill.containsKey("Kosten")) {
+									cheaperSkill.put("Kosten", (cheaperSkill.getInt("Kosten") + 1) / 2);
+								} else {
+									cheaperSkill.put("Verbilligungen", cheaperSkill.getIntOrDefault("Verbilligungen", 1) + 1);
+								}
+							} else {
+								cheaper.put(proConSkillName, proConSkillChanges.getObj(proConSkillName).clone(cheaper));
+							}
+							cheaper.getObj(proConSkillName).getArr("AutomatischDurch").add(effectorName);
+							cheaper.getObj(proConSkillName).notifyListeners(null);
+						} else {
+							target.put(proConSkillName, proConSkillChanges.getObj(proConSkillName).clone(target));
+							target.getObj(proConSkillName).put("AutomatischDurch", effectorName);
+							applyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
+							target.getObj(proConSkillName).notifyListeners(null);
+						}
 					}
 				}
 			}
@@ -257,73 +283,29 @@ public class HeroUtil {
 		if (effect.containsKey("Talente")) {
 			final JSONObject talentChanges = effect.getObj("Talente");
 			for (final String talentName : talentChanges.keySet()) {
-				final String modifiedName = "Auswahl".equals(talentName) ? actual.getString("Auswahl") : talentName;
-				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(modifiedName);
-				final JSONObject talent = talentAndGroup._1;
-				final String groupName = talentAndGroup._2;
-				if (groupName != null) {
-					final String targetValue = "Zauber".equals(groupName) ? "ZfW" : "TaW";
-					final JSONObject actualGroup = "Zauber".equals(groupName) ? hero.getObj("Zauber") : hero.getObj("Talente").getObj(groupName);
-					if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
-						final JSONArray actualTalent;
-						if ("Zauber".equals(groupName)) {
-							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
-							if (actualSpell.size() == 0) {
-								actualTalent = actualSpell.getArr("ÜNB");
-							} else {
-								actualTalent = actualSpell.getArr(actualSpell.keySet().iterator().next());
-							}
-						} else {
-							actualTalent = actualGroup.getArr(modifiedName);
-						}
-						final Object modificationsData = talentChanges.getUnsafe(talentName);
-						if (modificationsData instanceof final JSONObject modifications) {
-							for (String variantName : modifications.keySet()) {
-								final int change = modifications.getInt(variantName);
-								if ("Auswahl".equals(variantName)) {
-									variantName = actual.getString("Auswahl");
-								} else if ("Freitext".equals(variantName)) {
-									variantName = actual.getString("Freitext");
-								}
-								JSONObject actualVariant = null;
-								for (int i = 0; i < actualTalent.size(); ++i) {
-									final JSONObject variant = actualTalent.getObj(i);
-									if (talent.containsKey("Auswahl") && variantName.equals(variant.getString("Auswahl"))
-											|| talent.containsKey("Freitext") && variantName.equals(variant.getString("Freitext"))) {
-										actualVariant = variant;
-										break;
-									}
-								}
-								if (actualVariant == null) {
-									actualVariant = new JSONObject(actualTalent);
-									actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext", variantName);
-									actualTalent.add(actualVariant);
-								}
+				for (final Tuple4<JSONObject, String, Boolean, Integer> talent : getAffectedTalents(talentName, talentChanges, hero, actual)) {
+					applyTalentEffect(talent._1, actual, talent._2, effectorName, talent._4, false, talent._3, false);
+				}
+			}
+		}
 
-								applyTalentEffect(actualVariant, actual, targetValue, effectorName, change);
-							}
-						} else {
-							final JSONObject actualVariant = new JSONObject(actualTalent);
-							actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext",
-									talent.getString(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext"));
-							actualTalent.add(actualVariant);
+		if (effect.containsKey("Spezielle Erfahrungen")) {
+			final JSONObject talentChanges = effect.getObj("Spezielle Erfahrungen");
+			for (final String talentName : talentChanges.keySet()) {
+				for (final Tuple4<JSONObject, String, Boolean, Integer> talent : getAffectedTalents(talentName, talentChanges, hero, actual)) {
+					applyTalentEffect(talent._1, actual, talent._2, effectorName, talent._4, false, talent._3, true);
+				}
+			}
+		}
 
-							applyTalentEffect(actualVariant, actual, targetValue, effectorName, talentChanges.getInt(talentName));
-						}
-					} else {
-						final JSONObject actualTalent;
-						if ("Zauber".equals(groupName)) {
-							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
-							if (actualSpell.size() == 0) {
-								actualTalent = actualSpell.getObj("ÜNB");
-							} else {
-								actualTalent = actualSpell.getObj(actualSpell.keySet().iterator().next());
-							}
-						} else {
-							actualTalent = actualGroup.getObj(modifiedName);
-						}
-						final int change = talentChanges.getInt(talentName);
-						applyTalentEffect(actualTalent, actual, targetValue, effectorName, change);
+		if (effect.containsKey("Hauszauber")) {
+			final JSONObject spellChanges = effect.getObj("Hauszauber");
+			for (final String spellName : spellChanges.keySet()) {
+				for (final Tuple4<JSONObject, String, Boolean, Integer> spell : getAffectedTalents(spellName, spellChanges, hero, actual)) {
+					final JSONObject actualSpell = spell._1;
+					if (!actualSpell.getBoolOrDefault("Hauszauber", false)) {
+						actualSpell.put("Hauszauber", true);
+						actualSpell.put("HauszauberDurch", effectorName);
 					}
 				}
 			}
@@ -331,12 +313,26 @@ public class HeroUtil {
 	}
 
 	private static void applyTalentEffect(final JSONObject actualTalent, final JSONObject actual, final String targetValue, final String effectorName,
-			final int change) {
-		if (!actualTalent.containsKey(targetValue) || !actualTalent.getBoolOrDefault("aktiviert", true)) {
-			actualTalent.put("AutomatischDurch", effectorName);
+			final int change, final boolean unapply, final boolean isVariant, final boolean sesOnly) {
+		if (sesOnly) {
+			actualTalent.put("SEs", actualTalent.getIntOrDefault("SES", 0) + change * actual.getIntOrDefault("Stufe", 1) * (unapply ? -1 : 1));
+		} else if (unapply) {
+			actualTalent.put(targetValue, actualTalent.getIntOrDefault(targetValue, 0) - change * actual.getIntOrDefault("Stufe", 1));
+			if (actualTalent.getInt(targetValue) == 0 && actualTalent.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+				actualTalent.getParent().remove(actualTalent);
+				if (isVariant) {
+					if (actualTalent.getParent().size() == 0) {
+						actualTalent.getParent().getParent().remove(actualTalent.getParent());
+					}
+				}
+			}
+		} else {
+			if (!actualTalent.containsKey(targetValue) || !actualTalent.getBoolOrDefault("aktiviert", true)) {
+				actualTalent.put("AutomatischDurch", effectorName);
+			}
+			actualTalent.put(targetValue, actualTalent.getIntOrDefault(targetValue, 0) + change * actual.getIntOrDefault("Stufe", 1));
+			actualTalent.removeKey("aktiviert");
 		}
-		actualTalent.put(targetValue, actualTalent.getIntOrDefault(targetValue, 0) + change * actual.getIntOrDefault("Stufe", 1));
-		actualTalent.removeKey("aktiviert");
 		actualTalent.notifyListeners(null);
 	}
 
@@ -479,6 +475,106 @@ public class HeroUtil {
 				foreachInventoryItem(true, filter, function, inventory.getArr("Ausrüstung"));
 			}, animal.getArr("Inventare"));
 		}, hero.getArr("Tiere"));
+	}
+
+	private static Collection<Tuple4<JSONObject, String, Boolean, Integer>> getAffectedTalents(final String talentName, final JSONObject talentChanges,
+			final JSONObject hero, final JSONObject actual) {
+		final String modifiedName = "Auswahl".equals(talentName) ? actual.getString("Auswahl") : talentName;
+		final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(modifiedName);
+		final JSONObject talent = talentAndGroup._1;
+		final String groupName = talentAndGroup._2;
+		if (groupName != null) {
+			final String targetValue = "Zauber".equals(groupName) ? "ZfW" : "TaW";
+			final JSONObject actualGroup = "Zauber".equals(groupName) ? hero.getObj("Zauber") : hero.getObj("Talente").getObj(groupName);
+			if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
+				final Collection<JSONArray> actualTalents = new LinkedList<>();
+				if ("Zauber".equals(groupName)) {
+					final JSONObject actualSpell = actualGroup.getObj(modifiedName);
+					final Object effect = talentChanges.getUnsafe(talentName);
+					if (effect instanceof final JSONObject representations) {
+						for (final String representation : representations.keySet()) {
+							actualTalents.add(actualSpell.getArr(representation));
+						}
+					} else {
+						if (actualSpell.size() == 0) {
+							actualTalents.add(actualSpell.getArr("ÜNB"));
+						} else {
+							actualTalents.add(actualSpell.getArr(actualSpell.keySet().iterator().next()));
+						}
+					}
+				} else {
+					actualTalents.add(actualGroup.getArr(modifiedName));
+				}
+				final Object modificationsData = talentChanges.getUnsafe(talentName);
+				final List<Tuple4<JSONObject, String, Boolean, Integer>> results = new LinkedList<>();
+				if (modificationsData instanceof final JSONObject modifications) {
+					for (String variantName : modifications.keySet()) {
+						if ("Auswahl".equals(variantName)) {
+							variantName = actual.getString("Auswahl");
+						} else if ("Freitext".equals(variantName)) {
+							variantName = actual.getString("Freitext");
+						}
+						final Object change = modifications.getUnsafe(variantName);
+						final Collection<Long> changes = change instanceof final JSONArray changeArray ? changeArray.getInts() : List.of((long) change);
+						final Set<JSONObject> alreadyAffected = new HashSet<>();
+						for (final long currentChange : changes) {
+							for (final JSONArray actualTalent : actualTalents) {
+								JSONObject actualVariant = null;
+								for (int i = 0; i < actualTalent.size(); ++i) {
+									final JSONObject variant = actualTalent.getObj(i);
+									if (!alreadyAffected.contains(variant) && talent.containsKey("Auswahl") && variantName.equals(variant.getString("Auswahl"))
+											|| talent.containsKey("Freitext") && variantName.equals(variant.getString("Freitext"))) {
+										actualVariant = variant;
+										break;
+									}
+								}
+								if (actualVariant == null) {
+									actualVariant = new JSONObject(actualTalent);
+									actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext", variantName);
+									actualTalent.add(actualVariant);
+								}
+
+								alreadyAffected.add(actualVariant);
+								results.add(new Tuple4<>(actualVariant, targetValue, true, (int) currentChange));
+							}
+						}
+					}
+				} else {
+					for (final JSONArray actualTalent : actualTalents) {
+						final JSONObject actualVariant = new JSONObject(actualTalent);
+						actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext",
+								talent.getString(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext"));
+						actualTalent.add(actualVariant);
+						results.add(new Tuple4<>(actualVariant, targetValue, true, talentChanges.getInt(talentName)));
+					}
+				}
+				return results;
+			} else {
+				final JSONObject actualTalent;
+				if ("Zauber".equals(groupName)) {
+					final JSONObject actualSpell = actualGroup.getObj(modifiedName);
+					final Object effect = talentChanges.getUnsafe(talentName);
+					if (effect instanceof final JSONObject representations) {
+						final Collection<Tuple4<JSONObject, String, Boolean, Integer>> result = new LinkedList<>();
+						for (final String representation : representations.keySet()) {
+							result.add(new Tuple4<>(actualSpell.getObj(representation), targetValue, false, representations.getInt(representation)));
+						}
+						return result;
+					} else {
+						if (actualSpell.size() == 0) {
+							actualTalent = actualSpell.getObj("ÜNB");
+						} else {
+							actualTalent = actualSpell.getObj(actualSpell.keySet().iterator().next());
+						}
+						return List.of(new Tuple4<>(actualTalent, targetValue, false, talentChanges.getInt(talentName)));
+					}
+				} else {
+					actualTalent = actualGroup.getObj(modifiedName);
+					return List.of(new Tuple4<>(actualTalent, targetValue, false, talentChanges.getInt(talentName)));
+				}
+			}
+		}
+		return List.of();
 	}
 
 	public static String getAntiElement(final String element) {
@@ -1207,6 +1303,21 @@ public class HeroUtil {
 		}
 
 		return baseValue + fromTalent + weaponModifier + specialisation + masteryPA - be + TPKKModifier + secondHandModifier + secondWeaponModifier;
+	}
+
+	private static JSONObject getProConSkillVariant(final JSONObject proConSkill, final JSONArray actual, final String choice, final String text) {
+		int i;
+		for (i = 0; i < actual.size(); ++i) {
+			final JSONObject actualProConSkill = actual.getObj(i);
+			if (proConSkill.containsKey("Auswahl") && choice != null && !actualProConSkill.getStringOrDefault("Auswahl", choice).equals(choice)) {
+				continue;
+			}
+			if (proConSkill.containsKey("Freitext") && text != null && !actualProConSkill.getStringOrDefault("Freitext", text).equals(text)) {
+				continue;
+			}
+			return actualProConSkill;
+		}
+		return null;
 	}
 
 	public static String getProfessionString(final JSONObject hero, final JSONObject bio, final JSONObject professions, final boolean withVeteranBGB) {
@@ -2248,29 +2359,47 @@ public class HeroUtil {
 						if ("Freitext".equals(currentProConSkillChange.getString("Freitext"))) {
 							currentProConSkillChange.put("Freitext", actual.getString("Freitext"));
 						}
-						for (int j = 0; j < actualProConSkills.size(); ++j) {
-							final JSONObject actualProConSkill = actualProConSkills.getObj(j);
-							if (proConSkill.containsKey("Auswahl")
-									&& !actualProConSkill.getStringOrDefault("Auswahl", "").equals(currentProConSkillChange.getString("Auswahl"))) {
-								continue;
+
+						if (currentProConSkillChange.getBoolOrDefault("Verbilligung", false)) {
+							final JSONArray cheaper = hero.getObj("Verbilligte Sonderfertigkeiten").getArr(proConSkillName);
+							final JSONObject cheaperVariant = getProConSkillVariant(proConSkill, actualProConSkills,
+									currentProConSkillChange.getString("Auswahl"), currentProConSkillChange.getString("Freitext"));
+							if (cheaperVariant == null) {
+								final JSONObject newProConSkill = proConSkillChanges.getObj(proConSkillName).clone(cheaper);
+								cheaper.add(proConSkillChanges.getObj(proConSkillName).clone(cheaper));
+								newProConSkill.put("AutomatischDurch", effectorName);
+								newProConSkill.notifyListeners(null);
+							} else {
+								if (cheaperVariant.containsKey("Kosten")) {
+									cheaperVariant.put("Kosten", cheaperVariant.getInt("Kosten") * 2);
+								} else if (cheaperVariant.containsKey("Verbilligungen")) {
+									cheaperVariant.put("Verbilligungen", cheaperVariant.getInt("Verbilligungen") - 1);
+									switch (cheaperVariant.getInt("Verbilligungen")) {
+										case 0 -> cheaper.remove(cheaperVariant);
+										case 1 -> cheaperVariant.removeKey("Verbilligungen");
+									}
+								} else {
+									cheaper.remove(cheaperVariant);
+								}
+								cheaperVariant.getArr("AutomatischDurch").remove(effectorName);
+								cheaperVariant.notifyListeners(null);
 							}
-							if (proConSkill.containsKey("Freitext")
-									&& !actualProConSkill.getStringOrDefault("Freitext", "").equals(currentProConSkillChange.getString("Freitext"))) {
-								continue;
-							}
+						} else {
+							final JSONObject actualVariant = getProConSkillVariant(proConSkill, actualProConSkills,
+									currentProConSkillChange.getString("Auswahl"),
+									currentProConSkillChange.getString("Freitext"));
 							if (proConSkill.getBoolOrDefault("Abgestuft", false)) {
-								actualProConSkill.put("Stufe",
-										actualProConSkill.getIntOrDefault("Stufe", 0) - currentProConSkillChange.getIntOrDefault("Stufe", 0));
-								actualProConSkill.notifyListeners(null);
-								if (actualProConSkill.getInt("Stufe") == 0) {
-									actualProConSkills.remove(actualProConSkill);
+								actualVariant.put("Stufe",
+										actualVariant.getIntOrDefault("Stufe", 1) - currentProConSkillChange.getIntOrDefault("Stufe", 1));
+								actualVariant.notifyListeners(null);
+								if (actualVariant.getInt("Stufe") == 0) {
+									actualProConSkills.remove(actualVariant);
 								}
 								unapplyEffect(hero, proConSkillName, proConSkill, currentProConSkillChange);
-							} else if (actualProConSkill.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
-								actualProConSkills.remove(actualProConSkill);
+							} else if (actualVariant.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+								actualProConSkills.remove(actualVariant);
 								unapplyEffect(hero, proConSkillName, proConSkill, currentProConSkillChange);
 							}
-							break;
 						}
 					}
 				} else {
@@ -2284,8 +2413,26 @@ public class HeroUtil {
 						}
 						unapplyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
 					} else if (actualProConSkill.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
-						target.removeKey(proConSkillName);
-						unapplyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
+						if (proConSkillChanges.getObj(proConSkillName).getBoolOrDefault("Verbilligung", false)) {
+							final JSONObject cheaper = hero.getObj("Verbilligte Sonderfertigkeiten");
+							final JSONObject cheaperSkill = cheaper.getObj(proConSkillName);
+							if (cheaperSkill.containsKey("Kosten")) {
+								cheaperSkill.put("Kosten", cheaperSkill.getInt("Kosten") * 2);
+							} else if (cheaperSkill.containsKey("Verbilligungen")) {
+								cheaperSkill.put("Verbilligungen", cheaperSkill.getInt("Verbilligungen") - 1);
+								switch (cheaperSkill.getInt("Verbilligungen")) {
+									case 0 -> cheaper.removeKey(proConSkillName);
+									case 1 -> cheaperSkill.removeKey("Verbilligungen");
+								}
+							} else {
+								cheaper.removeKey(proConSkillName);
+							}
+							cheaperSkill.getArr("AutomatischDurch").remove(effectorName);
+
+						} else {
+							target.removeKey(proConSkillName);
+							unapplyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
+						}
 					}
 				}
 				target.notifyListeners(null);
@@ -2295,91 +2442,33 @@ public class HeroUtil {
 		if (effect.containsKey("Talente")) {
 			final JSONObject talentChanges = effect.getObj("Talente");
 			for (final String talentName : talentChanges.keySet()) {
-				final String modifiedName = "Auswahl".equals(talentName) ? actual.getString("Auswahl") : talentName;
-				final Tuple<JSONObject, String> talentAndGroup = HeroUtil.findTalent(modifiedName);
-				final JSONObject talent = talentAndGroup._1;
-				final String groupName = talentAndGroup._2;
-				if (groupName != null) {
-					final String targetValue = "Zauber".equals(groupName) ? "ZfW" : "TaW";
-					final JSONObject actualGroup = "Zauber".equals(groupName) ? hero.getObj("Zauber") : hero.getObj("Talente").getObj(groupName);
-					if (talent.containsKey("Auswahl") || talent.containsKey("Freitext")) {
-						final JSONArray actualTalent;
-						if ("Zauber".equals(groupName)) {
-							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
-							if (actualSpell.size() == 0) {
-								actualTalent = actualSpell.getArr("ÜNB");
-							} else {
-								actualTalent = actualSpell.getArr(actualSpell.keySet().iterator().next());
-							}
-						} else {
-							actualTalent = actualGroup.getArr(modifiedName);
-						}
-						final Object modificationsData = talentChanges.getUnsafe(talentName);
-						if (modificationsData instanceof final JSONObject modifications) {
-							for (String variantName : modifications.keySet()) {
-								final int change = modifications.getInt(variantName);
-								if ("Auswahl".equals(variantName)) {
-									variantName = actual.getString("Auswahl");
-								} else if ("Freitext".equals(variantName)) {
-									variantName = actual.getString("Freitext");
-								}
-								JSONObject actualVariant = null;
-								for (int i = 0; i < actualTalent.size(); ++i) {
-									final JSONObject variant = actualTalent.getObj(i);
-									if (talent.containsKey("Auswahl") && variantName.equals(variant.getString("Auswahl"))
-											|| talent.containsKey("Freitext") && variantName.equals(variant.getString("Freitext"))) {
-										actualVariant = variant;
-										break;
-									}
-								}
-								if (actualVariant == null) {
-									actualVariant = new JSONObject(actualTalent);
-									actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext", variantName);
-									actualTalent.add(actualVariant);
-								}
+				for (final Tuple4<JSONObject, String, Boolean, Integer> talent : getAffectedTalents(talentName, talentChanges, hero, actual)) {
+					applyTalentEffect(talent._1, actual, talent._2, effectorName, talent._4, true, talent._3, false);
+				}
+			}
+		}
 
-								unapplyTalentEffect(actualVariant, actual, targetValue, effectorName, change, true);
-							}
-						} else {
-							final JSONObject actualVariant = new JSONObject(actualTalent);
-							actualVariant.put(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext",
-									talent.getString(talent.containsKey("Auswahl") ? "Auswahl" : "Freitext"));
-							actualTalent.add(actualVariant);
+		if (effect.containsKey("Spezielle Erfahrungen")) {
+			final JSONObject talentChanges = effect.getObj("Spezielle Erfahrungen");
+			for (final String talentName : talentChanges.keySet()) {
+				for (final Tuple4<JSONObject, String, Boolean, Integer> talent : getAffectedTalents(talentName, talentChanges, hero, actual)) {
+					applyTalentEffect(talent._1, actual, talent._2, effectorName, talent._4, true, talent._3, true);
+				}
+			}
+		}
 
-							unapplyTalentEffect(actualVariant, actual, targetValue, effectorName, talentChanges.getInt(talentName), true);
-						}
-					} else {
-						final JSONObject actualTalent;
-						if ("Zauber".equals(groupName)) {
-							final JSONObject actualSpell = actualGroup.getObj(modifiedName);
-							if (actualSpell.size() == 0) {
-								actualTalent = actualSpell.getObj("ÜNB");
-							} else {
-								actualTalent = actualSpell.getObj(actualSpell.keySet().iterator().next());
-							}
-						} else {
-							actualTalent = actualGroup.getObj(modifiedName);
-						}
-						final int change = talentChanges.getInt(talentName);
-						unapplyTalentEffect(actualTalent, actual, targetValue, effectorName, change, false);
+		if (effect.containsKey("Hauszauber")) {
+			final JSONObject spellChanges = effect.getObj("Hauszauber");
+			for (final String spellName : spellChanges.keySet()) {
+				for (final Tuple4<JSONObject, String, Boolean, Integer> spell : getAffectedTalents(spellName, spellChanges, hero, actual)) {
+					final JSONObject actualSpell = spell._1;
+					if (actualSpell.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+						actualSpell.remove("Hauszauber");
+						actualSpell.remove("HauszauberDurch");
 					}
 				}
 			}
 		}
-	}
-
-	private static void unapplyTalentEffect(final JSONObject actualTalent, final JSONObject actual, final String targetValue, final String effectorName,
-			final int change, final boolean isVariant) {
-		actualTalent.put(targetValue, actualTalent.getIntOrDefault(targetValue, 0) - change * actual.getIntOrDefault("Stufe", 1));
-		if (actualTalent.getInt(targetValue) == 0 && actualTalent.getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
-			actualTalent.getParent().remove(actualTalent);
-			if (isVariant) {
-				if (actualTalent.getParent().size() == 0) {
-					actualTalent.getParent().getParent().remove(actualTalent.getParent());
-				}
-			}
-		}
-		actualTalent.notifyListeners(null);
 	}
 
 	private HeroUtil() {}
