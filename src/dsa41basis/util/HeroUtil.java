@@ -159,7 +159,29 @@ public class HeroUtil {
 		}
 	}
 
+	private static void applyBasicValueEffect(final String basicValueName, final JSONObject actualBasicValues, final JSONObject basicValueChanges,
+			final JSONObject actual, final boolean modifyValues) {
+		applyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues, false);
+	}
+
+	private static void applyBasicValueEffect(final String basicValueName, final JSONObject actualBasicValues, final JSONObject basicValueChanges,
+			final JSONObject actual, final boolean modifyValues, final boolean unapply) {
+		final String[] toModify = basicValueName.split(":", 2);
+		final JSONObject basicValue = actualBasicValues.getObj(toModify[0]);
+		final String key = toModify.length > 1 ? toModify[1] : switch (basicValueName) {
+			case "Karmaenergie" -> "Permanent";
+			case "Sozialstatus" -> "Wert";
+			default -> "Modifikator";
+		};
+		updateValue(basicValue, key, basicValueName, basicValueChanges, actual, modifyValues, unapply);
+	}
+
 	public static void applyEffect(final JSONObject hero, final String effectorName, final JSONObject effector, final JSONObject actual) {
+		applyEffect(hero, effectorName, effector, actual, false);
+	}
+
+	public static void applyEffect(final JSONObject hero, final String effectorName, final JSONObject effector, final JSONObject actual,
+			final boolean modifyValues) {
 		final JSONObject effect = effector.getObjOrDefault("Effekte", null);
 		if (hero == null || effect == null) return;
 
@@ -178,15 +200,92 @@ public class HeroUtil {
 			final JSONObject actualBasicValues = hero.getObj("Basiswerte");
 			final JSONObject basicValueChanges = effect.getObj("Basiswerte");
 			for (final String basicValueName : basicValueChanges.keySet()) {
-				final String[] toModify = basicValueName.split(":");
-				final JSONObject basicValue = actualBasicValues.getObj(toModify[0]);
-				final String key = toModify.length > 1 ? toModify[1] : switch (basicValueName) {
-					case "Karmaenergie" -> "Permanent";
-					case "Sozialstatus" -> "Wert";
-					default -> "Modifikator";
-				};
-				basicValue.put(key, basicValue.getIntOrDefault(key, 0) + basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
-				basicValue.notifyListeners(null);
+				boolean foundSpecial = false;
+				switch (basicValueName) {
+					case "Geschwindigkeit":
+						final JSONObject speed = actualBasicValues.getObj("Geschwindigkeit");
+						if (speed.containsKey("Boden")) {
+							applyBasicValueEffect("Geschwindigkeit:Boden:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (speed.containsKey("Luft")) {
+							applyBasicValueEffect("Geschwindigkeit:Luft:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (speed.containsKey("Schritt")) {
+							applyBasicValueEffect("Geschwindigkeit:Schritt:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (speed.containsKey("Trab")) {
+							applyBasicValueEffect("Geschwindigkeit:Trab:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (speed.containsKey("Galopp")) {
+							applyBasicValueEffect("Geschwindigkeit:Galopp:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (!foundSpecial) {
+							applyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						break;
+					case "Magieresistenz":
+						final JSONObject mr = actualBasicValues.getObj("Magieresistenz");
+						if (mr.containsKey("Geist")) {
+							applyBasicValueEffect("Magieresistenz:Geist:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (mr.containsKey("Körper")) {
+							applyBasicValueEffect("Magieresistenz:Körper:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (!foundSpecial) {
+							applyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						break;
+					case "Ausdauer":
+						final JSONObject aup = actualBasicValues.getObj("Ausdauer");
+						if (aup.containsKey("Trab")) {
+							applyBasicValueEffect("Ausdauer:Trab:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (aup.containsKey("Galopp")) {
+							applyBasicValueEffect("Ausdauer:Galopp:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+							foundSpecial = true;
+						}
+						if (!foundSpecial) {
+							applyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						break;
+					case "Attackewert", "Paradewert":
+						final JSONObject attacks = hero.getObj("Angriffe");
+						for (final String attackName : attacks.keySet()) {
+							final JSONObject attack = attacks.getObj(attackName);
+							attack.put(basicValueName + ":Modifikator", attack.getIntOrDefault(basicValueName + ":Modifikator", 0)
+									+ basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								attack.put(basicValueName, attack.getIntOrDefault(basicValueName, 0)
+										+ basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
+							}
+							attack.notifyListeners(null);
+						}
+						break;
+					case "Trefferpunkte":
+						final JSONObject attacks2 = hero.getObj("Angriffe");
+						for (final String attackName : attacks2.keySet()) {
+							final JSONObject tp = attacks2.getObj(attackName).getObj("Trefferpunkte");
+							tp.put("Modifikator",
+									tp.getIntOrDefault("Modifikator", 0) + basicValueChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								tp.put("Trefferpunkte", tp.getIntOrDefault("Trefferpunkte", 0)
+										+ basicValueChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							}
+							tp.notifyListeners(null);
+						}
+						break;
+					default:
+						applyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						break;
+				}
 			}
 		}
 
@@ -275,6 +374,77 @@ public class HeroUtil {
 							applyEffect(hero, proConSkillName, proConSkill, proConSkillChanges.getObj(proConSkillName));
 							target.getObj(proConSkillName).notifyListeners(null);
 						}
+					}
+				}
+			}
+		}
+
+		if (effect.containsKey("Eigenarten")) {
+			final JSONObject prosCons = hero.getObj("Eigenarten");
+			final JSONObject proConChanges = effect.getObj("Eigenarten");
+			for (final String proConName : proConChanges.keySet()) {
+				final Object proOrCon = proConChanges.getUnsafe(proConName);
+				if (proOrCon instanceof final JSONArray proConArray) {
+					final JSONArray actualProOrCon = prosCons.getArr(proConName);
+					for (int i = 0; i < proConArray.size(); ++i) {
+						final JSONObject newProOrCon = proConArray.getObj(i).clone(actualProOrCon);
+						newProOrCon.put("AutomatischDurch", effectorName);
+						actualProOrCon.add(newProOrCon);
+					}
+				} else {
+					final JSONObject newProOrCon = ((JSONObject) proOrCon).clone(prosCons);
+					newProOrCon.put("AutomatischDurch", effectorName);
+					prosCons.put(proConName, newProOrCon);
+				}
+			}
+		}
+
+		if (effect.containsKey("Fertigkeiten")) {
+			final JSONObject skills = hero.getObj("Fertigkeiten");
+			final JSONObject skillChanges = effect.getObj("Fertigkeiten");
+			for (final String skillName : skillChanges.keySet()) {
+				final Object skill = skillChanges.getUnsafe(skillName);
+				if (skill instanceof final JSONArray skillArray) {
+					final JSONArray actualSkill = skills.getArr(skillName);
+					for (int i = 0; i < skillArray.size(); ++i) {
+						final JSONObject newSkill = skillArray.getObj(i).clone(actualSkill);
+						newSkill.put("AutomatischDurch", effectorName);
+						actualSkill.add(newSkill);
+					}
+				} else {
+					final JSONObject newSkill = ((JSONObject) skill).clone(skills);
+					newSkill.put("AutomatischDurch", effectorName);
+					skills.put(skillName, newSkill);
+				}
+			}
+		}
+
+		if (effect.containsKey("Angriffe")) {
+			final JSONObject attacks = effect.getObj("Angriffe");
+			for (final String attackName : attacks.keySet()) {
+				final JSONObject attackChanges = attacks.getObj(attackName);
+				final JSONObject actualAttack = hero.getObj("Angriffe").getObj(attackName);
+				for (final String changeKey : attackChanges.keySet()) {
+					switch (changeKey) {
+						case "Attackewert", "Paradewert":
+							actualAttack.put(changeKey + ":Modifikator", actualAttack.getIntOrDefault(changeKey + ":Modifikator", 0)
+									+ attackChanges.getInt(changeKey) * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								actualAttack.put(changeKey,
+										actualAttack.getIntOrDefault(changeKey, 0) + attackChanges.getInt(changeKey) * actual.getIntOrDefault("Stufe", 1));
+							}
+							actualAttack.notifyListeners(null);
+							break;
+						case "Trefferpunkte":
+							final JSONObject tp = actualAttack.getObj("Trefferpunkte");
+							tp.put("Modifikator",
+									tp.getIntOrDefault("Modifikator", 0) + attackChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								tp.put("Trefferpunkte",
+										tp.getIntOrDefault("Trefferpunkte", 0) + attackChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							}
+							tp.notifyListeners(null);
+							break;
 					}
 				}
 			}
@@ -399,7 +569,7 @@ public class HeroUtil {
 			}
 
 			final JSONObject spells = hero.getObjOrDefault("Zauber", null);
-			if (spells != null && spells.containsKey(talentName)) return new Tuple<>((JSONValue) spells.getUnsafe(talentName), spells);
+			if (spells != null && spells.containsKey(talentName)) return new Tuple<>(spells.getObj(talentName), spells);
 
 			final String groupName = findTalent(actualTalentName)._2;
 			if ("Zauber".equals(groupName))
@@ -466,12 +636,12 @@ public class HeroUtil {
 
 	public static void foreachInventoryItem(final JSONObject hero, final Predicate<JSONObject> filter, final BiConsumer<JSONObject, Boolean> function) {
 		foreachInventoryItem(false, filter, function, hero.getObj("Besitz").getArr("Ausrüstung"));
-		DSAUtil.foreach(inventory -> true, inventory -> {
+		DSAUtil.foreach(_ -> true, inventory -> {
 			foreachInventoryItem(true, filter, function, inventory.getArr("Ausrüstung"));
 		}, hero.getObj("Besitz").getArr("Inventare"));
-		DSAUtil.foreach(animal -> true, animal -> {
+		DSAUtil.foreach(_ -> true, animal -> {
 			foreachInventoryItem(true, filter, function, animal.getArr("Ausrüstung"));
-			DSAUtil.foreach(inventory -> true, inventory -> {
+			DSAUtil.foreach(_ -> true, inventory -> {
 				foreachInventoryItem(true, filter, function, inventory.getArr("Ausrüstung"));
 			}, animal.getArr("Inventare"));
 		}, hero.getArr("Tiere"));
@@ -2308,7 +2478,17 @@ public class HeroUtil {
 		return weight;
 	}
 
+	private static void unapplyBasicValueEffect(final String basicValueName, final JSONObject actualBasicValues, final JSONObject basicValueChanges,
+			final JSONObject actual, final boolean modifyValues) {
+		applyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues, true);
+	}
+
 	public static void unapplyEffect(final JSONObject hero, final String effectorName, final JSONObject effector, final JSONObject actual) {
+		unapplyEffect(hero, effectorName, effector, actual, false);
+	}
+
+	public static void unapplyEffect(final JSONObject hero, final String effectorName, final JSONObject effector, final JSONObject actual,
+			final boolean modifyValues) {
 		final JSONObject effect = effector.getObjOrDefault("Effekte", null);
 		if (hero == null || effect == null) return;
 
@@ -2327,15 +2507,82 @@ public class HeroUtil {
 			final JSONObject actualBasicValues = hero.getObj("Basiswerte");
 			final JSONObject basicValueChanges = effect.getObj("Basiswerte");
 			for (final String basicValueName : basicValueChanges.keySet()) {
-				final String[] toModify = basicValueName.split(":");
-				final JSONObject basicValue = actualBasicValues.getObj(toModify[0]);
-				final String key = toModify.length > 1 ? toModify[1] : switch (basicValueName) {
-					case "Karmaenergie" -> "Permanent";
-					case "Sozialstatus" -> "Wert";
-					default -> "Modifikator";
-				};
-				basicValue.put(key, basicValue.getIntOrDefault(key, 0) - basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
-				basicValue.notifyListeners(null);
+				switch (basicValueName) {
+					case "Geschwindigkeit":
+						final JSONObject speed = actualBasicValues.getObj("Geschwindigkeit");
+						if (speed.containsKey("Wert") || speed.containsKey("Modifikator")) {
+							unapplyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (speed.containsKey("Boden")) {
+							unapplyBasicValueEffect("Geschwindigkeit:Boden:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (speed.containsKey("Luft")) {
+							unapplyBasicValueEffect("Geschwindigkeit:Luft:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (speed.containsKey("Schritt")) {
+							unapplyBasicValueEffect("Geschwindigkeit:Schritt:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (speed.containsKey("Trab")) {
+							unapplyBasicValueEffect("Geschwindigkeit:Trab:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (speed.containsKey("Galopp")) {
+							unapplyBasicValueEffect("Geschwindigkeit:Galopp:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						break;
+					case "Magieresistenz":
+						final JSONObject mr = actualBasicValues.getObj("Magieresistenz");
+						if (mr.containsKey("Wert") || mr.containsKey("Modifikator")) {
+							unapplyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (mr.containsKey("Geist")) {
+							unapplyBasicValueEffect("Magieresistenz:Geist:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (mr.containsKey("Körper")) {
+							unapplyBasicValueEffect("Magieresistenz:Körper:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						break;
+					case "Ausdauer":
+						final JSONObject aup = actualBasicValues.getObj("Ausdauer");
+						if (aup.containsKey("Wert") || aup.containsKey("Modifikator")) {
+							unapplyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (aup.containsKey("Trab")) {
+							unapplyBasicValueEffect("Ausdauer:Trab:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						if (aup.containsKey("Galopp")) {
+							unapplyBasicValueEffect("Ausdauer:Galopp:Modifikator", actualBasicValues, basicValueChanges, actual, modifyValues);
+						}
+						break;
+					case "Attackewert", "Paradewert":
+						final JSONObject attacks = hero.getObj("Angriffe");
+						for (final String attackName : attacks.keySet()) {
+							final JSONObject attack = attacks.getObj(attackName);
+							attack.put(basicValueName + ":Modifikator", attack.getIntOrDefault(basicValueName + ":Modifikator", 0)
+									- basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								attack.put(basicValueName, attack.getIntOrDefault(basicValueName, 0)
+										- basicValueChanges.getInt(basicValueName) * actual.getIntOrDefault("Stufe", 1));
+							}
+							attack.notifyListeners(null);
+						}
+						break;
+					case "Trefferpunkte":
+						final JSONObject attacks2 = hero.getObj("Angriffe");
+						for (final String attackName : attacks2.keySet()) {
+							final JSONObject tp = attacks2.getObj(attackName).getObj("Trefferpunkte");
+							tp.put("Modifikator",
+									tp.getIntOrDefault("Modifikator", 0) - basicValueChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								tp.put("Trefferpunkte", tp.getIntOrDefault("Trefferpunkte", 0)
+										- basicValueChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							}
+							tp.notifyListeners(null);
+						}
+						break;
+					default:
+						unapplyBasicValueEffect(basicValueName, actualBasicValues, basicValueChanges, actual, modifyValues);
+						break;
+				}
 			}
 		}
 
@@ -2439,6 +2686,95 @@ public class HeroUtil {
 			}
 		}
 
+		if (effect.containsKey("Eigenarten")) {
+			final JSONObject prosCons = hero.getObj("Eigenarten");
+			final JSONObject proConChanges = effect.getObj("Eigenarten");
+			for (final String proConName : proConChanges.keySet()) {
+				final Object actualProCon = prosCons.getUnsafe(proConName);
+				if (actualProCon instanceof final JSONArray proConArray) {
+					if (proConArray.size() > 0) {
+						final JSONObject template = proConArray.getObj(0).clone(null);
+						final JSONArray currentProConSkillChanges = proConChanges.getArr(proConName);
+						for (int i = 0; i < currentProConSkillChanges.size(); ++i) {
+							final JSONObject currentProConSkillChange = currentProConSkillChanges.getObj(i).clone(null);
+							if ("Auswahl".equals(currentProConSkillChange.getString("Auswahl"))) {
+								currentProConSkillChange.put("Auswahl", actual.getString("Auswahl"));
+							}
+							if ("Freitext".equals(currentProConSkillChange.getString("Freitext"))) {
+								currentProConSkillChange.put("Freitext", actual.getString("Freitext"));
+							}
+							final JSONObject actualVariant = getProConSkillVariant(template, proConArray,
+									currentProConSkillChange.getString("Auswahl"),
+									currentProConSkillChange.getString("Freitext"));
+							proConArray.remove(actualVariant);
+						}
+					}
+				} else if (((JSONObject) actualProCon).getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+					prosCons.removeKey(proConName);
+				}
+			}
+		}
+
+		if (effect.containsKey("Fertigkeiten")) {
+			final JSONObject skills = hero.getObj("Fertigkeiten");
+			final JSONObject skillChanges = effect.getObj("Fertigkeiten");
+			for (final String skillName : skillChanges.keySet()) {
+				final Object actualSkill = skills.getUnsafe(skillName);
+				if (actualSkill instanceof final JSONArray skillArray) {
+					if (skillArray.size() > 0) {
+						final JSONObject template = skillArray.getObj(0).clone(null);
+						final JSONArray currentProConSkillChanges = skillChanges.getArr(skillName);
+						for (int i = 0; i < currentProConSkillChanges.size(); ++i) {
+							final JSONObject currentProConSkillChange = currentProConSkillChanges.getObj(i).clone(null);
+							if ("Auswahl".equals(currentProConSkillChange.getString("Auswahl"))) {
+								currentProConSkillChange.put("Auswahl", actual.getString("Auswahl"));
+							}
+							if ("Freitext".equals(currentProConSkillChange.getString("Freitext"))) {
+								currentProConSkillChange.put("Freitext", actual.getString("Freitext"));
+							}
+							final JSONObject actualVariant = getProConSkillVariant(template, skillArray,
+									currentProConSkillChange.getString("Auswahl"),
+									currentProConSkillChange.getString("Freitext"));
+							skillArray.remove(actualVariant);
+						}
+					}
+				} else if (((JSONObject) actualSkill).getStringOrDefault("AutomatischDurch", "").equals(effectorName)) {
+					skills.removeKey(skillName);
+				}
+			}
+		}
+
+		if (effect.containsKey("Angriffe")) {
+			final JSONObject attacks = effect.getObj("Angriffe");
+			for (final String attackName : attacks.keySet()) {
+				final JSONObject attackChanges = attacks.getObj(attackName);
+				final JSONObject actualAttack = hero.getObj("Angriffe").getObj(attackName);
+				for (final String changeKey : attackChanges.keySet()) {
+					switch (changeKey) {
+						case "Attackewert", "Paradewert":
+							actualAttack.put(changeKey + ":Modifikator", actualAttack.getIntOrDefault(changeKey + ":Modifikator", 0)
+									- attackChanges.getInt(changeKey) * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								actualAttack.put(changeKey,
+										actualAttack.getIntOrDefault(changeKey, 0) - attackChanges.getInt(changeKey) * actual.getIntOrDefault("Stufe", 1));
+							}
+							actualAttack.notifyListeners(null);
+							break;
+						case "Trefferpunkte":
+							final JSONObject tp = actualAttack.getObj("Trefferpunkte");
+							tp.put("Modifikator",
+									tp.getIntOrDefault("Modifikator", 0) - attackChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							if (modifyValues) {
+								tp.put("Trefferpunkte",
+										tp.getIntOrDefault("Trefferpunkte", 0) - attackChanges.getInt("Trefferpunkte") * actual.getIntOrDefault("Stufe", 1));
+							}
+							tp.notifyListeners(null);
+							break;
+					}
+				}
+			}
+		}
+
 		if (effect.containsKey("Talente")) {
 			final JSONObject talentChanges = effect.getObj("Talente");
 			for (final String talentName : talentChanges.keySet()) {
@@ -2469,6 +2805,27 @@ public class HeroUtil {
 				}
 			}
 		}
+	}
+
+	private static void updateValue(final JSONObject value, final String key, final String valueName, final JSONObject valueChange, final JSONObject actual,
+			final boolean modifyValues, final boolean unapply) {
+		if (value.getInt(key) != null) {
+			value.put(key, value.getIntOrDefault(key, 0) + valueChange.getInt(valueName) * actual.getIntOrDefault("Stufe", 1) * (unapply ? -1 : 1));
+			if (modifyValues && key.endsWith("Modifikator")) {
+				final String valueKey = "Modifikator".equals(key) ? "Wert" : key.substring(0, key.length() - 12);
+				value.put(valueKey,
+						value.getIntOrDefault(valueKey, 0) + valueChange.getInt(valueName) * actual.getIntOrDefault("Stufe", 1) * (unapply ? -1 : 1));
+			}
+		} else {
+			value.put(key,
+					value.getDoubleOrDefault(key, 0.0) + valueChange.getDouble(valueName) * actual.getIntOrDefault("Stufe", 1) * (unapply ? -1 : 1));
+			if (modifyValues && "Modifikator".equals(key)) {
+				final String valueKey = "Modifikator".equals(key) ? "Wert" : key.substring(0, key.length() - 12);
+				value.put(valueKey,
+						value.getDoubleOrDefault(valueKey, 0.0) + valueChange.getDouble(valueName) * actual.getIntOrDefault("Stufe", 1) * (unapply ? -1 : 1));
+			}
+		}
+		value.notifyListeners(null);
 	}
 
 	private HeroUtil() {}
