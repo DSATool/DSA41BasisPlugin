@@ -51,8 +51,8 @@ public class Attack implements WithAttack, WithDefense {
 		pa.set(actual.getIntOrDefault("Paradewert", Integer.MIN_VALUE));
 		atMod.set(actual.getIntOrDefault("Attackewert:Modifikator", 0));
 		paMod.set(actual.getIntOrDefault("Paradewert:Modifikator", 0));
-		atMod.set(actual.getIntOrDefault("Attackewert:Start", 0));
-		paMod.set(actual.getIntOrDefault("Paradewert:Start", 0));
+		atStart.set(actual.getIntOrDefault("Attackewert:Start", 0));
+		paStart.set(actual.getIntOrDefault("Paradewert:Start", 0));
 		dk.set(String.join("", actual.getArr("Distanzklassen").getStrings()));
 		notes.set(actual.getStringOrDefault("Anmerkungen", ""));
 	}
