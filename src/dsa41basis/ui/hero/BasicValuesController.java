@@ -16,8 +16,12 @@
 package dsa41basis.ui.hero;
 
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import dsa41basis.fight.ArmorEditor;
+import dsa41basis.hero.Buyable;
+import dsa41basis.hero.Raisable;
 import dsa41basis.util.HeroUtil;
 import dsatool.gui.ThemedAlert;
 import dsatool.resources.Settings;
@@ -25,7 +29,9 @@ import dsatool.ui.ReactiveSpinner;
 import dsatool.util.ErrorLogger;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.BooleanExpression;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -37,7 +43,13 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.TextField;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import jsonant.event.JSONListener;
 import jsonant.value.JSONArray;
@@ -256,19 +268,19 @@ public class BasicValuesController implements JSONListener {
 		zoneRS.disableProperty().bind(disabled);
 		zoneRS.setVisible(type == CharacterType.NORMAL && "Zonenrüstung".equals(Settings.getSettingStringOrDefault("Zonenrüstung", "Kampf", "Rüstungsart")));
 		mrChoice.disableProperty().bind(disabled.or(new SimpleBooleanProperty(type == CharacterType.HORSE)));
-		mr.disableProperty().bind(disabled);
-		mrMind.disableProperty().bind(disabled);
-		mrBody.disableProperty().bind(disabled);
+		mr.disableProperty().bind(disabled.and(new SimpleBooleanProperty(type != CharacterType.MAGIC_ANIMAL)));
+		mrMind.disableProperty().bind(disabled.and(new SimpleBooleanProperty(type != CharacterType.MAGIC_ANIMAL)));
+		mrBody.disableProperty().bind(disabled.and(new SimpleBooleanProperty(type != CharacterType.MAGIC_ANIMAL)));
 		mrStart.disableProperty().bind(disabled);
 		mrMindStart.disableProperty().bind(disabled);
 		mrBodyStart.disableProperty().bind(disabled);
 		mrMod.disableProperty().bind(disabled);
 		mrMindMod.disableProperty().bind(disabled);
 		mrBodyMod.disableProperty().bind(disabled);
-		speedChoice.disableProperty().bind(disabled.or(new SimpleBooleanProperty(type == CharacterType.HORSE)));
-		speed.disableProperty().bind(disabled);
-		speedGround.disableProperty().bind(disabled);
-		speedAir.disableProperty().bind(disabled);
+		speedChoice.disableProperty().bind(disabled);
+		speed.disableProperty().bind(disabled.and(new SimpleBooleanProperty(type != CharacterType.MAGIC_ANIMAL)));
+		speedGround.disableProperty().bind(disabled.and(new SimpleBooleanProperty(type != CharacterType.MAGIC_ANIMAL)));
+		speedAir.disableProperty().bind(disabled.and(new SimpleBooleanProperty(type != CharacterType.MAGIC_ANIMAL)));
 		speedStart.disableProperty().bind(disabled);
 		speedGroundStart.disableProperty().bind(disabled);
 		speedAirStart.disableProperty().bind(disabled);
@@ -294,9 +306,32 @@ public class BasicValuesController implements JSONListener {
 		zkFactor.disableProperty().bind(disabled);
 		zkMod.disableProperty().bind(disabled);
 		freeAp.disableProperty().bind(disabled);
-		rkw.disableProperty().bind(disabled);
 
-		init();
+		init(disabled);
+	}
+
+	private void addEnhancementDialog(final Control control, final Runnable showDialog, final BooleanExpression disabled) {
+		control.addEventFilter(MouseEvent.MOUSE_PRESSED, event -> {
+			if (event.getButton() == MouseButton.PRIMARY) {
+				if (disabled.get()) {
+					showDialog.run();
+					event.consume();
+				}
+			}
+		});
+
+		control.skinProperty().addListener((_, _, skin) -> {
+			if (skin != null) {
+				final TextField editor = (TextField) skin.getNode().lookup(".text-field");
+				if (editor != null) {
+					final ContextMenu contextMenu = new ContextMenu();
+					editor.setContextMenu(contextMenu);
+					final MenuItem enhanceItem = new MenuItem("Steigern");
+					contextMenu.getItems().add(enhanceItem);
+					enhanceItem.setOnAction(_ -> showDialog.run());
+				}
+			}
+		});
 	}
 
 	private ChangeListener<Double> doubleListener(final String value, final String key) {
@@ -330,7 +365,7 @@ public class BasicValuesController implements JSONListener {
 		return grid;
 	}
 
-	private void init() {
+	private void init(final BooleanExpression disabled) {
 		iniBase.valueProperty().addListener(listener("Initiative-Basis", "Wert"));
 		iniDiceNum.valueProperty().addListener(listener("Initiative", "Würfel:Anzahl"));
 		iniDiceType.valueProperty().addListener(listener("Initiative", "Würfel:Typ"));
@@ -394,6 +429,9 @@ public class BasicValuesController implements JSONListener {
 		mrMind.valueProperty().addListener(listener("Magieresistenz", "Geist"));
 		mrBody.valueProperty().addListener(listener("Magieresistenz", "Körper"));
 		if (type == CharacterType.MAGIC_ANIMAL) {
+			addEnhancementDialog(mr, () -> showMREnhancementDialog("Wert"), disabled);
+			addEnhancementDialog(mrMind, () -> showMREnhancementDialog("Geist"), disabled);
+			addEnhancementDialog(mrBody, () -> showMREnhancementDialog("Körper"), disabled);
 			mrMod.valueProperty().addListener(listener("Magieresistenz", "Modifikator"));
 			mrMindMod.valueProperty().addListener(listener("Magieresistenz", "Geist:Modifikator"));
 			mrBodyMod.valueProperty().addListener(listener("Magieresistenz", "Körper:Modifikator"));
@@ -407,9 +445,18 @@ public class BasicValuesController implements JSONListener {
 				biography.put("Abenteuerpunkte", ap.getValue());
 				biography.put("Abenteuerpunkte-Guthaben", freeAp.getValue());
 			});
-			rkw.valueProperty().addListener((_, oldV, newV) -> {
-				if (oldV == null || newV == null || oldV.equals(newV)) return;
+
+			addEnhancementDialog(rkw, () -> {
 				final JSONObject ritualKnowledge = character.getObj("Basiswerte").getObj("Ritualkenntnis (Vertrautenmagie)");
+				showAttributeEnhancementDialog(ritualKnowledge, "Ritualkenntnis", ritualKnowledge.getIntOrDefault("TaW", 3) + 1,
+						() -> ritualKnowledge.getIntOrDefault("TaW", 3), (newValue) -> {
+							ritualKnowledge.put("TaW", newValue);
+							ritualKnowledge.notifyListeners(null);
+						}, () -> Integer.MAX_VALUE);
+			}, disabled);
+			rkw.valueProperty().addListener((_, oldV, newV) -> {
+				final JSONObject ritualKnowledge = character.getObj("Basiswerte").getObj("Ritualkenntnis (Vertrautenmagie)");
+				if (oldV == null || newV == null || oldV.equals(newV) || newV == ritualKnowledge.getIntOrDefault("TaW", 3)) return;
 				ritualKnowledge.put("TaW", newV);
 				ritualKnowledge.notifyListeners(null);
 			});
@@ -476,6 +523,9 @@ public class BasicValuesController implements JSONListener {
 			speedAirMod.valueProperty().addListener(doubleListener("Geschwindigkeit", "Luft:Modifikator"));
 
 			if (type == CharacterType.MAGIC_ANIMAL) {
+				addEnhancementDialog(speed, () -> showSpeedEnhancementDialog("Wert"), disabled);
+				addEnhancementDialog(speedGround, () -> showSpeedEnhancementDialog("Boden"), disabled);
+				addEnhancementDialog(speedAir, () -> showSpeedEnhancementDialog("Luft"), disabled);
 				speedStart.valueProperty().addListener(doubleListener("Geschwindigkeit", "Start"));
 				speedGroundStart.valueProperty().addListener(doubleListener("Geschwindigkeit", "Boden:Start"));
 				speedAirStart.valueProperty().addListener(doubleListener("Geschwindigkeit", "Luft:Start"));
@@ -557,6 +607,7 @@ public class BasicValuesController implements JSONListener {
 			ap.getValueFactory().setValue(biography.getIntOrDefault("Abenteuerpunkte", 0));
 			freeAp.getValueFactory().setValue(biography.getIntOrDefault("Abenteuerpunkte-Guthaben", 0));
 			rkw.getValueFactory().setValue(baseValues.getObj("Ritualkenntnis (Vertrautenmagie)").getIntOrDefault("TaW", 3));
+			biography.addListener(this);
 		}
 
 		if (type == CharacterType.HORSE) {
@@ -610,6 +661,116 @@ public class BasicValuesController implements JSONListener {
 				speedAirStart.getValueFactory().setValue(actualSpeed.getDoubleOrDefault("Luft:Start", 0.0));
 			}
 		}
+	}
+
+	private void showAttributeEnhancementDialog(final JSONObject actual, final String name, final int initialTarget, final Supplier<Integer> getValue,
+			final Consumer<Integer> setValue, final Supplier<Integer> getMaximum) {
+		final Raisable dummyRaisable = new Raisable() {
+
+			@Override
+			public JSONObject getActual() {
+				return actual;
+			}
+
+			@Override
+			public int getEnhancementComplexity(final JSONObject hero, final int targetLevel) {
+				return 6;
+			}
+
+			@Override
+			public int getMaximum(final JSONObject hero) {
+				return getMaximum.get();
+			}
+
+			@Override
+			public String getName() {
+				return name;
+			}
+
+			@Override
+			public int getValue() {
+				return getValue.get();
+			}
+
+			@Override
+			public IntegerProperty sesProperty() {
+				return new SimpleIntegerProperty(0);
+			}
+
+			@Override
+			public void setValue(final int value) {
+				setValue.accept(value);
+			}
+		};
+
+		new AttributeEnhancementDialog(grid.getScene().getWindow(), dummyRaisable, character, initialTarget);
+	}
+
+	private void showMREnhancementDialog(final String key) {
+		final JSONObject actualValue = character.getObj("Basiswerte").getObj("Magieresistenz");
+		final int currentValue = actualValue.getIntOrDefault(key, 0);
+
+		final Buyable dummyBuyable = new Buyable() {
+
+			@Override
+			public IntegerProperty boughtProperty() {
+				return new SimpleIntegerProperty(0);
+			}
+
+			@Override
+			public JSONObject getActual() {
+				return actualValue;
+			}
+
+			@Override
+			public int getBought() {
+				return actualValue.getIntOrDefault("Wert".equals(key) ? "Kauf" : key + ":" + "Kauf", 0);
+			}
+
+			@Override
+			public int getEnhancementComplexity(final JSONObject hero, final int targetLevel) {
+				return 6;
+			}
+
+			@Override
+			public int getMaximum(final JSONObject hero) {
+				return (int) Math.round(actualValue.getIntOrDefault("Wert".equals(key) ? "Start" : key + ":" + "Start", 0) * 1.5) - getValue() + getBought();
+			}
+
+			@Override
+			public String getName() {
+				return "Magieresistenz";
+			}
+
+			@Override
+			public int getValue() {
+				return currentValue;
+			}
+
+			@Override
+			public IntegerProperty sesProperty() {
+				return new SimpleIntegerProperty(0);
+			}
+
+			@Override
+			public void setBought(final int bought) {
+				final int newValue = getValue() + bought - getBought();
+				actualValue.put("Wert".equals(key) ? "Kauf" : key + ":" + "Kauf", bought);
+				actualValue.put(key, newValue);
+				actualValue.notifyListeners(null);
+			}
+		};
+
+		new EnergyEnhancementDialog(grid.getScene().getWindow(), dummyBuyable, character, currentValue + 1);
+	}
+
+	private void showSpeedEnhancementDialog(final String key) {
+		final JSONObject actualValue = character.getObj("Basiswerte").getObj("Geschwindigkeit");
+		final double currentValue = actualValue.getDoubleOrDefault(key, 0.0);
+		showAttributeEnhancementDialog(actualValue, "Geschwindigkeit", (int) Math.round(currentValue + 1), () -> (int) Math.round(currentValue), (newValue) -> {
+			actualValue.put(key, currentValue + (newValue - (int) Math.round(currentValue)));
+			actualValue.notifyListeners(null);
+		}, () -> (int) Math.round(actualValue.getDoubleOrDefault("Wert".equals(key) ? "Start" : key + ":" + "Start", 0.0) * 1.5));
 	}
 
 	private void updateTkZk() {
