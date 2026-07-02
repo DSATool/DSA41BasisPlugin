@@ -16,36 +16,13 @@
 package dsa41basis.hero;
 
 import javafx.beans.property.IntegerProperty;
-import jsonant.value.JSONObject;
 
-public interface Enhanceable {
+public interface Buyable extends Enhanceable {
 
-	JSONObject getActual();
+	public IntegerProperty boughtProperty();
 
-	public int getEnhancementComplexity(JSONObject hero, int targetLevel);
+	public int getBought();
 
-	public int getMaximum(JSONObject hero);
+	public void setBought(int bought);
 
-	public String getName();
-
-	default int getSes() {
-		return sesProperty().get();
-	}
-
-	public int getValue();
-
-	IntegerProperty sesProperty();
-
-	default void setSes(final int ses) {
-		if (sesProperty().get() != ses) {
-			final JSONObject actual = getActual();
-			if (ses == 0) {
-				actual.removeKey("SEs");
-			} else {
-				actual.put("SEs", ses);
-			}
-			sesProperty().set(ses);
-			actual.notifyListeners(null);
-		}
-	}
 }

@@ -27,7 +27,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.paint.Color;
 import jsonant.value.JSONObject;
 
-public class Energy extends DerivedValue implements Enhanceable {
+public class Energy extends DerivedValue implements Buyable {
 
 	public static Color COLOR_LEP = Color.RED;
 	public static Color COLOR_AUP = Color.DODGERBLUE;
@@ -37,9 +37,9 @@ public class Energy extends DerivedValue implements Enhanceable {
 
 	protected final IntegerProperty bought = new SimpleIntegerProperty();
 	protected final DoubleProperty currentPercentage = new SimpleDoubleProperty();
-	protected final IntegerProperty max = new SimpleIntegerProperty();
+	protected final IntegerProperty value = new SimpleIntegerProperty();
 	protected final IntegerProperty permanent = new SimpleIntegerProperty();
-	protected final IntegerProperty buyableMaximum = new SimpleIntegerProperty();
+	protected final IntegerProperty maximum = new SimpleIntegerProperty();
 	protected IntegerProperty ses;
 
 	protected final int enhancementCost;
@@ -47,8 +47,8 @@ public class Energy extends DerivedValue implements Enhanceable {
 	public Energy(final String name, final JSONObject derivation, final JSONObject hero) {
 		super(name, derivation, hero);
 
-		final When cond = Bindings.when(max.isEqualTo(0));
-		currentPercentage.bind(cond.then(0).otherwise(current.divide(cond.then(1.0).otherwise(max))));
+		final When cond = Bindings.when(value.isEqualTo(0));
+		currentPercentage.bind(cond.then(0).otherwise(current.divide(cond.then(1.0).otherwise(value))));
 
 		enhancementCost = derivation.getIntOrDefault("Zukauf", 8);
 
@@ -57,44 +57,45 @@ public class Energy extends DerivedValue implements Enhanceable {
 		ses = new SimpleIntegerProperty(actual == null ? 0 : actual.getIntOrDefault("SEs", 0));
 	}
 
+	@Override
 	public final IntegerProperty boughtProperty() {
 		return bought;
-	}
-
-	public final ReadOnlyIntegerProperty buyableMaximumProperty() {
-		return buyableMaximum;
 	}
 
 	public final ReadOnlyDoubleProperty currentPercentageProperty() {
 		return currentPercentage;
 	}
 
+	@Override
 	public final int getBought() {
 		return bought.get();
-	}
-
-	public final int getBuyableMaximum() {
-		return buyableMaximum.get();
 	}
 
 	public final double getCurrentPercentage() {
 		return currentPercentage.get();
 	}
 
-	public int getEnhancementCost() {
+	@Override
+	public int getEnhancementComplexity(final JSONObject hero, final int targetLevel) {
 		return enhancementCost;
 	}
 
-	public final int getMax() {
-		return max.get();
+	@Override
+	public final int getMaximum(final JSONObject hero) {
+		return maximum.get();
 	}
 
 	public final int getPermanent() {
 		return permanent.get();
 	}
 
-	public final ReadOnlyIntegerProperty maxProperty() {
-		return max;
+	@Override
+	public final int getValue() {
+		return value.get();
+	}
+
+	public final ReadOnlyIntegerProperty maximumProperty() {
+		return maximum;
 	}
 
 	public final IntegerProperty permanentProperty() {
@@ -106,7 +107,7 @@ public class Energy extends DerivedValue implements Enhanceable {
 		super.recalculate(derivation, hero);
 
 		if (derivation.getIntOrDefault("Zukauf", -1) != -1) {
-			buyableMaximum.set(HeroUtil.deriveValue(derivation.getObj("Zukauf:Maximum"), hero, null, false));
+			maximum.set(HeroUtil.deriveValue(derivation.getObj("Zukauf:Maximum"), hero, null, false));
 			bought.set(actual.getIntOrDefault("Kauf", 0));
 		} else {
 			bought.set(Integer.MIN_VALUE);
@@ -114,8 +115,8 @@ public class Energy extends DerivedValue implements Enhanceable {
 
 		final int value = HeroUtil.deriveValue(derivation, hero, actual, false);
 		permanent.set(actual.getIntOrDefault("Permanent", 0));
-		max.set(value);
-		current.bind(max.add(manualModifier));
+		this.value.set(value);
+		current.bind(this.value.add(manualModifier));
 	}
 
 	@Override
@@ -123,6 +124,7 @@ public class Energy extends DerivedValue implements Enhanceable {
 		return ses;
 	}
 
+	@Override
 	public final void setBought(final int bought) {
 		if (this.bought.get() != bought) {
 			if (bought == 0) {
@@ -145,5 +147,9 @@ public class Energy extends DerivedValue implements Enhanceable {
 			this.permanent.set(permanent);
 			actual.notifyListeners(null);
 		}
+	}
+
+	public final ReadOnlyIntegerProperty valueProperty() {
+		return value;
 	}
 }

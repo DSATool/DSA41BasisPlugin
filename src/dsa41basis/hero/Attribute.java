@@ -25,7 +25,7 @@ import javafx.beans.property.StringProperty;
 import jsonant.event.JSONListener;
 import jsonant.value.JSONObject;
 
-public class Attribute implements Enhanceable {
+public class Attribute implements Raisable {
 
 	protected final JSONObject actual;
 	private final IntegerProperty current;
@@ -68,11 +68,17 @@ public class Attribute implements Enhanceable {
 		return current.get();
 	}
 
+	@Override
+	public int getEnhancementComplexity(final JSONObject hero, final int targetLevel) {
+		return 8;
+	}
+
 	public final int getManualModifier() {
 		return manualModifier.get();
 	}
 
-	public int getMaximum() {
+	@Override
+	public int getMaximum(final JSONObject hero) {
 		return (int) Math.round(getStart() * 1.5);
 	}
 
@@ -80,6 +86,7 @@ public class Attribute implements Enhanceable {
 		return modifier.get();
 	}
 
+	@Override
 	public final String getName() {
 		return name.get();
 	}
@@ -88,6 +95,7 @@ public class Attribute implements Enhanceable {
 		return actual.getIntOrDefault("Start", value.get());
 	}
 
+	@Override
 	public final int getValue() {
 		return value.get();
 	}

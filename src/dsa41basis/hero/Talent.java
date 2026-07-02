@@ -32,7 +32,7 @@ import javafx.beans.property.StringProperty;
 import jsonant.value.JSONArray;
 import jsonant.value.JSONObject;
 
-public class Talent implements Enhanceable {
+public class Talent implements Raisable {
 	private static Map<JSONObject, Talent> talentCache = new IdentityHashMap<>();
 
 	public static Talent getTalent(final String name, final JSONObject talentGroup, final JSONObject talent, final JSONObject hero, final JSONObject actual,
@@ -121,10 +121,12 @@ public class Talent implements Enhanceable {
 		return displayName.get();
 	}
 
+	@Override
 	public int getEnhancementComplexity(final JSONObject hero, final int targetTaW) {
 		return HeroUtil.getTalentComplexity(hero, name.get());
 	}
 
+	@Override
 	public int getMaximum(final JSONObject hero) {
 		final JSONObject attributes = hero.getObj("Eigenschaften");
 		int max = 0;
@@ -146,6 +148,7 @@ public class Talent implements Enhanceable {
 		return max + 3;
 	}
 
+	@Override
 	public final String getName() {
 		return name.get();
 	}
@@ -158,6 +161,7 @@ public class Talent implements Enhanceable {
 		return talent;
 	}
 
+	@Override
 	public int getValue() {
 		return value.get();
 	}
@@ -254,13 +258,14 @@ public class Talent implements Enhanceable {
 			insertTalent(false);
 		}
 
-		Enhanceable.super.setSes(ses);
+		Raisable.super.setSes(ses);
 
 		if (ses == 0 && !actual.getBoolOrDefault("aktiviert", true) && !actual.getBoolOrDefault("Leittalent", false)) {
 			removeTalent();
 		}
 	}
 
+	@Override
 	public void setValue(final int value) {
 		if (this.value.get() != value) {
 			if (actual == null) {
