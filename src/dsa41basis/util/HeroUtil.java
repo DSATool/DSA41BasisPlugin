@@ -379,16 +379,33 @@ public class HeroUtil {
 
 	public static Tuple<JSONValue, JSONObject> findActualTalent(final JSONObject hero, final String talentName) {
 		if (hero != null) {
+			final String actualTalentName = switch (talentName) {
+				case "Muttersprache", "Zweitsprache", "Lehrsprache", "Muttersprache:Schrift", "Zweitsprache:Schrift", "Lehrsprache:Schrift" -> {
+					final JSONObject languages = ResourceManager.getResource("data/Talente").getObj("Sprachen und Schriften");
+					final JSONObject actualLanguages = hero.getObj("Talente").getObj("Sprachen und Schriften");
+					for (final String language : actualLanguages.keySet()) {
+						if (actualLanguages.getObj(language).containsKey(talentName) && !languages.getObj(language).getBoolOrDefault("Schrift", false)) {
+							yield language;
+						} else if (talentName.endsWith(":Schrift")
+								&& actualLanguages.getObj(language).containsKey(talentName.substring(0, talentName.length() - 8))
+								&& languages.getObj(language).getBoolOrDefault("Schrift", false)) {
+							yield language;
+						}
+					}
+					yield talentName;
+				}
+				default -> talentName;
+			};
 			final JSONObject actualTalentGroups = hero.getObj("Talente");
 			for (final String talentGroupName : actualTalentGroups.keySet()) {
 				final JSONObject talentGroup = actualTalentGroups.getObj(talentGroupName);
-				if (talentGroup.containsKey(talentName)) return new Tuple<>((JSONValue) talentGroup.getUnsafe(talentName), talentGroup);
+				if (talentGroup.containsKey(actualTalentName)) return new Tuple<>((JSONValue) talentGroup.getUnsafe(actualTalentName), talentGroup);
 			}
 
 			final JSONObject spells = hero.getObjOrDefault("Zauber", null);
 			if (spells != null && spells.containsKey(talentName)) return new Tuple<>((JSONValue) spells.getUnsafe(talentName), spells);
 
-			final String groupName = findTalent(talentName)._2;
+			final String groupName = findTalent(actualTalentName)._2;
 			if ("Zauber".equals(groupName))
 				return new Tuple<>(null, hero.getObj("Zauber"));
 			else if (groupName != null) return new Tuple<>(null, actualTalentGroups.getObj(groupName));
