@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import dsatool.ui.ReactiveSpinner?>
+
+<VBox fx:id="root" style="-fx-padding: 4;" spacing="2" xmlns:fx="http://javafx.com/fxml" >
+   <HBox alignment="CENTER" >
+      <Label fx:id="nameLabel" alignment="CENTER" />
+      <Label fx:id="enhanceLabel" text=" steigern:" alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+   </HBox>
+   <HBox alignment="CENTER" >
+      <Label text="Aktuell: " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Label fx:id="startLabel" alignment="CENTER" />
+   </HBox>
+   <HBox alignment="CENTER" >
+      <Label text="Maximum: " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Label fx:id="maxLabel" alignment="CENTER" />
+   </HBox>
+   <HBox alignment="CENTER" >
+      <Label text="Ziel: " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <ReactiveSpinner fx:id="target" imin="0" imax="99" editable="true" prefWidth="60" />
+   </HBox>
+   <HBox alignment="CENTER" >
+      <Label text="SEs: " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <ReactiveSpinner fx:id="ses" imin="0" imax="99" editable="true" prefWidth="60" />
+   </HBox>
+   <HBox alignment="CENTER" >
+      <Label text="AP " alignment="CENTER_LEFT" maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <ReactiveSpinner fx:id="ap" imin="0" imax="9999" editable="true" prefWidth="70" />
+      <Label text=" AP" alignment="CENTER_LEFT" />
+   </HBox>
+   <HBox spacing="2" alignment="CENTER_LEFT" >
+      <Label maxWidth="Infinity" HBox.hgrow="ALWAYS" />
+      <Button fx:id="okButton" text="Ok" prefWidth="90" />
+      <Button fx:id="cancelButton" text="Abbrechen" prefWidth="90" />
+   </HBox>
+</VBox>
