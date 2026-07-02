@@ -212,8 +212,13 @@ public class RequirementsUtil {
 			final JSONArray choices = requirements.getArr("Auswahl");
 			boolean found = false;
 			for (int i = 0; i < choices.size(); ++i) {
-				if (choices.getString(i).equals(choice)) {
-					found = true;
+				final String possibleChoice = choices.getString(i);
+				found |= switch (possibleChoice) {
+					case "alveranisch" -> DSAUtil.isAlveranGod(choice);
+					case "nicht-alveranisch" -> !DSAUtil.isAlveranGod(choice);
+					default -> possibleChoice.equals(choice);
+				};
+				if (found) {
 					break;
 				}
 			}
@@ -595,8 +600,13 @@ public class RequirementsUtil {
 			final JSONArray choices = requirements.getArr("Auswahl");
 			boolean found = false;
 			for (int i = 0; i < choices.size(); ++i) {
-				if (choices.getString(i).equals(choice)) {
-					found = true;
+				final String possibleChoice = choices.getString(i);
+				found |= switch (possibleChoice) {
+					case "alveranisch" -> DSAUtil.isAlveranGod(choice);
+					case "nicht-alveranisch" -> !DSAUtil.isAlveranGod(choice);
+					default -> possibleChoice.equals(choice);
+				};
+				if (found) {
 					break;
 				}
 			}

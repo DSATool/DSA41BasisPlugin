@@ -666,6 +666,11 @@ public class DSAUtil {
 		return getRollString(roll, 1, units);
 	}
 
+	public static boolean isAlveranGod(final String goddess) {
+		return ResourceManager.getResource("data/Talente").getObj("Liturgiekenntnis").getObjOrDefault(goddess, new JSONObject(null))
+				.getBoolOrDefault("alveranisch", false);
+	}
+
 	private static void mapProfessionGenderNames() {
 		final Map<String, String> genderMap = new HashMap<>();
 		final JSONObject professions = ResourceManager.getResource("data/Professionen");
