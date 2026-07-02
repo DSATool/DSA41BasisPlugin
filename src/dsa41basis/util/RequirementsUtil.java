@@ -15,8 +15,10 @@
  */
 package dsa41basis.util;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import dsatool.resources.ResourceManager;
 import dsatool.util.StringUtil;
@@ -338,18 +340,23 @@ public class RequirementsUtil {
 			}
 			if (talents.containsKey("Wahl")) {
 				final JSONArray choices = talents.getArr("Wahl");
+				final Set<String> matched = new HashSet<>();
 				for (int i = 0; i < choices.size(); ++i) {
 					final JSONObject curChoice = choices.getObj(i);
 					boolean match = false;
 					for (String talent : curChoice.keySet()) {
-						final int value = curChoice.getInt(talent);
-						if ("Auswahl".equals(talent)) {
-							talent = choice;
-						} else if ("Freitext".equals(talent)) {
-							talent = text;
-						}
-						if (isTalentRequirementFulfilled(hero, talent, value)) {
-							match = true;
+						if (!matched.contains(talent)) {
+							final int value = curChoice.getInt(talent);
+							if ("Auswahl".equals(talent)) {
+								talent = choice;
+							} else if ("Freitext".equals(talent)) {
+								talent = text;
+							}
+							if (isTalentRequirementFulfilled(hero, talent, value)) {
+								match = true;
+								matched.add(talent);
+								break;
+							}
 						}
 					}
 					if (!match) return false;
@@ -762,18 +769,23 @@ public class RequirementsUtil {
 			}
 			if (talents.containsKey("Wahl")) {
 				final JSONArray choices = talents.getArr("Wahl");
+				final Set<String> matched = new HashSet<>();
 				for (int i = 0; i < choices.size(); ++i) {
 					final JSONObject curChoice = choices.getObj(i);
 					boolean match = false;
 					for (String talent : curChoice.keySet()) {
-						final int value = curChoice.getInt(talent);
-						if ("Auswahl".equals(talent)) {
-							talent = choice;
-						} else if ("Freitext".equals(talent)) {
-							talent = text;
-						}
-						if (isTalentRequirementFulfilled(hero, talent, value)) {
-							match = true;
+						if (!matched.contains(talent)) {
+							final int value = curChoice.getInt(talent);
+							if ("Auswahl".equals(talent)) {
+								talent = choice;
+							} else if ("Freitext".equals(talent)) {
+								talent = text;
+							}
+							if (isTalentRequirementFulfilled(hero, talent, value)) {
+								match = true;
+								matched.add(talent);
+								break;
+							}
 						}
 					}
 					if (!match) {
