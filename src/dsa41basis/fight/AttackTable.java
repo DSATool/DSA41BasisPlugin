@@ -17,12 +17,16 @@ package dsa41basis.fight;
 
 import java.util.function.Consumer;
 
+import dsa41basis.hero.Raisable;
+import dsa41basis.ui.hero.AttributeEnhancementDialog;
 import dsatool.gui.GUIUtil;
 import dsatool.ui.GraphicTableCell;
 import dsatool.ui.IntegerSpinnerTableCell;
 import dsatool.util.ErrorLogger;
+import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanExpression;
 import javafx.beans.binding.DoubleExpression;
+import javafx.beans.property.IntegerProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -66,7 +70,8 @@ public class AttackTable {
 
 	private JSONObject character;
 
-	public AttackTable(final BooleanExpression isEditable, final DoubleExpression width, final boolean needsStart) {
+	public AttackTable(final JSONObject character, final BooleanExpression isEditable, final DoubleExpression width, final boolean needsStart,
+			final boolean needsEnhancement) {
 		final FXMLLoader fxmlLoader = new FXMLLoader();
 
 		fxmlLoader.setController(this);
@@ -77,11 +82,10 @@ public class AttackTable {
 			ErrorLogger.logError(e);
 		}
 
-		attacksTable.editableProperty().bind(isEditable);
 		newAttackField.editableProperty().bind(isEditable);
 		attackAddButton.disableProperty().bind(isEditable.not());
 
-		initAttacks(width, needsStart);
+		initAttacks(character, isEditable, width, needsStart, needsEnhancement);
 	}
 
 	@FXML
@@ -107,7 +111,8 @@ public class AttackTable {
 		return box;
 	}
 
-	private void initAttacks(final DoubleExpression width, final boolean needsStart) {
+	private void initAttacks(final JSONObject character, final BooleanExpression isEditable, final DoubleExpression width, final boolean needsStart,
+			final boolean needsEnhancement) {
 		attacksTable.prefWidthProperty().bind(width);
 		GUIUtil.autosizeTable(attacksTable);
 		GUIUtil.cellValueFactories(attacksTable, "name", "tp", "at", "pa", "dk", "notes");
@@ -115,15 +120,26 @@ public class AttackTable {
 		attackATColumn.setCellFactory(_ -> new IntegerSpinnerTableCell<>(0, 99));
 		attackATColumn.setOnEditCommit(t -> {
 			if (t.getRowValue() != null) {
-				t.getRowValue().setAt(t.getNewValue());
+				if (isEditable.get()) {
+					t.getRowValue().setAt(t.getNewValue());
+				} else if (!t.getNewValue().equals(t.getOldValue())) {
+					showEnhancementDialog(t.getRowValue(), t.getNewValue(), false);
+				}
 			}
 		});
+		attackATColumn.editableProperty().bind(Bindings.createBooleanBinding(() -> needsEnhancement || isEditable.get(), isEditable));
+
 		attackPAColumn.setCellFactory(_ -> new IntegerSpinnerTableCell<>(0, 99));
 		attackPAColumn.setOnEditCommit(t -> {
 			if (t.getRowValue() != null) {
-				t.getRowValue().setPa(t.getNewValue());
+				if (isEditable.get()) {
+					t.getRowValue().setPa(t.getNewValue());
+				} else if (!t.getNewValue().equals(t.getOldValue())) {
+					showEnhancementDialog(t.getRowValue(), t.getNewValue(), true);
+				}
 			}
 		});
+		attackPAColumn.editableProperty().bind(Bindings.createBooleanBinding(() -> needsEnhancement || isEditable.get(), isEditable));
 
 		attackNameColumn.setCellFactory(_ -> {
 			final TableCell<Attack, String> cell = new GraphicTableCell<>(false) {
@@ -139,6 +155,7 @@ public class AttackTable {
 			final Attack attack = event.getRowValue();
 			attack.setName(event.getNewValue());
 		});
+		attackNameColumn.editableProperty().bind(isEditable);
 
 		attackNotesColumn.setCellFactory(_ -> {
 			final TableCell<Attack, String> cell = new GraphicTableCell<>(false) {
@@ -155,6 +172,7 @@ public class AttackTable {
 			final Attack attack = event.getRowValue();
 			attack.setNotes(note);
 		});
+		attackNotesColumn.editableProperty().bind(isEditable);
 
 		attacksTable.setRowFactory(_ -> {
 			final TableRow<Attack> row = new TableRow<>();
@@ -174,6 +192,22 @@ public class AttackTable {
 					edit.accept(null);
 				}
 			});
+
+			if (needsEnhancement) {
+				final MenuItem attackEnhanceItem = new MenuItem("Attacke steigern");
+				contextMenu.getItems().add(attackEnhanceItem);
+				attackEnhanceItem.setOnAction(_ -> {
+					final Attack attack = row.getItem();
+					showEnhancementDialog(attack, attack.getAt() + 1, false);
+				});
+
+				final MenuItem defenseEnhanceItem = new MenuItem("Parade steigern");
+				contextMenu.getItems().add(defenseEnhanceItem);
+				defenseEnhanceItem.setOnAction(_ -> {
+					final Attack attack = row.getItem();
+					showEnhancementDialog(attack, attack.getPa() + 1, true);
+				});
+			}
 
 			final MenuItem editItem = new MenuItem("Bearbeiten");
 			contextMenu.getItems().add(editItem);
@@ -204,6 +238,52 @@ public class AttackTable {
 		character = newCharacter;
 		newCharacter.getObj("Angriffe").addListener(updateListener);
 		updateAttacks();
+	}
+
+	private void showEnhancementDialog(final Attack attack, final int initialTarget, final boolean isDefense) {
+		final Raisable dummyRaisable = new Raisable() {
+
+			@Override
+			public JSONObject getActual() {
+				return attack.getActual();
+			}
+
+			@Override
+			public int getEnhancementComplexity(final JSONObject hero, final int targetLevel) {
+				return 6;
+			}
+
+			@Override
+			public int getMaximum(final JSONObject hero) {
+				return isDefense ? attack.getPaMaximum() : attack.getAtMaximum();
+			}
+
+			@Override
+			public String getName() {
+				return attack.getName() + (isDefense ? ":Parade" : ":Attacke");
+			}
+
+			@Override
+			public int getValue() {
+				return isDefense ? attack.getPa() : attack.getAt();
+			}
+
+			@Override
+			public IntegerProperty sesProperty() {
+				return null;
+			}
+
+			@Override
+			public void setValue(final int value) {
+				if (isDefense) {
+					attack.setPa(value);
+				} else {
+					attack.setAt(value);
+				}
+			}
+		};
+
+		new AttributeEnhancementDialog(box.getScene().getWindow(), dummyRaisable, character, initialTarget);
 	}
 
 	private void updateAttacks() {

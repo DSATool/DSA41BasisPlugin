@@ -73,9 +73,17 @@ public class Attack implements WithAttack, WithDefense {
 		return dk;
 	}
 
+	public JSONObject getActual() {
+		return actual;
+	}
+
 	@Override
 	public int getAt() {
 		return at.get();
+	}
+
+	public int getAtMaximum() {
+		return (int) Math.round(atStart.get() * 1.5);
 	}
 
 	public int getAtMod() {
@@ -103,6 +111,10 @@ public class Attack implements WithAttack, WithDefense {
 	@Override
 	public int getPa() {
 		return pa.get();
+	}
+
+	public int getPaMaximum() {
+		return (int) Math.round(paStart.get() * 1.5);
 	}
 
 	public int getPaMod() {
